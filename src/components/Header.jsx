@@ -114,7 +114,7 @@ return (
                         <Link to="/register" className="px-6 py-2.5 rounded-full bg-[#1A1A1A] text-white text-sm font-medium hover:bg-gray-800 transition">
                             Реєстрація
                         </Link>
-                        <Link to="/login" className="px-6 py-2.5 rounded-full border border-gray-300 text-gray-800 text-sm font-medium hover:bg-gray-50 transition">
+                        <Link to="/login" className="px-6 py-2.5 rounded-full bg-[#1A1A1A] text-white text-sm font-medium hover:bg-gray-800 transition">
                             Увійти
                         </Link>
                     </div>
