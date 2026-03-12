@@ -46,10 +46,10 @@ const Header = () => {
     const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/6866/6866538.png";
 
 return (
-        <header className="bg-[#F6F7FB] py-4 px-8 md:px-16 flex justify-between items-center shadow-sm relative z-50">
+        <header className="bg-[#F6F7FB] py-4 px-8 md:px-16 flex justify-between items-center shadow-sm relative z-50 h-[80px]">
 
             {/* Ліва частина: Навігація */}
-            <nav className="hidden md:flex items-center space-x-8 text-[#1A1A1A] font-['Inter'] font-medium text-sm lg:text-base">
+            <nav className="hidden md:flex flex-1 items-center space-x-8 text-[#1A1A1A] font-['Inter'] font-medium text-sm lg:text-base">
                 <Link to="/" className="hover:text-[#42705D] transition duration-300">Головна</Link>
                 <Link to="/recipes" className="hover:text-[#42705D] transition duration-300">Підібрати рецепт</Link>
 
@@ -66,14 +66,15 @@ return (
                 </div>
             </nav>
 
-            {/* Права частина: Логотип + Аватарка / Кнопки */}
-            <div className="flex items-center space-x-6">
-
-                {/* Логотип зсунуто вправо */}
+            {/* ЦЕНТРАЛЬНА ЧАСТИНА: Ідеально відцентрований логотип */}
+            <div className="absolute left-1/2 transform -translate-x-1/2">
                 <Link to="/">
                     <img src={logo} alt="LITE cook" className="h-10 lg:h-12 mix-blend-multiply object-contain" />
                 </Link>
+            </div>
 
+            {/* Права частина: Аватарка / Кнопки */}
+            <div className="flex flex-1 justify-end items-center space-x-6">
                 {isAuthenticated ? (
                     <div
                         className="relative"

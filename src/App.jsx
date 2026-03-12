@@ -4,15 +4,18 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import Login from './pages/Login';
+import ConfirmEmail from './pages/ConfirmEmail';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
-import ConfirmEmail from './pages/ConfirmEmail';
+
 
 import Recipes from './pages/Recipes';
 import Favorites from './pages/Favorites';
 import Menu from './pages/Menu';
 import About from './pages/About';
 import Contacts from './pages/Contacts';
+import ResetPassword from './pages/ResetPassword';
+import ResetPasswordConfirm from './pages/ResetPasswordConfirm';
 
 function App() {
   return (
@@ -23,6 +26,8 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/reset-password-confirm/:uid/:token" element={<ResetPasswordConfirm />} />
             <Route path="/register" element={<Register />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/confirm-email/:key" element={<ConfirmEmail />} />
