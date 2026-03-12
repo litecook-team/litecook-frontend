@@ -33,7 +33,23 @@ const ResetPasswordConfirm = () => {
             setMessage('Пароль успішно змінено! Перенаправляємо на сторінку входу...');
             setTimeout(() => navigate('/login'), 3000);
         } catch (err) {
-            setError('Помилка відновлення. Можливо, посилання застаріло або пароль занадто простий.');
+            // ТЕПЕР МИ ЧИТАЄМО ТОЧНУ ВІДПОВІДЬ ВІД DJANGO
+            if (err.response && err.response.data) {
+                const errorData = err.response.data;
+                console.error("Деталі від сервера:", errorData); // Виводимо в консоль для дебагу
+
+                if (errorData.new_password1) {
+                    setError(`Помилка пароля: ${errorData.new_password1[0]}`);
+                } else if (errorData.non_field_errors) {
+                    setError(`Помилка: ${errorData.non_field_errors[0]}`);
+                } else if (errorData.uid || errorData.token) {
+                    setError('Недійсне або застаріле посилання. Надішліть запит на відновлення ще раз.');
+                } else {
+                    setError('Невідома помилка перевірки даних.');
+                }
+            } else {
+                setError('Помилка з\'єднання з сервером.');
+            }
         }
     };
 
