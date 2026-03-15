@@ -22,7 +22,7 @@ function App() {
     <Router>
       <div className="min-h-screen flex flex-col font-sans bg-[#fbfbfb]">
         <Header />
-        <main className="flex-grow">
+        <main className="flex-grow flex flex-col">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />

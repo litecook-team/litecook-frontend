@@ -1,19 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import logo from '../assets/logo.png';
 
 const Header = () => {
     const navigate = useNavigate();
-    const location = useLocation(); // Хук для відслідковування зміни сторінок
+    const location = useLocation();
     const [user, setUser] = useState(null);
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false); // Стан для випливаючого меню
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-    // Перевіряємо токен
+    // Додали реф для таймера, щоб зробити затримку (запасний варіант надійності)
+    const timeoutRef = useRef(null);
+
     const token = localStorage.getItem('access_token');
     const isAuthenticated = !!token;
 
-    // Цей useEffect спрацьовує щоразу, коли користувач переходить на нову сторінку
     useEffect(() => {
         const fetchUserRole = async () => {
             if (isAuthenticated) {
@@ -21,9 +23,8 @@ const Header = () => {
                     const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/auth/user/`, {
                         headers: { Authorization: `Bearer ${token}` }
                     });
-                    setUser(response.data); // Зберігаємо дані юзера (включаючи is_staff)
+                    setUser(response.data);
                 } catch (err) {
-                    // Якщо токен прострочений - викидаємо з системи
                     localStorage.removeItem('access_token');
                     setUser(null);
                 }
@@ -32,94 +33,150 @@ const Header = () => {
             }
         };
         fetchUserRole();
-    }, [isAuthenticated, token, location.pathname]); // Залежності: оновлюємо при зміні шляху або токена
+        setIsMobileMenuOpen(false);
+    }, [isAuthenticated, token, location.pathname]);
 
-    // Надійна функція виходу (з примусовим перезавантаженням стану)
     const handleLogout = () => {
         localStorage.removeItem('access_token');
         setUser(null);
-        // Замість звичайного navigate використовуємо window.location для 100% очищення пам'яті
         window.location.href = '/login';
     };
 
-    // Дефолтна іконка авокадо, якщо користувач не завантажив свою
-    const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/6866/6866538.png";
+    // Красива дефолтна аватарка (стиль LITE cook)
+    const defaultAvatar = "https://api.dicebear.com/7.x/fun-emoji/svg?seed=Felix&backgroundColor=e6f4ea";
 
-return (
-        <header className="bg-[#F6F7FB] py-4 px-8 md:px-16 flex justify-between items-center shadow-sm relative z-50 h-[80px]">
+    // Покращені функції для наведення мишки (з таймером)
+    const handleMouseEnter = () => {
+        clearTimeout(timeoutRef.current);
+        setIsDropdownOpen(true);
+    };
 
-            {/* Ліва частина: Навігація */}
-            <nav className="hidden md:flex flex-1 items-center space-x-8 text-[#1A1A1A] font-['Inter'] font-medium text-sm lg:text-base">
-                <Link to="/" className="hover:text-[#42705D] transition duration-300">Головна</Link>
-                <Link to="/recipes" className="hover:text-[#42705D] transition duration-300">Підібрати рецепт</Link>
+    const handleMouseLeave = () => {
+        // Додаємо затримку в 150мс перед закриттям, щоб користувач точно встиг перевести мишку
+        timeoutRef.current = setTimeout(() => {
+            setIsDropdownOpen(false);
+        }, 150);
+    };
 
-                {isAuthenticated && (
-                    <>
-                        <Link to="/favorites" className="hover:text-[#42705D] transition duration-300">Улюблені</Link>
-                        <Link to="/menu" className="hover:text-[#42705D] transition duration-300">Тижневе меню</Link>
-                    </>
-                )}
+    return (
+        <header className="bg-[#F6F7FB] py-3 px-6 lg:px-16 w-full border-b border-gray-100 relative z-50 min-h-[64px] md:h-[80px]">
+            <div className="flex justify-between items-center w-full h-full">
 
-                <div className="flex items-center cursor-pointer hover:text-[#42705D] transition duration-300 group relative">
-                    <span>Про нас</span>
-                    <svg className="w-4 h-4 ml-1 text-gray-500 group-hover:text-[#42705D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                {/* Ліва частина: Логотип + Навігація */}
+                <div className="flex items-center space-x-8 xl:space-x-12 relative z-20 h-full">
+                    <Link to="/" className="flex-shrink-0 block">
+                        <img src={logo} alt="LITE cook" className="h-8 md:h-10 lg:h-12 mix-blend-multiply object-contain" />
+                    </Link>
+
+                    {/* Навігація змінюється залежно від авторизації */}
+                    <nav className="hidden md:flex items-center space-x-6 lg:space-x-8 text-[#1A1A1A] font-['Inter'] font-medium text-sm lg:text-[15px] h-full">
+                        <Link to="/" className="hover:text-[#42705D] transition duration-300">Головна</Link>
+                        <Link to="/recipes" className="hover:text-[#42705D] transition duration-300">Підібрати рецепт</Link>
+
+                        {isAuthenticated && (
+                            <>
+                                <Link to="/favorites" className="hover:text-[#42705D] transition duration-300">Улюблені</Link>
+                                <Link to="/menu" className="hover:text-[#42705D] transition duration-300">Тижневе меню</Link>
+                            </>
+                        )}
+
+                        <Link to="/about" className="hover:text-[#42705D] transition duration-300">Про нас</Link>
+                    </nav>
                 </div>
-            </nav>
 
-            {/* ЦЕНТРАЛЬНА ЧАСТИНА: Ідеально відцентрований логотип */}
-            <div className="absolute left-1/2 transform -translate-x-1/2">
-                <Link to="/">
-                    <img src={logo} alt="LITE cook" className="h-10 lg:h-12 mix-blend-multiply object-contain" />
-                </Link>
+                {/* Права частина: Аватарка / Кнопки + Мобільне меню */}
+                <div className="flex justify-end items-center space-x-3 sm:space-x-5 relative z-20 h-full">
+
+                    {isAuthenticated ? (
+                        <div className="flex items-center space-x-4 h-full">
+
+                            {/* Окрема красива кнопка Адмін-панелі */}
+                            {user?.is_staff && (
+                                <a
+                                    href={`${import.meta.env.VITE_API_URL}/admin/`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="hidden md:flex items-center space-x-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-semibold rounded-full transition duration-300 font-['Inter']"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    <span>Адмін-панель</span>
+                                </a>
+                            )}
+
+                            {/* Контейнер для аватарки і меню, який керує hover-подіями */}
+                            <div
+                                className="relative h-full flex items-center"
+                                onMouseEnter={handleMouseEnter}
+                                onMouseLeave={handleMouseLeave}
+                            >
+                                {/* Стилізована Аватарка з чорною обводкою */}
+                                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full border-[2.5px] border-[#1A1A1A] overflow-hidden cursor-pointer hover:scale-105 transition duration-300 bg-white shadow-sm flex items-center justify-center p-[2px]">
+                                    <img src={user?.avatar || defaultAvatar} alt="User" className="w-full h-full object-cover rounded-full" />
+                                </div>
+
+                                {/* Покращене випадаюче меню. Замість mt-2 (margin) додаємо pt-2 (padding) в обгортку, створюючи "міст" */}
+                                {isDropdownOpen && (
+                                    <div className="absolute right-0 top-full pt-2 w-52 z-50">
+                                        <div className="bg-white rounded-2xl shadow-xl py-3 border border-gray-100 font-['Inter'] transform origin-top-right transition-all">
+
+                                            {/* Привітання користувача */}
+                                            <div className="px-5 py-2 mb-2 border-b border-gray-50">
+                                                <p className="text-[11px] text-gray-500 uppercase tracking-wider font-semibold">Увійшли як</p>
+                                                <p className="text-sm text-gray-900 font-medium truncate">{user?.first_name || user?.email || "Користувач"}</p>
+                                            </div>
+
+                                            <Link to="/profile" className="flex items-center px-5 py-2.5 text-sm text-gray-700 hover:bg-[#F6F7FB] hover:text-[#42705D] transition">
+                                                <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                                Мій профіль
+                                            </Link>
+
+                                            <button onClick={handleLogout} className="w-full flex items-center px-5 py-2.5 text-sm text-red-600 hover:bg-red-50 transition mt-1">
+                                                <svg className="w-4 h-4 mr-3 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                                                Вийти
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex space-x-2 sm:space-x-3 font-['Inter']">
+                            <Link to="/register" className="px-5 md:px-7 py-2.5 rounded-full bg-[#1A1A1A] text-white text-xs md:text-[14px] font-medium hover:bg-gray-800 transition shadow-sm">Реєстрація</Link>
+                            <Link to="/login" className="px-5 md:px-7 py-2.5 rounded-full bg-[#1A1A1A] text-white text-xs md:text-[14px] font-medium hover:bg-gray-800 transition shadow-sm">Увійти</Link>
+                        </div>
+                    )}
+
+                    {/* Мобільний гамбургер */}
+                    <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden text-[#1A1A1A] hover:text-[#42705D] transition p-1">
+                        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            {isMobileMenuOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>}
+                        </svg>
+                    </button>
+                </div>
             </div>
 
-            {/* Права частина: Аватарка / Кнопки */}
-            <div className="flex flex-1 justify-end items-center space-x-6">
-                {isAuthenticated ? (
-                    <div
-                        className="relative"
-                        onMouseEnter={() => setIsDropdownOpen(true)}
-                        onMouseLeave={() => setIsDropdownOpen(false)}
-                    >
-                        {/* Аватарка */}
-                        <div className="w-11 h-11 rounded-full border-2 border-[#42705D] overflow-hidden cursor-pointer hover:shadow-md transition bg-white">
-                            <img src={user?.avatar || defaultAvatar} alt="User" className="w-full h-full object-cover p-0.5 rounded-full" />
-                        </div>
-
-                        {/* Випливаюче меню */}
-                        {isDropdownOpen && (
-                            <div className="absolute right-0 mt-0 w-48 bg-white rounded-xl shadow-xl py-2 border border-gray-100 transform opacity-100 scale-100 transition-all font-['Inter']">
-                                <Link to="/profile" className="block px-5 py-2.5 text-sm text-gray-700 hover:bg-[#D8E3CA] hover:text-[#42705D] transition">
-                                    Мій профіль
-                                </Link>
+            {/* Мобільне меню */}
+            {isMobileMenuOpen && (
+                <div className="absolute top-full left-0 w-full bg-[#F6F7FB] border-t border-gray-200 shadow-lg md:hidden font-['Inter'] font-medium transition-all duration-300 z-40">
+                    <nav className="flex flex-col px-6 py-4 space-y-1">
+                        <Link to="/" className="py-3 text-gray-800 hover:text-[#42705D] border-b border-gray-100">Головна</Link>
+                        <Link to="/recipes" className="py-3 text-gray-800 hover:text-[#42705D] border-b border-gray-100">Підібрати рецепт</Link>
+                        {isAuthenticated && (
+                            <>
+                                <Link to="/favorites" className="py-3 text-gray-800 hover:text-[#42705D] border-b border-gray-100">Улюблені</Link>
+                                <Link to="/menu" className="py-3 text-gray-800 hover:text-[#42705D] border-b border-gray-100">Тижневе меню</Link>
                                 {user?.is_staff && (
-                                    <a
-                                        href={`${import.meta.env.VITE_API_URL}/admin/`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="block px-5 py-2.5 text-sm text-blue-600 hover:bg-blue-50 transition"
-                                    >
+                                    <a href={`${import.meta.env.VITE_API_URL}/admin/`} target="_blank" rel="noopener noreferrer" className="py-3 text-blue-600 hover:text-blue-800 border-b border-gray-100 flex items-center">
+                                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                         Адмін-панель
                                     </a>
                                 )}
-                                <div className="border-t border-gray-100 my-1"></div>
-                                <button onClick={handleLogout} className="block w-full text-left px-5 py-2.5 text-sm text-red-600 hover:bg-red-50 transition">
-                                    Вийти
-                                </button>
-                            </div>
+                            </>
                         )}
-                    </div>
-                ) : (
-                    <div className="flex space-x-3 font-['Inter']">
-                        <Link to="/register" className="px-6 py-2.5 rounded-full bg-[#1A1A1A] text-white text-sm font-medium hover:bg-gray-800 transition">
-                            Реєстрація
-                        </Link>
-                        <Link to="/login" className="px-6 py-2.5 rounded-full bg-[#1A1A1A] text-white text-sm font-medium hover:bg-gray-800 transition">
-                            Увійти
-                        </Link>
-                    </div>
-                )}
-            </div>
+                        <Link to="/about" className="py-3 text-gray-800 hover:text-[#42705D]">Про нас</Link>
+                    </nav>
+                </div>
+            )}
         </header>
     );
 };
