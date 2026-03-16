@@ -10,7 +10,6 @@ const Header = () => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-    // Додали реф для таймера, щоб зробити затримку (запасний варіант надійності)
     const timeoutRef = useRef(null);
 
     const token = localStorage.getItem('access_token');
@@ -42,24 +41,21 @@ const Header = () => {
         window.location.href = '/login';
     };
 
-    // Красива дефолтна аватарка (стиль LITE cook)
     const defaultAvatar = "https://api.dicebear.com/7.x/fun-emoji/svg?seed=Felix&backgroundColor=e6f4ea";
 
-    // Покращені функції для наведення мишки (з таймером)
     const handleMouseEnter = () => {
         clearTimeout(timeoutRef.current);
         setIsDropdownOpen(true);
     };
 
     const handleMouseLeave = () => {
-        // Додаємо затримку в 150мс перед закриттям, щоб користувач точно встиг перевести мишку
         timeoutRef.current = setTimeout(() => {
             setIsDropdownOpen(false);
         }, 150);
     };
 
     return (
-        <header className="bg-[#F6F7FB] py-3 px-6 lg:px-16 w-full border-b border-gray-100 relative z-50 min-h-[64px] md:h-[80px]">
+        <header className="bg-[#F6F3F4] py-3 px-6 lg:px-16 w-full border-b border-gray-100 relative z-50 min-h-[64px] md:h-[80px]">
             <div className="flex justify-between items-center w-full h-full">
 
                 {/* Ліва частина: Логотип + Навігація */}
@@ -68,7 +64,7 @@ const Header = () => {
                         <img src={logo} alt="LITE cook" className="h-8 md:h-10 lg:h-12 mix-blend-multiply object-contain" />
                     </Link>
 
-                    {/* Навігація змінюється залежно від авторизації */}
+                    {/* ЗАМІНЕНО: Навігація тепер на Inter */}
                     <nav className="hidden md:flex items-center space-x-6 lg:space-x-8 text-[#1A1A1A] font-['Inter'] font-medium text-sm lg:text-[15px] h-full">
                         <Link to="/" className="hover:text-[#42705D] transition duration-300">Головна</Link>
                         <Link to="/recipes" className="hover:text-[#42705D] transition duration-300">Підібрати рецепт</Link>
@@ -90,7 +86,7 @@ const Header = () => {
                     {isAuthenticated ? (
                         <div className="flex items-center space-x-4 h-full">
 
-                            {/* Окрема красива кнопка Адмін-панелі */}
+                            {/* ЗАМІНЕНО: Кнопка Адмін-панелі тепер на Inter */}
                             {user?.is_staff && (
                                 <a
                                     href={`${import.meta.env.VITE_API_URL}/admin/`}
@@ -103,23 +99,20 @@ const Header = () => {
                                 </a>
                             )}
 
-                            {/* Контейнер для аватарки і меню, який керує hover-подіями */}
                             <div
                                 className="relative h-full flex items-center"
                                 onMouseEnter={handleMouseEnter}
                                 onMouseLeave={handleMouseLeave}
                             >
-                                {/* Стилізована Аватарка з чорною обводкою */}
                                 <div className="w-10 h-10 md:w-12 md:h-12 rounded-full border-[2.5px] border-[#1A1A1A] overflow-hidden cursor-pointer hover:scale-105 transition duration-300 bg-white shadow-sm flex items-center justify-center p-[2px]">
                                     <img src={user?.avatar || defaultAvatar} alt="User" className="w-full h-full object-cover rounded-full" />
                                 </div>
 
-                                {/* Покращене випадаюче меню. Замість mt-2 (margin) додаємо pt-2 (padding) в обгортку, створюючи "міст" */}
                                 {isDropdownOpen && (
                                     <div className="absolute right-0 top-full pt-2 w-52 z-50">
+                                        {/* ЗАМІНЕНО: Меню тепер на Inter */}
                                         <div className="bg-white rounded-2xl shadow-xl py-3 border border-gray-100 font-['Inter'] transform origin-top-right transition-all">
 
-                                            {/* Привітання користувача */}
                                             <div className="px-5 py-2 mb-2 border-b border-gray-50">
                                                 <p className="text-[11px] text-gray-500 uppercase tracking-wider font-semibold">Увійшли як</p>
                                                 <p className="text-sm text-gray-900 font-medium truncate">{user?.first_name || user?.email || "Користувач"}</p>
@@ -140,13 +133,13 @@ const Header = () => {
                             </div>
                         </div>
                     ) : (
+                        // ЗАМІНЕНО: Кнопки тепер на Inter
                         <div className="flex space-x-2 sm:space-x-3 font-['Inter']">
                             <Link to="/register" className="px-5 md:px-7 py-2.5 rounded-full bg-[#1A1A1A] text-white text-xs md:text-[14px] font-medium hover:bg-gray-800 transition shadow-sm">Реєстрація</Link>
                             <Link to="/login" className="px-5 md:px-7 py-2.5 rounded-full bg-[#1A1A1A] text-white text-xs md:text-[14px] font-medium hover:bg-gray-800 transition shadow-sm">Увійти</Link>
                         </div>
                     )}
 
-                    {/* Мобільний гамбургер */}
                     <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden text-[#1A1A1A] hover:text-[#42705D] transition p-1">
                         <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             {isMobileMenuOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>}
@@ -157,6 +150,7 @@ const Header = () => {
 
             {/* Мобільне меню */}
             {isMobileMenuOpen && (
+                // ЗАМІНЕНО: Мобільне меню тепер на Inter
                 <div className="absolute top-full left-0 w-full bg-[#F6F7FB] border-t border-gray-200 shadow-lg md:hidden font-['Inter'] font-medium transition-all duration-300 z-40">
                     <nav className="flex flex-col px-6 py-4 space-y-1">
                         <Link to="/" className="py-3 text-gray-800 hover:text-[#42705D] border-b border-gray-100">Головна</Link>
@@ -167,7 +161,7 @@ const Header = () => {
                                 <Link to="/menu" className="py-3 text-gray-800 hover:text-[#42705D] border-b border-gray-100">Тижневе меню</Link>
                                 {user?.is_staff && (
                                     <a href={`${import.meta.env.VITE_API_URL}/admin/`} target="_blank" rel="noopener noreferrer" className="py-3 text-blue-600 hover:text-blue-800 border-b border-gray-100 flex items-center">
-                                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                         Адмін-панель
                                     </a>
                                 )}
