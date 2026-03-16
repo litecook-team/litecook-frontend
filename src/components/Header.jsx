@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import logo from '../assets/logo.png';
+import avokado_avatar from '../assets/avokado_avatar.png';
+
 
 const Header = () => {
     const navigate = useNavigate();
@@ -40,8 +42,6 @@ const Header = () => {
         setUser(null);
         window.location.href = '/login';
     };
-
-    const defaultAvatar = "https://api.dicebear.com/7.x/fun-emoji/svg?seed=Felix&backgroundColor=e6f4ea";
 
     const handleMouseEnter = () => {
         clearTimeout(timeoutRef.current);
@@ -86,13 +86,13 @@ const Header = () => {
                     {isAuthenticated ? (
                         <div className="flex items-center space-x-4 h-full">
 
-                            {/* ЗАМІНЕНО: Кнопка Адмін-панелі тепер на Inter */}
+                            {/* Кнопка Адмін-панелі */}
                             {user?.is_staff && (
                                 <a
-                                    href={`${import.meta.env.VITE_API_URL}/admin/`}
+                                    href={`${import.meta.env.VITE_API_URL}/${import.meta.env.VITE_ADMIN_URL}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="hidden md:flex items-center space-x-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-semibold rounded-full transition duration-300 font-['Inter']"
+                                    className="hidden md:flex items-center space-x-2 px-4 py-2 bg-white border border-gray-200 hover:border-[#42705D] hover:text-[#42705D] text-gray-500 text-xs font-semibold rounded-full transition duration-300 font-['Inter'] shadow-sm"
                                 >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                     <span>Адмін-панель</span>
@@ -104,8 +104,12 @@ const Header = () => {
                                 onMouseEnter={handleMouseEnter}
                                 onMouseLeave={handleMouseLeave}
                             >
-                                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full border-[2.5px] border-[#1A1A1A] overflow-hidden cursor-pointer hover:scale-105 transition duration-300 bg-white shadow-sm flex items-center justify-center p-[2px]">
-                                    <img src={user?.avatar || defaultAvatar} alt="User" className="w-full h-full object-cover rounded-full" />
+                                <div className="w-10 h-10 md:w-14 md:h-14 rounded-full border-[2.5px] border-[#1A1A1A] overflow-hidden cursor-pointer hover:scale-105 transition duration-300 bg-white shadow-sm flex items-center justify-center p-1">
+                                    <img
+                                        src={user?.avatar || avokado_avatar}
+                                        alt="User"
+                                        className="w-full h-full object-contain rounded-full"
+                                    />
                                 </div>
 
                                 {isDropdownOpen && (
@@ -160,7 +164,7 @@ const Header = () => {
                                 <Link to="/favorites" className="py-3 text-gray-800 hover:text-[#42705D] border-b border-gray-100">Улюблені</Link>
                                 <Link to="/menu" className="py-3 text-gray-800 hover:text-[#42705D] border-b border-gray-100">Тижневе меню</Link>
                                 {user?.is_staff && (
-                                    <a href={`${import.meta.env.VITE_API_URL}/admin/`} target="_blank" rel="noopener noreferrer" className="py-3 text-blue-600 hover:text-blue-800 border-b border-gray-100 flex items-center">
+                                    <a href={`${import.meta.env.VITE_API_URL}/${import.meta.env.VITE_ADMIN_URL}`} target="_blank" rel="noopener noreferrer" className="py-3 text-blue-600 hover:text-blue-800 border-b border-gray-100 flex items-center">
                                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                         Адмін-панель
                                     </a>
