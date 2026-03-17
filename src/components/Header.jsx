@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import logo from '../assets/logo.png';
-import avokado_avatar from '../assets/avokado_avatar.png';
+import logo from '../assets/global/logo.png';
+import avokado_avatar from '../assets/global/avokado_avatar.png';
 
 
 const Header = () => {
@@ -13,6 +13,11 @@ const Header = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const timeoutRef = useRef(null);
+
+    // ДОДАНО: Створюємо рефи (посилання) на елементи, щоб відслідковувати кліки по них
+    const dropdownRef = useRef(null);
+    const mobileMenuRef = useRef(null);
+    const mobileBtnRef = useRef(null);
 
     const token = localStorage.getItem('access_token');
     const isAuthenticated = !!token;
@@ -37,6 +42,34 @@ const Header = () => {
         setIsMobileMenuOpen(false);
     }, [isAuthenticated, token, location.pathname]);
 
+    // ДОДАНО: Ефект для відслідковування кліків за межами меню
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            // Якщо клік був поза меню профілю (аватарки) — закриваємо його
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsDropdownOpen(false);
+            }
+
+            // Якщо клік був поза мобільним меню ТА поза кнопкою "гамбургер" — закриваємо його
+            if (
+                mobileMenuRef.current && !mobileMenuRef.current.contains(event.target) &&
+                mobileBtnRef.current && !mobileBtnRef.current.contains(event.target)
+            ) {
+                setIsMobileMenuOpen(false);
+            }
+        };
+
+        // Слухаємо події кліку миші та дотику до екрану (для телефонів)
+        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('touchstart', handleClickOutside);
+
+        // Очищаємо слухачів при демонтажі компонента
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('touchstart', handleClickOutside);
+        };
+    }, []);
+
     const handleLogout = () => {
         localStorage.removeItem('access_token');
         setUser(null);
@@ -54,6 +87,11 @@ const Header = () => {
         }, 150);
     };
 
+    // ДОДАНО: Для мобільних зручніше закривати меню при повторному тапі на аватарку
+    const toggleDropdown = () => {
+        setIsDropdownOpen(!isDropdownOpen);
+    };
+
     return (
         <header className="bg-[#F6F3F4] py-3 px-6 lg:px-16 w-full border-b border-gray-100 relative z-50 min-h-[64px] md:h-[80px]">
             <div className="flex justify-between items-center w-full h-full">
@@ -64,7 +102,6 @@ const Header = () => {
                         <img src={logo} alt="LITE cook" className="h-8 md:h-10 lg:h-12 mix-blend-multiply object-contain" />
                     </Link>
 
-                    {/* ЗАМІНЕНО: Навігація тепер на Inter */}
                     <nav className="hidden md:flex items-center space-x-6 lg:space-x-8 text-[#1A1A1A] font-['Inter'] font-medium text-sm lg:text-[15px] h-full">
                         <Link to="/" className="hover:text-[#42705D] transition duration-300">Головна</Link>
                         <Link to="/recipes" className="hover:text-[#42705D] transition duration-300">Підібрати рецепт</Link>
@@ -99,12 +136,17 @@ const Header = () => {
                                 </a>
                             )}
 
+                            {/* ДОДАНО: ref={dropdownRef} та onClick */}
                             <div
+                                ref={dropdownRef}
                                 className="relative h-full flex items-center"
                                 onMouseEnter={handleMouseEnter}
                                 onMouseLeave={handleMouseLeave}
                             >
-                                <div className="w-10 h-10 md:w-14 md:h-14 rounded-full border-[2.5px] border-[#1A1A1A] overflow-hidden cursor-pointer hover:scale-105 transition duration-300 bg-white shadow-sm flex items-center justify-center p-1">
+                                <div
+                                    onClick={toggleDropdown}
+                                    className="w-10 h-10 md:w-14 md:h-14 rounded-full border-[2.5px] border-[#1A1A1A] overflow-hidden cursor-pointer hover:scale-105 transition duration-300 bg-white shadow-sm flex items-center justify-center p-1"
+                                >
                                     <img
                                         src={user?.avatar || avokado_avatar}
                                         alt="User"
@@ -114,7 +156,6 @@ const Header = () => {
 
                                 {isDropdownOpen && (
                                     <div className="absolute right-0 top-full pt-2 w-52 z-50">
-                                        {/* ЗАМІНЕНО: Меню тепер на Inter */}
                                         <div className="bg-white rounded-2xl shadow-xl py-3 border border-gray-100 font-['Inter'] transform origin-top-right transition-all">
 
                                             <div className="px-5 py-2 mb-2 border-b border-gray-50">
@@ -137,14 +178,18 @@ const Header = () => {
                             </div>
                         </div>
                     ) : (
-                        // ЗАМІНЕНО: Кнопки тепер на Inter
                         <div className="flex space-x-2 sm:space-x-3 font-['Inter']">
                             <Link to="/register" className="px-5 md:px-7 py-2.5 rounded-full bg-[#1A1A1A] text-white text-xs md:text-[14px] font-medium hover:bg-gray-800 transition shadow-sm">Реєстрація</Link>
                             <Link to="/login" className="px-5 md:px-7 py-2.5 rounded-full bg-[#1A1A1A] text-white text-xs md:text-[14px] font-medium hover:bg-gray-800 transition shadow-sm">Увійти</Link>
                         </div>
                     )}
 
-                    <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden text-[#1A1A1A] hover:text-[#42705D] transition p-1">
+                    {/* ДОДАНО: ref={mobileBtnRef} */}
+                    <button
+                        ref={mobileBtnRef}
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        className="md:hidden text-[#1A1A1A] hover:text-[#42705D] transition p-1"
+                    >
                         <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             {isMobileMenuOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>}
                         </svg>
@@ -154,8 +199,8 @@ const Header = () => {
 
             {/* Мобільне меню */}
             {isMobileMenuOpen && (
-                // ЗАМІНЕНО: Мобільне меню тепер на Inter
-                <div className="absolute top-full left-0 w-full bg-[#F6F7FB] border-t border-gray-200 shadow-lg md:hidden font-['Inter'] font-medium transition-all duration-300 z-40">
+                // ДОДАНО: ref={mobileMenuRef}
+                <div ref={mobileMenuRef} className="absolute top-full left-0 w-full bg-[#F6F7FB] border-t border-gray-200 shadow-lg md:hidden font-['Inter'] font-medium transition-all duration-300 z-40">
                     <nav className="flex flex-col px-6 py-4 space-y-1">
                         <Link to="/" className="py-3 text-gray-800 hover:text-[#42705D] border-b border-gray-100">Головна</Link>
                         <Link to="/recipes" className="py-3 text-gray-800 hover:text-[#42705D] border-b border-gray-100">Підібрати рецепт</Link>
@@ -165,7 +210,7 @@ const Header = () => {
                                 <Link to="/menu" className="py-3 text-gray-800 hover:text-[#42705D] border-b border-gray-100">Тижневе меню</Link>
                                 {user?.is_staff && (
                                     <a href={`${import.meta.env.VITE_API_URL}/${import.meta.env.VITE_ADMIN_URL}`} target="_blank" rel="noopener noreferrer" className="py-3 text-blue-600 hover:text-blue-800 border-b border-gray-100 flex items-center">
-                                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                         Адмін-панель
                                     </a>
                                 )}
