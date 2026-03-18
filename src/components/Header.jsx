@@ -93,7 +93,7 @@ const Header = () => {
     };
 
     return (
-        <header className="bg-[#F6F3F4] py-3 px-6 lg:px-16 w-full border-b border-gray-100 relative z-50 min-h-[64px] md:h-[80px]">
+        <header className="bg-[#F6F3F4] py-3 px-6 lg:px-16 w-full border-b-1 border-gray-500 relative z-50 min-h-[64px] md:h-[80px]">
             <div className="flex justify-between items-center w-full h-full">
 
                 {/* Ліва частина: Логотип + Навігація */}
