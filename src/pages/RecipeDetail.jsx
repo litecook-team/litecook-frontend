@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api';
 import { ENDPOINTS, TOKEN_KEY, API_URL } from '../constants/api';
 import { DICTIONARIES } from '../constants/translations';
+import recipeBgImage from '../assets/recipe/recipe.png';
 
 // Допоміжна функція для правильного відмінювання слів
 const getPluralForm = (number, titles) => {
@@ -113,7 +114,7 @@ const RecipeDetail = () => {
 
             <div className="absolute bottom-0 right-0 z-0 pointer-events-none">
                 <img
-                    src="/src/assets/recipe/recipe.png"
+                    src={recipeBgImage}
                     alt="Vegetables Background"
                     className="w-[400px] sm:w-[500px] md:w-[600px] lg:w-[750px] xl:w-[850px] object-contain opacity-90 sm:opacity-90 lg:opacity-90 transform -rotate-[15deg] translate-y-16 lg:translate-y-20 translate-x-12 lg:translate-x-16 transition-all rotate-270"
                 />
