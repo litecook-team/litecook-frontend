@@ -11,12 +11,23 @@ const Login = () => {
 
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
+    // Допоміжна функція для збереження даних сеансу
+    const saveAuthData = (data) => {
+        localStorage.setItem('access_token', data.access);
+        if (data.refresh) {
+            localStorage.setItem('refresh_token', data.refresh);
+        }
+        if (data.user) {
+            localStorage.setItem('user', JSON.stringify(data.user));
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         try {
             const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login/`, formData);
-            localStorage.setItem('access_token', response.data.access);
+            saveAuthData(response.data);
             window.location.href = '/';
         } catch (err) {
             if (err.response && err.response.data && err.response.data.non_field_errors) {
@@ -36,7 +47,7 @@ const Login = () => {
         onSuccess: async (tokenResponse) => {
             try {
                 const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/social/google/`, { access_token: tokenResponse.access_token });
-                localStorage.setItem('access_token', res.data.access);
+                saveAuthData(res.data);
                 window.location.href = '/';
             } catch (err) { setError('Помилка авторизації Google'); }
         }
@@ -45,7 +56,7 @@ const Login = () => {
     const handleFacebookSuccess = async (response) => {
         try {
             const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/social/facebook/`, { access_token: response.accessToken });
-            localStorage.setItem('access_token', res.data.access);
+            saveAuthData(res.data);
             window.location.href = '/';
         } catch (err) { setError('Помилка авторизації Facebook'); }
     };
@@ -54,10 +65,17 @@ const Login = () => {
         <div className="flex-grow w-full flex justify-center md:justify-end items-center p-4 py-16 sm:p-6 md:py-24 md:pr-10 lg:pr-24 xl:pr-32 relative bg-white bg-cover bg-no-repeat bg-center md:bg-left"
              style={{ backgroundImage: `url(${authBg})` }}>
 
-            <Link to="/" className="absolute top-6 left-4 sm:left-6 md:top-10 md:left-10 flex items-center px-4 md:px-5 py-2.5 bg-[#1A1A1A] text-white rounded-full hover:bg-gray-800 transition font-['Inter'] font-medium text-xs md:text-sm shadow-md z-20">
-                <svg className="w-4 h-4 md:w-5 md:h-5 mr-1 md:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                Назад
-            </Link>
+        <Link
+            to="/"
+            className="absolute top-6 left-4 sm:left-6 md:top-10 md:left-10 flex items-center px-6 sm:px-10 py-2 bg-white text-gray-800 rounded-[30px] border border-black hover:shadow-md transition font-['Inter'] font-medium text-[13px] sm:text-[14px] lg:text-[15px] shadow-lg z-20 gap-2"
+        >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 8 8 12 12 16"></polyline>
+                <line x1="16" y1="12" x2="8" y2="12"></line>
+            </svg>
+            Назад
+        </Link>
 
             <div className="flex flex-col items-center w-full max-w-[700px] z-10 pt-6 md:pt-0">
 

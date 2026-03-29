@@ -7,13 +7,13 @@ import Login from './pages/Login';
 import ConfirmEmail from './pages/ConfirmEmail';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
+import RecipeDetail from './pages/RecipeDetail';
 
 
 import Recipes from './pages/Recipes';
 import Favorites from './pages/Favorites';
 import Menu from './pages/Menu';
 import About from './pages/About';
-import Contacts from './pages/Contacts';
 import ResetPassword from './pages/ResetPassword';
 import ResetPasswordConfirm from './pages/ResetPasswordConfirm';
 
@@ -22,7 +22,7 @@ function App() {
     <Router>
       <div className="min-h-screen flex flex-col font-sans bg-[#fbfbfb]">
         <Header />
-        <main className="flex-grow flex flex-col">
+        <main className="flex-grow flex flex-col w-full">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
@@ -31,12 +31,12 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/confirm-email/:key" element={<ConfirmEmail />} />
+            <Route path="/recipe/:id" element={<RecipeDetail />} />
 
             <Route path="/recipes" element={<Recipes />} />
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/menu" element={<Menu />} />
             <Route path="/about" element={<About />} />
-            <Route path="/contacts" element={<Contacts />} />
           </Routes>
         </main>
         <Footer />

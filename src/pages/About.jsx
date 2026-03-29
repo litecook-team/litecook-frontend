@@ -14,9 +14,13 @@ const About = () => {
             {/* Стилізована кнопка "Назад" */}
             <button
                 onClick={() => navigate('/')}
-                className="absolute top-6 left-4 sm:left-6 md:top-6 md:left-17 flex items-center px-4 md:px-5 py-2.5 bg-[#1A1A1A] text-white rounded-full hover:bg-gray-800 transition font-['Inter'] font-medium text-xs md:text-sm shadow-md z-30"
+                className="absolute top-10 left-6 lg:top-8 lg:left-17 px-8 sm:px-10 py-2 bg-white rounded-[30px] border border-black hover:shadow-md transition text-gray-800 flex items-center justify-center gap-2 font-['Inter'] font-medium text-[13px] sm:text-[14px] lg:text-[15px] z-40"
             >
-                <svg className="w-4 h-4 md:w-5 md:h-5 mr-1 md:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 8 8 12 12 16"></polyline>
+                    <line x1="16" y1="12" x2="8" y2="12"></line>
+                </svg>
                 Назад
             </button>
 

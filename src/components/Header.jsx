@@ -32,6 +32,8 @@ const Header = () => {
                     setUser(response.data);
                 } catch (err) {
                     localStorage.removeItem('access_token');
+                    localStorage.removeItem('refresh_token');
+                    localStorage.removeItem('user');
                     setUser(null);
                 }
             } else {
@@ -71,7 +73,11 @@ const Header = () => {
     }, []);
 
     const handleLogout = () => {
+        // Видаляємо всі дані сеансу з пам'яті браузера
         localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user');
+
         setUser(null);
         window.location.href = '/login';
     };
