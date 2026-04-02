@@ -4,6 +4,9 @@ import api from '../api';
 import { ENDPOINTS, API_URL } from '../constants/api';
 import { DICTIONARIES } from '../constants/translations';
 
+import { pdf } from '@react-pdf/renderer';
+import ShoppingListPDF from '../components/ShoppingListPDF';
+
 // Допоміжна функція для правильного відмінювання слів
 const getPluralForm = (number, titles) => {
     const n = Math.abs(number) % 100;
@@ -75,6 +78,7 @@ const Menu = () => {
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [exportEmail, setExportEmail] = useState('');
     const [exportScope, setExportScope] = useState('day');
+    const [exportError, setExportError] = useState(null); // Стан для помилок експорту
 
     // Стани для списку покупок
     const [useFridge, setUseFridge] = useState(true); // Чи враховувати холодильник
@@ -113,7 +117,7 @@ const Menu = () => {
             setIsSearching(true);
             setModalError(null);
             try {
-                const response = await api.get(`${ENDPOINTS.RECIPES}?search=${searchQuery}`);
+                const response = await api.get(`${ENDPOINTS.RECIPES}?search_query=${searchQuery}`);
                 let recipesData = response.data.results ? response.data.results : response.data;
 
                 if (!searchQuery && recipesData.length > 0) {
@@ -262,6 +266,92 @@ const Menu = () => {
             showToast("❌ Не вдалося згенерувати список");
         } finally {
             setIsShoppingListLoading(false);
+        }
+    };
+
+    // Функція експорту (Сучасний підхід з @react-pdf/renderer)
+    const handleExport = async (actionType) => {
+        setExportError(null); // Очищаємо помилку перед новою спробою
+
+        if (actionType === 'email' && !exportEmail) {
+            setExportError('Будь ласка, введіть email для відправки.');
+            return;
+        }
+
+        try {
+            showToast('⏳ Завантажуємо дані та формуємо PDF...');
+
+            // 1. САМОСТІЙНО ОТРИМУЄМО ДАНІ ДЛЯ PDF
+            // (незалежно від того, чи згенеровані вони на екрані)
+            const url = exportScope === 'day'
+                ? `${ENDPOINTS.WEEKLY_MENU}shopping_list/?day_of_week=${activeDay}&use_fridge=${useFridge}`
+                : `${ENDPOINTS.WEEKLY_MENU}shopping_list/?use_fridge=${useFridge}`;
+
+            const response = await api.get(url);
+
+            // Відфільтровуємо те, що потрібно
+            const listToExport = response.data.filter(item => {
+                if (item.required_amount === null || parseFloat(item.required_amount) === 0) return true;
+                return item.to_buy > 0;
+            });
+
+            // Якщо список порожній — показуємо помилку В МОДАЛЦІ і не закриваємо її
+            if (listToExport.length === 0) {
+                setExportError('Список продуктів порожній. Немає чого експортувати.');
+                return;
+            }
+
+            // 2. Форматуємо отримані дані для передачі в PDF-компонент
+            const formattedList = listToExport.map(item => ({
+                name: capitalizeFirstLetter(item.ingredient_name),
+                amount: formatIngredientAmount(item.to_buy !== undefined ? item.to_buy : item.required_amount, item.unit),
+                image: getImageUrl(item.ingredient_image)
+            }));
+
+            const scopeText = exportScope === 'day'
+                ? `На день (${DAYS_ACCUSATIVE[activeDay]})`
+                : 'На весь тиждень';
+            const fridgeText = useFridge ? 'Враховано наявні запаси' : 'Повний список';
+            const subtitleText = `${scopeText}  |  ${fridgeText}`;
+            const dateString = new Date().toLocaleDateString('uk-UA');
+
+            // 3. Створюємо PDF-файл (Blob) у фоні
+            const pdfBlob = await pdf(
+                <ShoppingListPDF
+                    list={formattedList}
+                    subtitleText={subtitleText}
+                    dateString={dateString}
+                />
+            ).toBlob();
+
+            // 4. Обробляємо дію (Завантаження або Email)
+            if (actionType === 'download') {
+                const fileUrl = window.URL.createObjectURL(pdfBlob);
+                const link = document.createElement('a');
+                link.href = fileUrl;
+                link.setAttribute('download', `LiteCook_List_${exportScope}.pdf`);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                window.URL.revokeObjectURL(fileUrl); // Очищаємо пам'ять браузера
+
+                showToast('✅ PDF успішно завантажено!');
+                setIsExportModalOpen(false);
+            } else {
+                const formData = new FormData();
+                formData.append('email', exportEmail);
+                formData.append('pdf_file', pdfBlob, `LiteCook_List_${exportScope}.pdf`);
+
+                await api.post(`${ENDPOINTS.WEEKLY_MENU}email_pdf/`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+
+                showToast('✉️ PDF відправлено на вашу пошту!');
+                setIsExportModalOpen(false);
+            }
+        } catch (error) {
+            console.error(error);
+            setExportError('Виникла помилка при генерації або відправці PDF. Спробуйте ще раз.');
         }
     };
 
@@ -568,7 +658,11 @@ const Menu = () => {
 
                                 <div className="pt-4 mt-6 border-t border-gray-100">
                                     <button
-                                        onClick={() => setIsExportModalOpen(true)}
+                                        onClick={() => {
+                                            setIsExportModalOpen(true);
+                                            setExportError(null); // Очищаємо помилку при відкритті
+                                            setExportEmail(''); // Очищуємо пошту
+                                        }}
                                         className="w-full border-2 border-dashed border-[#6A907B]/40 text-[#6A907B] py-3.5 rounded-xl hover:bg-[#6A907B]/5 hover:border-[#6A907B] transition-colors flex items-center justify-center gap-2 font-bold"
                                     >
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
@@ -583,8 +677,14 @@ const Menu = () => {
 
             {/* МОДАЛКА 1: Додавання рецепту */}
             {isAddModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm transform-gpu w-full h-full">
-                    <div className="bg-white rounded-[2rem] p-5 sm:p-8 w-full max-w-4xl h-[90vh] sm:h-[85vh] flex flex-col shadow-2xl relative font-['Inter']">
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm transform-gpu w-full h-full"
+                    onClick={() => { setIsAddModalOpen(false); setModalError(null); }} //закриття по темному фону
+                >
+                    <div
+                        className="bg-white rounded-[2rem] p-5 sm:p-8 w-full max-w-4xl h-[90vh] sm:h-[85vh] flex flex-col shadow-2xl relative font-['Inter']"
+                        onClick={(e) => e.stopPropagation()} // блокуємо закриття при кліку на саме вікно
+                    >
                         <button
                             onClick={() => {
                                 setIsAddModalOpen(false);
@@ -609,15 +709,21 @@ const Menu = () => {
                         )}
 
                         {/* Пошук у модалці */}
-                        <div className="relative mb-6 shrink-0">
-                            <input
-                                type="text"
-                                placeholder="Пошук рецептів (назва або інгредієнт)..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className={`w-full bg-gray-50 border rounded-xl px-5 py-3.5 sm:py-4 pl-12 outline-none transition-colors text-gray-800 font-medium ${modalError ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-[#6A907B]'}`}
-                            />
-                            <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <div className="mb-6 shrink-0">
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    placeholder="Назва рецепту або інгредієнти через кому..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className={`w-full bg-gray-50 border rounded-xl px-5 py-3.5 sm:py-4 pl-12 outline-none transition-colors text-gray-800 font-medium ${modalError ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-[#6A907B]'}`}
+                                />
+                                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            </div>
+                            {/* Підказка для користувача */}
+                            <p className="text-[13px] text-gray-500 ml-2 mt-2 font-medium">
+                                💡 Вводьте декілька інгредієнтів через кому (наприклад: <span className="text-[#B47231]">картопля, буряк</span>)
+                            </p>
                         </div>
 
                         {/* Список результатів */}
@@ -684,26 +790,42 @@ const Menu = () => {
                 </div>
             )}
 
-            {/* МОДАЛКА 2: Відправка PDF */}
+            {/* МОДАЛКА 2: Експорт PDF */}
             {isExportModalOpen && (
-                <div className="fixed top-0 left-0 w-screen h-screen z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm transform-gpu transition-all">
-                    <div className="bg-white rounded-[2.5rem] p-8 sm:p-10 w-full max-w-[420px] shadow-2xl relative font-['Inter']">
-
-                        <button onClick={() => setIsExportModalOpen(false)} className="absolute top-5 right-5 w-10 h-10 flex items-center justify-center bg-gray-50 rounded-full text-gray-400 hover:text-gray-900 hover:bg-gray-200 transition-all">
+                <div
+                    className="fixed top-0 left-0 w-screen h-screen z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm transform-gpu transition-all"
+                    onClick={() => {
+                        setIsExportModalOpen(false);
+                        setExportError(null);
+                        setExportEmail(''); // очищуємо пошту при закритті по фону
+                    }}
+                >
+                    <div
+                        className="bg-white rounded-[2.5rem] p-8 sm:p-10 w-full max-w-[460px] shadow-2xl relative font-['Inter']"
+                        onClick={(e) => e.stopPropagation()} // блокуємо закриття при кліку на саме вікно
+                    >
+                        <button
+                            onClick={() => {
+                                setIsExportModalOpen(false);
+                                setExportError(null);
+                                setExportEmail(''); // очищуємо пошту при натисканні на хрестик
+                            }}
+                            className="absolute top-5 right-5 w-10 h-10 flex items-center justify-center bg-gray-50 rounded-full text-gray-400 hover:text-gray-900 hover:bg-gray-200 transition-all"
+                        >
                             <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                         </button>
 
                         <div className="flex justify-center mb-5">
                             <div className="w-16 h-16 bg-[#B47231]/10 rounded-full flex items-center justify-center text-[#B47231]">
-                                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                             </div>
                         </div>
 
                         <h2 className="text-2xl font-bold font-['El_Messiri'] text-gray-900 mb-2 text-center uppercase tracking-wide">
-                            Експорт меню
+                            Експорт списку
                         </h2>
-                        <p className="text-[13px] text-gray-500 mb-6 text-center font-medium leading-relaxed">
-                            Оберіть період та вкажіть email для відправки PDF списку продуктів.
+                        <p className="text-[13px] text-gray-500 mb-4 text-center font-medium leading-relaxed px-4">
+                            Завантажте файл на пристрій або відправте його собі на електронну пошту.
                         </p>
 
                         <div className="flex bg-gray-100 p-1 rounded-[1.2rem] mb-6">
@@ -711,7 +833,7 @@ const Menu = () => {
                                 onClick={() => setExportScope('day')}
                                 className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 ${exportScope === 'day' ? 'bg-white text-[#1A1A1A] shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}
                             >
-                                На день
+                                На день ({DAYS_ACCUSATIVE[activeDay]})
                             </button>
                             <button
                                 onClick={() => setExportScope('week')}
@@ -721,20 +843,46 @@ const Menu = () => {
                             </button>
                         </div>
 
-                        <div className="relative mb-6">
-                            <label className="absolute -top-2.5 left-4 px-1.5 bg-white text-[11px] font-bold text-gray-400 uppercase tracking-widest">Email адреса</label>
+                        {/* Повідомлення про помилку ЕКСПОРТУ В МОДАЛЦІ - ПЕРЕМІЩЕНО СЮДИ (НАД КНОПКОЮ) */}
+                        {exportError && (
+                            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm font-medium flex items-center justify-center gap-2 shrink-0 animate-pulse text-center">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                <span>{exportError}</span>
+                            </div>
+                        )}
+
+                        {/* Кнопка Завантаження */}
+                        <button
+                            onClick={() => handleExport('download')}
+                            className="w-full bg-[#5B826B] text-white py-3.5 rounded-[1.2rem] font-bold hover:bg-gray-800 transition-all shadow-md flex justify-center items-center gap-2 mb-4"
+                        >
+                            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            Завантажити PDF
+                        </button>
+
+                        <div className="relative flex py-3 items-center">
+                            <div className="flex-grow border-t border-gray-200"></div>
+                            <span className="flex-shrink-0 mx-4 text-gray-400 text-xs font-bold uppercase tracking-widest">Або на пошту</span>
+                            <div className="flex-grow border-t border-gray-200"></div>
+                        </div>
+
+                        {/* Відправка на пошту */}
+                        <div className="relative mb-4 mt-2">
                             <input
                                 type="email"
                                 placeholder="Введіть email..."
                                 value={exportEmail}
                                 onChange={(e) => setExportEmail(e.target.value)}
-                                className="w-full bg-transparent border-2 border-gray-200 rounded-[1.2rem] px-5 py-4 outline-none focus:border-[#6A907B] text-gray-800 font-semibold text-sm transition-colors"
+                                className="w-full bg-transparent border-2 border-gray-200 rounded-[1.2rem] px-5 py-3.5 outline-none focus:border-[#B47231] text-gray-800 font-semibold text-sm transition-colors"
                             />
                         </div>
 
-                        <button className="w-full bg-[#1A1A1A] text-white py-4 rounded-[1.2rem] font-bold hover:bg-[#B47231] transition-all shadow-md flex justify-center items-center gap-2">
-                            Відправити PDF
-                            <svg width="25" height="25" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        <button
+                            onClick={() => handleExport('email')}
+                            className="w-full bg-white border-2 border-[#B47231] text-[#B47231] py-3.5 rounded-[1.2rem] font-bold hover:bg-[#B47231] hover:text-white transition-all flex justify-center items-center gap-2"
+                        >
+                            <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                            Відправити лист
                         </button>
                     </div>
                 </div>
