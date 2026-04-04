@@ -30,7 +30,7 @@ const Profile = () => {
     const [showAddAllergy, setShowAddAllergy] = useState(false);
     const [showAddDiet, setShowAddDiet] = useState(false);
     const [showAddCuisine, setShowAddCuisine] = useState(false);
-    const [isFridgeOpen, setIsFridgeOpen] = useState(false); // Відкриття холодильника як блоку
+    const [isFridgeOpen, setIsFridgeOpen] = useState(false); // Відкриття списку продуктів користувача як блоку
 
     // Стани для модалки зміни пароля
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
@@ -48,7 +48,7 @@ const Profile = () => {
 
     // === СТАНИ ТА REFS ДЛЯ НОВИХ БЛОКІВ ===
     const [allergySearch, setAllergySearch] = useState('');
-    // Стан для пошуку в холодильнику
+    // Стан для пошуку в списку продуктах користувача
     const [fridgeSearch, setFridgeSearch] = useState('');
     // Стан для керування видимістю випадаючого списку
     const [isFridgeDropdownOpen, setIsFridgeDropdownOpen] = useState(false);
@@ -56,7 +56,7 @@ const Profile = () => {
     const addAllergyWrapperRef = useRef(null);
     const addDietWrapperRef = useRef(null);
     const addCuisineWrapperRef = useRef(null);
-    // Ref для закриття списку пошуку холодильника
+    // Ref для закриття списку пошуку продуктів користувача
     const addFridgeWrapperRef = useRef(null);
 
     useEffect(() => {
@@ -127,7 +127,7 @@ const Profile = () => {
     const handleNavClick = (ref) => {
         clearAllUnsavedInputs(); // Очищаємо перед переходом
         if (isFridgeOpen) {
-            setIsFridgeOpen(false); // Ховаємо холодильник
+            setIsFridgeOpen(false); // Ховаємо продукти користувача
             // Даємо React мілісекунду на рендер блоків перед тим, як до них скролити
             setTimeout(() => {
                 ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -239,7 +239,7 @@ const Profile = () => {
         await updateArrayField('favorite_cuisines', updatedCuisines);
     };
 
-    // ================= ХОЛОДИЛЬНИК (ІНВЕНТАР) =================
+    // ================= Продукти користувача (ІНВЕНТАР) =================
     const safeInventory = userData?.inventory || [];
     const inventoryUrl = ENDPOINTS?.INVENTORY || '/api/inventory/';
 
@@ -252,7 +252,7 @@ const Profile = () => {
 
         try {
             if (editingInventoryId) {
-                // РЕЖИМ ОНОВЛЕННЯ (Продукт вже був у холодильнику)
+                // РЕЖИМ ОНОВЛЕННЯ (Продукт вже був у списку продуктів)
                 const res = await api.patch(`${inventoryUrl}${editingInventoryId}/`, {
                     amount: newFridgeItem.amount ? parseFloat(newFridgeItem.amount) : null,
                     unit: newFridgeItem.unit
@@ -272,7 +272,7 @@ const Profile = () => {
                     unit: newFridgeItem.unit
                 });
                 setUserData({ ...userData, inventory: [res.data, ...safeInventory] });
-                showToast(`🍲 Продукт додано до холодильника!`);
+                showToast(`🍲 Продукт додано до списку ваших продуктів!`);
             }
 
             // Очищаємо всі поля і виходимо з режиму редагування
@@ -290,7 +290,7 @@ const Profile = () => {
         setFridgeSearch(ing.name);
         setIsFridgeDropdownOpen(false);
 
-        // Перевіряємо, чи є вже такий продукт у холодильнику
+        // Перевіряємо, чи є вже такий продукт у списку продуктів
         const existingItem = safeInventory.find(item => item.ingredient === ing.id);
 
         if (existingItem) {
@@ -328,7 +328,7 @@ const Profile = () => {
             if (addDietWrapperRef.current && !addDietWrapperRef.current.contains(event.target)) setShowAddDiet(false);
             if (addCuisineWrapperRef.current && !addCuisineWrapperRef.current.contains(event.target)) setShowAddCuisine(false);
 
-            // Закриваємо випадаючий список пошуку холодильника, якщо клікнули повз
+            // Закриваємо випадаючий список пошуку своїх продуктів, якщо клікнули повз
             if (addFridgeWrapperRef.current && !addFridgeWrapperRef.current.contains(event.target)) {
                  setIsFridgeDropdownOpen(false);
             }
@@ -693,7 +693,7 @@ const Profile = () => {
                             ))}
 
                             {safeInventory.length === 0 && (
-                                <div className="text-gray-500 font-medium py-4 px-2 w-full text-center sm:text-left">Ваш холодильник порожній. Почніть шукати продукти вище!</div>
+                                <div className="text-gray-500 font-medium py-4 px-2 w-full text-center sm:text-left">Ваш список продуктів порожній. Почніть шукати продукти вище!</div>
                             )}
                         </div>
                     </div>
