@@ -5,6 +5,7 @@ import { ENDPOINTS, API_URL } from '../constants/api';
 import { DICTIONARIES } from '../constants/translations';
 
 import defaultAvatar from '../assets/global/avokado_avatar.png';
+import profileBg from '../assets/profile/profile-bg.jpg';
 
 const Profile = () => {
     const navigate = useNavigate();
@@ -422,14 +423,11 @@ const Profile = () => {
         <div
             className="w-full min-h-screen font-sans pb-24 relative bg-cover bg-no-repeat overflow-x-hidden"
             style={{
-                backgroundImage: "url('/src/assets/profile/profile-bg.jpg')",
+                backgroundImage: `url(${profileBg})`,
                 backgroundColor: "#F6F3F4",
-                // Якщо нове зображення вже обрізане дизайнерами як треба, можливо вам більше не потрібне "center top -150px".
-                // Якщо воно з'їхало - змініть на просто "center top"
                 backgroundPosition: "center top -150px"
             }}
         >
-            {/* ЗМІНЕНО: Прибрано backdrop-blur-[2px], тепер фото буде ідеально чітким. bg-white/60 робить фон світлішим, щоб текст легко читався */}
             <div className="absolute inset-0 w-full h-full z-0"></div>
 
             {toastMessage && (
@@ -438,7 +436,6 @@ const Profile = () => {
                 </div>
             )}
 
-            {/* ЗМІНЕНО: Повідомлення про пароль тепер просто спливає по центру без білого фону на весь екран */}
             {passwordSuccess && (
                 <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[200] transition-all duration-500">
                     <div className="bg-[#C4D5BD] px-10 py-6 rounded-3xl shadow-2xl flex flex-col items-center border-2 border-white">
@@ -573,7 +570,6 @@ const Profile = () => {
                     </button>
 
                     <button onClick={() => handleNavClick(dietsRef)} className="flex items-center gap-2 sm:gap-3 hover:text-[#42705D] transition-colors group">
-                        {/* ЗМІНЕНО: Іконка обмежень (щит з галочкою - безпека) */}
                         <svg className="w-6 h-6 md:w-8 md:h-8 text-blue-500 group-hover:text-[#42705D] transition-colors" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M9 12l2 2 4-4"></path></svg>
                         <span className="font-['Inter'] font-semibold text-[#1A1A1A] text-[15px] sm:text-base md:text-[20px] lg:text-[22px]">Харчові обмеження</span>
                     </button>
@@ -582,7 +578,6 @@ const Profile = () => {
                         onClick={toggleFridge}
                         className="flex items-center gap-2 sm:gap-3 transition-colors hover:text-[#42705D] group"
                     >
-                        {/* ЗМІНЕНО: Сучасна іконка холодильника */}
                         <svg className="w-6 h-6 md:w-8 md:h-8 text-cyan-600 group-hover:text-[#42705D] transition-colors" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="4" y1="9" x2="20" y2="9"></line><line x1="9" y1="14" x2="9" y2="17"></line><line x1="9" y1="5" x2="9" y2="6"></line></svg>
                         <span className="font-['Inter'] font-semibold text-[#1A1A1A] text-[15px] sm:text-base md:text-[20px] lg:text-[22px]">Мої продукти</span>
                     </button>
