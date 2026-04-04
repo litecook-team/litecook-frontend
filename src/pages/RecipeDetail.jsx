@@ -70,7 +70,7 @@ const RecipeDetail = () => {
 
     const removeFromMenu = async () => {
         try {
-            await api.delete(`${ENDPOINTS.WEEKLY_MENU}${id}/`);
+            await api.delete(`${ENDPOINTS.WEEKLY_MENU}remove-recipe/${id}/`);
             setRecipe({ ...recipe, is_added_to_menu: false });
             showToast("🍽️ Видалено з меню");
         } catch (error) {
@@ -246,8 +246,12 @@ const RecipeDetail = () => {
                                         </div>
                                     )}
                                     <span className="lowercase">{ing.ingredient_name}</span>
+
                                     <span className="ml-1 sm:ml-2 whitespace-nowrap text-gray-800">
-                                        — {ing.amount ? `${parseFloat(ing.amount)} ` : ''}{DICTIONARIES.units[ing.unit] || ing.unit}
+                                        — {ing.amount ? `${parseFloat(ing.amount)} ` : ''}
+                                        {Array.isArray(DICTIONARIES.units[ing.unit])
+                                            ? getPluralForm(ing.amount || 1, DICTIONARIES.units[ing.unit])
+                                            : (DICTIONARIES.units[ing.unit] || ing.unit)}
                                     </span>
                                 </li>
                             ))}
