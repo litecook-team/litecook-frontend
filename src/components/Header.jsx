@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api';
 import logo from '../assets/global/logo.png';
 import avokado_avatar from '../assets/global/avokado_avatar.png';
 
@@ -14,26 +14,26 @@ const Header = () => {
 
     const timeoutRef = useRef(null);
 
-    // ДОДАНО: Створюємо рефи (посилання) на елементи, щоб відслідковувати кліки по них
+    // Створюємо рефи (посилання) на елементи, щоб відслідковувати кліки по них
     const dropdownRef = useRef(null);
     const mobileMenuRef = useRef(null);
     const mobileBtnRef = useRef(null);
 
-    const token = localStorage.getItem('access_token');
+    // Шукаємо токен в обох сховищах
+    const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
     const isAuthenticated = !!token;
 
     useEffect(() => {
         const fetchUserRole = async () => {
             if (isAuthenticated) {
                 try {
-                    const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/auth/user/`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
+                    // Використовуємо api.get. Він сам підставить токен!
+                    const response = await api.get('/api/auth/user/');
                     setUser(response.data);
                 } catch (err) {
-                    localStorage.removeItem('access_token');
-                    localStorage.removeItem('refresh_token');
-                    localStorage.removeItem('user');
+                    // Очищаємо обидва сховища при помилці
+                    localStorage.clear();
+                    sessionStorage.clear();
                     setUser(null);
                 }
             } else {
@@ -83,10 +83,9 @@ const Header = () => {
     }, []);
 
     const handleLogout = () => {
-        // Видаляємо всі дані сеансу з пам'яті браузера
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('user');
+        // Очищаємо обидва сховища при виході
+        localStorage.clear();
+        sessionStorage.clear();
 
         setUser(null);
         window.location.href = '/login';

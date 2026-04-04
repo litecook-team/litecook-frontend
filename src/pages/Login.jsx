@@ -9,16 +9,29 @@ const Login = () => {
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [error, setError] = useState('');
 
+    // Стан для галочки (за замовчуванням увімкнена)
+    const [rememberMe, setRememberMe] = useState(true);
+
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
     // Допоміжна функція для збереження даних сеансу
     const saveAuthData = (data) => {
-        localStorage.setItem('access_token', data.access);
+        // Визначаємо, куди зберігати
+        const storage = rememberMe ? localStorage : sessionStorage;
+
+        // Очищаємо інше сховище, щоб не було конфліктів
+        const otherStorage = rememberMe ? sessionStorage : localStorage;
+        otherStorage.removeItem('access_token');
+        otherStorage.removeItem('refresh_token');
+        otherStorage.removeItem('user');
+
+        // Зберігаємо дані
+        storage.setItem('access_token', data.access);
         if (data.refresh) {
-            localStorage.setItem('refresh_token', data.refresh);
+            storage.setItem('refresh_token', data.refresh);
         }
         if (data.user) {
-            localStorage.setItem('user', JSON.stringify(data.user));
+            storage.setItem('user', JSON.stringify(data.user));
         }
     };
 
@@ -98,7 +111,23 @@ const Login = () => {
                             <label className="inline-block text-sm md:text-base font-semibold font-['El_Messiri'] text-gray-800 mb-1 ml-4">Пароль</label>
                             <input type="password" name="password" value={formData.password} onChange={handleChange} required placeholder="Введіть пароль" className="w-full px-5 py-3 md:py-2.5 font-['El_Messiri'] rounded-full border border-gray-300 focus:outline-none focus:border-[#42705D] transition text-base md:text-lg text-gray-700 bg-white" />
 
-                            <div className="text-right mt-2 pr-4">
+                            <div className="flex justify-between items-center mt-3 px-2 sm:px-4">
+                                {/* ДОДАНО: Галочка Запам'ятати мене */}
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                    <div className="relative flex items-center justify-center w-5 h-5 rounded-md border-2 border-gray-400 group-hover:border-[#42705D] transition-colors">
+                                        <input
+                                            type="checkbox"
+                                            checked={rememberMe}
+                                            onChange={(e) => setRememberMe(e.target.checked)}
+                                            className="absolute opacity-0 w-0 h-0"
+                                        />
+                                        {rememberMe && (
+                                            <svg className="w-3.5 h-3.5 text-[#42705D]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                                        )}
+                                    </div>
+                                    <span className="text-sm sm:text-base font-['El_Messiri'] text-gray-700 font-medium select-none">Запам'ятати мене</span>
+                                </label>
+
                                 <Link to="/reset-password" className="inline-block text-sm sm:text-base font-['El_Messiri'] text-blue-600 hover:text-[#42705D] transition font-medium">Забули пароль?</Link>
                             </div>
                         </div>
