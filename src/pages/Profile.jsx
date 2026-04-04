@@ -550,12 +550,15 @@ const Profile = () => {
                 {/* ================= СМУГА СТАТИСТИКИ ТА НАВІГАЦІЇ ================= */}
                 <div className="border-t-2 border-gray-800 pt-6 pb-4 mb-10 flex flex-wrap justify-center lg:justify-between px-4 lg:px-12 gap-4 sm:gap-6 lg:gap-8">
 
-                    <div className="flex items-center gap-2 sm:gap-3 cursor-default">
-                        <svg className="w-6 h-6 md:w-8 md:h-8 text-red-100 fill-red-500" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                        <span className="font-['Inter'] font-semibold text-[#1A1A1A] text-[15px] sm:text-base md:text-[20px] lg:text-[22px]">
+                    <button
+                        onClick={() => navigate('/favorites')}
+                        className="flex items-center gap-2 sm:gap-3 hover:text-[#42705D] transition-colors group"
+                    >
+                        <svg className="w-6 h-6 md:w-8 md:h-8 text-red-100 fill-red-500 group-hover:scale-110 transition-transform" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                        <span className="font-['Inter'] font-semibold text-[#1A1A1A] group-hover:text-[#42705D] transition-colors text-[15px] sm:text-base md:text-[20px] lg:text-[22px]">
                             {userData.favorites_count} {getFavoritesWord(userData.favorites_count)}
                         </span>
-                    </div>
+                    </button>
 
                     <button onClick={() => handleNavClick(cuisinesRef)} className="flex items-center gap-2 sm:gap-3 hover:text-[#42705D] transition-colors group">
                         {/* Іконка кухні (сіра каструля) */}
