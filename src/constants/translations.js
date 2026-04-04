@@ -29,5 +29,8 @@ export const DICTIONARIES = {
 
     cuisine: { eu: 'Європейська', mediterranean: 'Середземноморська', it: 'Італійська', mx: 'Мексиканська', intl: 'Міжнародна', ua: 'Українська', fr: 'Французька', us: 'Американська', cn: 'Китайська', jp: 'Японська', asian: 'Азійська' },
     meal_times: { breakfast: 'Сніданок', lunch: 'Обід', dinner: 'Вечеря', snack: 'Перекус' },
-    dietary_tags: { traditional: 'Традиційний', vegetarian: 'Вегетаріанський', vegan: 'Веганський', dietary: 'Дієтичний', gluten_free: 'Безглютеновий', lactose_free: 'Безлактозний', sugar_free: 'Без цукру' }
+    dietary_tags: { traditional: 'Традиційний', vegetarian: 'Вегетаріанський', vegan: 'Веганський', dietary: 'Дієтичний', gluten_free: 'Безглютеновий', lactose_free: 'Безлактозний', sugar_free: 'Без цукру' },
+
+    // для профілю
+    profile_dietary_tags: { traditional: 'Традиційний', vegetarian: 'Вегетаріанець', vegan: 'Веган', dietary: 'Дієта', gluten_free: 'Без глютену', lactose_free: 'Без лактози', sugar_free: 'Без цукру' }
 };

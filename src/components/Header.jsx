@@ -44,7 +44,17 @@ const Header = () => {
         setIsMobileMenuOpen(false);
     }, [isAuthenticated, token, location.pathname]);
 
-    // ДОДАНО: Ефект для відслідковування кліків за межами меню
+    // Миттєве оновлення даних хедера при зміні профілю
+    useEffect(() => {
+        const handleUserUpdate = (event) => {
+            setUser(event.detail); // Отримуємо нові дані з події
+        };
+
+        window.addEventListener('userProfileUpdated', handleUserUpdate);
+        return () => window.removeEventListener('userProfileUpdated', handleUserUpdate);
+    }, []);
+
+    // Ефект для відслідковування кліків за межами меню
     useEffect(() => {
         const handleClickOutside = (event) => {
             // Якщо клік був поза меню профілю (аватарки) — закриваємо його
@@ -93,7 +103,7 @@ const Header = () => {
         }, 150);
     };
 
-    // ДОДАНО: Для мобільних зручніше закривати меню при повторному тапі на аватарку
+    // Для мобільних зручніше закривати меню при повторному тапі на аватарку
     const toggleDropdown = () => {
         setIsDropdownOpen(!isDropdownOpen);
     };
@@ -142,7 +152,7 @@ const Header = () => {
                                 </a>
                             )}
 
-                            {/* ДОДАНО: ref={dropdownRef} та onClick */}
+                            {/* ref={dropdownRef} та onClick */}
                             <div
                                 ref={dropdownRef}
                                 className="relative h-full flex items-center"
@@ -151,12 +161,18 @@ const Header = () => {
                             >
                                 <div
                                     onClick={toggleDropdown}
-                                    className="w-10 h-10 md:w-14 md:h-14 rounded-full border-[2.5px] border-[#1A1A1A] overflow-hidden cursor-pointer hover:scale-105 transition duration-300 bg-white shadow-sm flex items-center justify-center p-1"
+                                    className="w-10 h-10 md:w-14 md:h-14 rounded-full border-[2.5px] border-[#1A1A1A] overflow-hidden cursor-pointer hover:scale-105 transition duration-300 bg-white shadow-sm flex items-center justify-center"
                                 >
                                     <img
+                                        key={user?.avatar || 'default'}
                                         src={user?.avatar || avokado_avatar}
                                         alt="User"
-                                        className="w-full h-full object-contain rounded-full"
+                                        className={`rounded-full ${user?.avatar ? 'w-full h-full object-cover' : 'w-[80%] h-[80%] object-contain'}`}
+                                        onError={(e) => {
+                                            e.target.onerror = null;
+                                            e.target.src = avokado_avatar;
+                                            e.target.className = "rounded-full w-[80%] h-[80%] object-contain";
+                                        }}
                                     />
                                 </div>
 
@@ -190,7 +206,6 @@ const Header = () => {
                         </div>
                     )}
 
-                    {/* ДОДАНО: ref={mobileBtnRef} */}
                     <button
                         ref={mobileBtnRef}
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -205,7 +220,6 @@ const Header = () => {
 
             {/* Мобільне меню */}
             {isMobileMenuOpen && (
-                // ДОДАНО: ref={mobileMenuRef}
                 <div ref={mobileMenuRef} className="absolute top-full left-0 w-full bg-[#F6F7FB] border-t border-gray-200 shadow-lg md:hidden font-['Inter'] font-medium transition-all duration-300 z-40">
                     <nav className="flex flex-col px-6 py-4 space-y-1">
                         <Link to="/" className="py-3 text-gray-800 hover:text-[#42705D] border-b border-gray-100">Головна</Link>
