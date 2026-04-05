@@ -240,7 +240,7 @@ const Home = () => {
 
                                 </div>
 
-                                <p className="text-[#1A1A1A] italic font-['Inter'] mb-5 text-lg px-3">
+                                <p className="text-[#1A1A1A] italic font-['Inter'] mb-5 text-lg px-3 md:px-0">
                                     {recipeOfDay.description}
                                 </p>
 
