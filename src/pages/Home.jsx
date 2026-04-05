@@ -128,30 +128,34 @@ const Home = () => {
                 {/* ================= БЛОК КАРТОК ПОСЕРЕДИНІ (OVERLAPPING) ================= */}
                 <div className="relative z-20 w-full px-4 sm:px-6 lg:px-20 -mt-9 sm:-mt-17 lg:-mt-25 mb-16 lg:mb-20 font-['Inter']">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-12 max-w-[1400px] mx-auto">
-                        {/* Картка 1 */}
-                        <div className="bg-[#F6F3F4] backdrop-blur-md rounded-2xl px-6 py-10 sm:px-8 sm:py-10 flex flex-col items-center text-center shadow-[0_8px_30px_rgb(0,0,0,0.08)] transform hover:-translate-y-1 transition-transform">
+
+                        {/* Картка 1: Веде на сторінку "Про нас" (/about) */}
+                        <Link to="/about" className="bg-[#F6F3F4] backdrop-blur-md rounded-2xl px-6 py-10 sm:px-8 sm:py-10 flex flex-col items-center text-center shadow-[0_8px_30px_rgb(0,0,0,0.08)] transform hover:-translate-y-1 transition-transform">
                             <div className="w-12 h-12 mb-4 flex items-center justify-center">
                                 <img src={iconLocation} alt="Готує із того, що є вдома" className="w-14 h-14 object-contain drop-shadow-sm" />
                             </div>
                             <h3 className="font-bold text-[#1A1A1A] text-xl">Готує із того, що є в холодильнику</h3>
                             <p className="text-lg text-gray-800">Рецепти під твій запит та смак</p>
-                        </div>
-                        {/* Картка 2 */}
-                        <div className="bg-[#F6F3F4] backdrop-blur-md rounded-2xl p-6 sm:p-8 flex flex-col items-center text-center shadow-[0_8px_30px_rgb(0,0,0,0.08)] transform hover:-translate-y-1 transition-transform">
+                        </Link>
+
+                        {/* Картка 2: Веде на сторінку "Підбір рецепта" (/recipes) */}
+                        <Link to="/recipes" className="bg-[#F6F3F4] backdrop-blur-md rounded-2xl p-6 sm:p-8 flex flex-col items-center text-center shadow-[0_8px_30px_rgb(0,0,0,0.08)] transform hover:-translate-y-1 transition-transform">
                             <div className="w-12 h-12 mb-4 flex items-center justify-center">
                                 <img src={iconSun} alt="Прості інгредієнти" className="w-14 h-14 object-contain drop-shadow-sm" />
                             </div>
                             <h3 className="font-bold text-[#1A1A1A] text-xl">Прості інгредієнти</h3>
                             <p className="text-lg text-gray-800 ">Страви з сезонних продуктів</p>
-                        </div>
-                        {/* Картка 3 */}
-                        <div className="bg-[#F6F3F4] backdrop-blur-md rounded-2xl p-6 sm:p-8 flex flex-col items-center text-center shadow-[0_8px_30px_rgb(0,0,0,0.08)] transform hover:-translate-y-1 transition-transform">
+                        </Link>
+
+                        {/* Картка 3: Веде на сторінку "Вхід" (/login) */}
+                        <Link to="/login" className="bg-[#F6F3F4] backdrop-blur-md rounded-2xl p-6 sm:p-8 flex flex-col items-center text-center shadow-[0_8px_30px_rgb(0,0,0,0.08)] transform hover:-translate-y-1 transition-transform">
                             <div className="w-12 h-12 mb-4 flex items-center justify-center">
                                 <img src={iconLeaf} alt="Швидко та легко" className="w-14 h-14 object-contain drop-shadow-sm" />
                             </div>
                             <h3 className="font-bold text-[#1A1A1A] text-xl">Швидко та легко</h3>
                             <p className="text-lg text-gray-800 ">Смачне та корисне меню</p>
-                        </div>
+                        </Link>
+
                     </div>
                 </div>
 
@@ -178,17 +182,24 @@ const Home = () => {
 
                             {/* фото */}
                             <div className="w-[90%] sm:w-[400px] h-64 md:w-80 md:h-80 lg:w-[390px] lg:h-[270px] shrink-0 mx-auto md:mx-0 md:ml-4 lg:ml-10 mt-1 rounded-3xl overflow-hidden shadow-lg bg-white">
-                                <img
-                                    src={getImageUrl(recipeOfDay.image)}
-                                    alt={recipeOfDay.title}
-                                    className="w-full h-full object-cover object-top"
-                                />
+                                {/* ДОДАНО: Обгортка Link навколо зображення */}
+                                <Link to={`/recipe/${recipeOfDay.id}`} className="block w-full h-full">
+                                    <img
+                                        src={getImageUrl(recipeOfDay.image)}
+                                        alt={recipeOfDay.title}
+                                        className="w-full h-full object-cover object-top"
+                                    />
+                                </Link>
                             </div>
 
                             {/* Інформація про рецепт */}
                             <div className="flex flex-col text-center md:text-left mt-0 bg-white/1 min-[1700px]:bg-transparent backdrop-blur-md min-[1700px]:backdrop-blur-none p-6 md:p-8 xl:p-0 rounded-[2rem] xl:rounded-none flex-1 w-full transition-all duration-500">
-                                <h2 className="text-3xl md:text-5xl font-['El_Messiri'] text-[#1A1A1A] mb-4 mt-2">
-                                    {recipeOfDay.title}
+
+                                {/* ЗМІНЕНО: Трішки зменшено розмір (text-2xl md:text-4xl) та додано <Link> для клікабельності з ефектом наведення */}
+                                <h2 className="text-2xl sm:text-3xl md:text-4xl font-['El_Messiri'] text-[#1A1A1A] mb-4 mt-2">
+                                    <Link to={`/recipe/${recipeOfDay.id}`} className="hover:text-[#42705D] transition-colors">
+                                        {recipeOfDay.title}
+                                    </Link>
                                 </h2>
 
                                 {/* Іконки статистики */}

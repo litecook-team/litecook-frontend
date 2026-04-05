@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useGoogleLogin } from '@react-oauth/google';
@@ -11,6 +11,15 @@ const Login = () => {
 
     // Стан для галочки (за замовчуванням увімкнена)
     const [rememberMe, setRememberMe] = useState(true);
+
+    // При завантаженні сторінки перевіряємо, чи є збережена пошта
+    useEffect(() => {
+        const savedEmail = localStorage.getItem('saved_email');
+        if (savedEmail) {
+            setFormData(prevState => ({ ...prevState, email: savedEmail }));
+            setRememberMe(true);
+        }
+    }, []);
 
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -41,6 +50,14 @@ const Login = () => {
         try {
             const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login/`, formData);
             saveAuthData(response.data);
+
+            // Зберігаємо або видаляємо email для майбутніх входів
+            if (rememberMe) {
+                localStorage.setItem('saved_email', formData.email);
+            } else {
+                localStorage.removeItem('saved_email');
+            }
+
             window.location.href = '/';
         } catch (err) {
             if (err.response && err.response.data && err.response.data.non_field_errors) {
@@ -105,14 +122,32 @@ const Login = () => {
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
                             <label className="inline-block text-sm md:text-base font-semibold font-['El_Messiri'] text-gray-800 mb-1 ml-4">Електронна пошта</label>
-                            <input type="email" name="email" value={formData.email} onChange={handleChange} required placeholder="Введіть електронну пошту" className="w-full px-5 font-['El_Messiri'] py-3 md:py-2.5 rounded-full border border-gray-300 focus:outline-none focus:border-[#42705D] transition text-base md:text-lg text-gray-700 bg-white" />
+                            <input
+                                type="email"
+                                name="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                                required
+                                autoComplete="username"
+                                placeholder="Введіть електронну пошту"
+                                className="w-full px-5 font-['El_Messiri'] py-3 md:py-2.5 rounded-full border border-gray-300 focus:outline-none focus:border-[#42705D] transition text-base md:text-lg text-gray-700 bg-white"
+                            />
                         </div>
                         <div>
                             <label className="inline-block text-sm md:text-base font-semibold font-['El_Messiri'] text-gray-800 mb-1 ml-4">Пароль</label>
-                            <input type="password" name="password" value={formData.password} onChange={handleChange} required placeholder="Введіть пароль" className="w-full px-5 py-3 md:py-2.5 font-['El_Messiri'] rounded-full border border-gray-300 focus:outline-none focus:border-[#42705D] transition text-base md:text-lg text-gray-700 bg-white" />
+                            <input
+                                type="password"
+                                name="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                                required
+                                autoComplete="current-password"
+                                placeholder="Введіть пароль"
+                                className="w-full px-5 py-3 md:py-2.5 font-['El_Messiri'] rounded-full border border-gray-300 focus:outline-none focus:border-[#42705D] transition text-base md:text-lg text-gray-700 bg-white"
+                            />
 
                             <div className="flex justify-between items-center mt-3 px-2 sm:px-4">
-                                {/* ДОДАНО: Галочка Запам'ятати мене */}
+                                {/* Галочка Запам'ятати мене */}
                                 <label className="flex items-center gap-2 cursor-pointer group">
                                     <div className="relative flex items-center justify-center w-5 h-5 rounded-md border-2 border-gray-400 group-hover:border-[#42705D] transition-colors">
                                         <input
