@@ -18,6 +18,7 @@ const Footer = () => {
                     <nav className="flex space-x-8 font-medium text-sm md:text-base">
                         <Link to="/" className="hover:text-[#42705D] transition duration-300">Головна</Link>
                         <Link to="/about" className="hover:text-[#42705D] transition duration-300">Про нас</Link>
+                        <Link to="/privacy" className="hover:text-[#42705D] transition duration-300">Політика конфіденційності</Link>
                     </nav>
                 </div>
 

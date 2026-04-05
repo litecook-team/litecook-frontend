@@ -16,6 +16,8 @@ import Menu from './pages/Menu';
 import About from './pages/About';
 import ResetPassword from './pages/ResetPassword';
 import ResetPasswordConfirm from './pages/ResetPasswordConfirm';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import PrivacyDetail from './pages/PrivacyDetail';
 
 function App() {
   return (
@@ -37,6 +39,8 @@ function App() {
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/menu" element={<Menu />} />
             <Route path="/about" element={<About />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/privacy/:section" element={<PrivacyDetail />} />
           </Routes>
         </main>
         <Footer />

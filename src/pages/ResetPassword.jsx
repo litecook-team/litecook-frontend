@@ -46,7 +46,7 @@ const ResetPassword = () => {
                 <div className="bg-white/90 backdrop-blur-sm shadow-xl rounded-[2rem] p-6 sm:p-10 w-full max-w-[520px] font-['Inter'] mx-auto">
 
                     <h1 className="text-2xl md:text-3xl font-['El_Messiri'] font-bold mb-6 text-[#1A1A1A] text-center md:text-left">
-                        Відновлення пароля
+                        Забули ваш пароль?
                     </h1>
 
                     {message && (
@@ -63,7 +63,7 @@ const ResetPassword = () => {
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label className="inline-block text-sm md:text-base font-semibold font-['El_Messiri'] text-gray-800 mb-1 ml-4">Електронна пошта</label>
+                            <label className="inline-block text-sm md:text-base font-semibold font-['El_Messiri'] text-gray-800 mb-1 ml-4">Не хвилюйтеся! Ми допоможемо вам скинути пароль.</label>
                             <input
                                 type="email"
                                 value={email}
@@ -75,7 +75,7 @@ const ResetPassword = () => {
                         </div>
 
                         <button type="submit" className="w-full bg-[#1A1A1A] text-white font-['El_Messiri'] font-medium rounded-full py-3 md:py-2.5 hover:bg-gray-800 transition mt-4 text-base md:text-lg shadow-md">
-                            Відправити посилання
+                            Надіслати посилання для скидання пароля
                         </button>
                     </form>
 
