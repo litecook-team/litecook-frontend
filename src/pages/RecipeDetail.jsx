@@ -186,7 +186,6 @@ const RecipeDetail = () => {
                         </div>
                     </div>
 
-                    {/* ЗМІНЕНО: Класи розміру тексту зменшено для всіх точок зламу */}
                     <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[36px] xl:text-[40px] leading-tight font-['El_Messiri'] text-gray-900 uppercase text-center mb-8 sm:mb-12 px-2 sm:px-0">
                         {recipe.title}
                     </h1>

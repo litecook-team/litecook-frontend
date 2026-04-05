@@ -182,20 +182,17 @@ const Home = () => {
 
                             {/* фото */}
                             <div className="w-[90%] sm:w-[400px] h-64 md:w-80 md:h-80 lg:w-[390px] lg:h-[270px] shrink-0 mx-auto md:mx-0 md:ml-4 lg:ml-10 mt-1 rounded-3xl overflow-hidden shadow-lg bg-white">
-                                {/* ДОДАНО: Обгортка Link навколо зображення */}
                                 <Link to={`/recipe/${recipeOfDay.id}`} className="block w-full h-full">
                                     <img
                                         src={getImageUrl(recipeOfDay.image)}
                                         alt={recipeOfDay.title}
-                                        className="w-full h-full object-cover object-top"
+                                        className="w-full h-full object-cover object-top transition-transform duration-500 hover:scale-110"
                                     />
                                 </Link>
                             </div>
 
                             {/* Інформація про рецепт */}
                             <div className="flex flex-col text-center md:text-left mt-0 bg-white/1 min-[1700px]:bg-transparent backdrop-blur-md min-[1700px]:backdrop-blur-none p-6 md:p-8 xl:p-0 rounded-[2rem] xl:rounded-none flex-1 w-full transition-all duration-500">
-
-                                {/* ЗМІНЕНО: Трішки зменшено розмір (text-2xl md:text-4xl) та додано <Link> для клікабельності з ефектом наведення */}
                                 <h2 className="text-2xl sm:text-3xl md:text-4xl font-['El_Messiri'] text-[#1A1A1A] mb-4 mt-2">
                                     <Link to={`/recipe/${recipeOfDay.id}`} className="hover:text-[#42705D] transition-colors">
                                         {recipeOfDay.title}
