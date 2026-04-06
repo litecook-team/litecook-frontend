@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
+// Імпорт зображень
+import imgChef from '../assets/privacy/Cook.png';
+import imgData from '../assets/privacy/Data_collection.png';
+import imgUsage from '../assets/privacy/Using.png';
+import imgCookies from '../assets/privacy/Cookies.png';
+import imgControl from '../assets/privacy/Control.png';
+
 const PrivacyPolicy = () => {
     const navigate = useNavigate();
     const [isAccepted, setIsAccepted] = useState(false);
@@ -42,12 +49,14 @@ const PrivacyPolicy = () => {
                     </div>
 
                     <div className="md:w-1/2 flex justify-center md:justify-end">
-                        {/* ЗАГЛУШКА ДЛЯ ЗОБРАЖЕННЯ КУХАРЯ */}
+                        {/* ЗОБРАЖЕННЯ КУХАРЯ */}
                         <div className="relative w-64 h-64 md:w-80 md:h-80 lg:w-[380px] lg:h-[380px] flex items-center justify-center">
-                            <div className="absolute inset-0 bg-[#DCE8D9] rounded-full scale-90"></div>
-                            <div className="relative z-10 w-full h-full border-2 border-dashed border-[#42705D] rounded-full flex flex-col items-center justify-center bg-white/50 backdrop-blur-sm">
-                                <span className="text-[#42705D] font-['Inter'] text-center px-4">Місце для зображення кухаря</span>
-                            </div>
+                            <div className="absolute inset-0 rounded-full scale-90"></div>
+                            <img
+                                src={imgChef}
+                                alt="Кухар LITE cook"
+                                className="relative z-10 w-full h-full object-contain"
+                            />
                         </div>
                     </div>
                 </div>
@@ -58,8 +67,11 @@ const PrivacyPolicy = () => {
                     {/* Картка 1: Збір даних */}
                     <Link to="/privacy/data" className="bg-transparent border border-gray-500 rounded-[2rem] p-8 flex flex-col items-center text-center hover:bg-white transition-all duration-300 group">
                         <div className="mb-4 flex items-center justify-center group-hover:scale-110 transition-transform">
-                            {/* Іконка без фонового кола */}
-                            <span className="text-6xl text-center">🍪</span>
+                            <img
+                                src={imgData}
+                                alt="Іконка збору даних"
+                                className="h-26 sm:h-30 w-auto object-contain"
+                            />
                         </div>
                         <h3 className="text-2xl font-bold mb-3 text-gray-900">Збір даних</h3>
                         <p className="text-gray-900 text-lg leading-snug">Нам потрібен ваш Email та<br/>ім’я, щоб зберігати рецепти</p>
@@ -68,7 +80,11 @@ const PrivacyPolicy = () => {
                     {/* Картка 2: Використання */}
                     <Link to="/privacy/usage" className="bg-transparent border border-gray-500 rounded-[2rem] p-8 flex flex-col items-center text-center hover:bg-white transition-all duration-300 group">
                         <div className="mb-4 flex items-center justify-center group-hover:scale-110 transition-transform">
-                            <span className="text-6xl text-center">🥄</span>
+                            <img
+                                src={imgUsage}
+                                alt="Іконка використання даних"
+                                className="h-26 sm:h-30 w-auto object-contain"
+                            />
                         </div>
                         <h3 className="text-2xl font-bold mb-3 text-gray-900">Використання</h3>
                         <p className="text-gray-900 text-lg leading-snug">Щоб покращувати сервіс<br/>та надсилати новини</p>
@@ -77,7 +93,11 @@ const PrivacyPolicy = () => {
                     {/* Картка 3: Куки */}
                     <Link to="/privacy/cookies" className="bg-transparent border border-gray-500 rounded-[2rem] p-8 flex flex-col items-center text-center hover:bg-white transition-all duration-300 group">
                         <div className="mb-4 flex items-center justify-center group-hover:scale-110 transition-transform">
-                            <span className="text-6xl text-center">💻</span>
+                            <img
+                                src={imgCookies}
+                                alt="Іконка Cookies"
+                                className="h-26 sm:h-30 w-auto object-contain"
+                            />
                         </div>
                         <h3 className="text-2xl font-bold mb-3 text-gray-900">Куки(Cookies)</h3>
                         <p className="text-gray-900 text-lg leading-snug">Наші “печива” лише для<br/>технічної роботи сайту</p>
@@ -86,7 +106,11 @@ const PrivacyPolicy = () => {
                     {/* Картка 4: Контроль */}
                     <Link to="/privacy/control" className="bg-transparent border border-gray-500 rounded-[2rem] p-8 flex flex-col items-center text-center hover:bg-white transition-all duration-300 group">
                         <div className="mb-4 flex items-center justify-center group-hover:scale-110 transition-transform">
-                            <span className="text-6xl text-center">⚙️</span>
+                            <img
+                                src={imgControl}
+                                alt="Іконка контролю даних"
+                                className="h-26 sm:h-30 w-auto object-contain"
+                            />
                         </div>
                         <h3 className="text-2xl font-bold mb-3 text-gray-900">Контроль</h3>
                         <p className="text-gray-900 text-lg leading-snug">Ви можете видалити<br/>акаунт будь коли</p>
