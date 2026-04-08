@@ -287,7 +287,6 @@ const RecipeDetail = () => {
 
                         {/* Блок 5: Деталі рецепту (Праворуч на ПК, знизу на мобільних) */}
                         <div className="w-full lg:w-[45%] xl:w-[40%] flex items-center justify-center lg:justify-start pt-6 lg:pt-0">
-                            {/* ЗМІНЕНО: Градієнтний бордер. Для цього використовуємо обгортку з p-[4px] (або p-[6px] для товстішого бордера) і bg-gradient */}
                             <div className="relative w-full max-w-md lg:max-w-none rounded-[2rem] p-[6px] bg-gradient-to-br from-[#DCE8D9] via-[#6A907B]/20 to-[#DCE8D9] shadow-sm mx-auto lg:mx-0">
 
                                 {/* ІКОНКА СКРІПКИ */}
@@ -342,8 +341,7 @@ const RecipeDetail = () => {
                             {/* Яскравий градієнтний бордер для ПРИГОТУВАННЯ */}
                             <div className="relative w-full max-w-2xl lg:max-w-none rounded-[2rem] p-[4px] bg-gradient-to-br from-[#B47231]/20 via-[#6A907B]/30 to-[#B47231]/40 shadow-lg">
 
-                                {/* ІКОНКА КАСТРУЛІ (Розташована подібно до скріпки) */}
-                                {/* ЗАМІНІТЬ SVG НА <img src={iconPot} ... /> КОЛИ БУДЕ КАРТИНКА */}
+                                {/* ІКОНКА КАСТРУЛІ */}
                                 <div className="absolute -top-8 right-6 sm:-top-10 sm:right-10 lg:-top-10 lg:right-8 xl:-top-10 xl:right-10 w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 flex items-center justify-center bg-white rounded-full shadow-md z-10 p-2 border-2 border-[#B47231]/20">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="#B47231" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
                                         <path d="M4 11l1 10a1.5 1.5 0 0 0 1.5 1.5h11a1.5 1.5 0 0 0 1.5-1.5L20 11" />
@@ -354,18 +352,16 @@ const RecipeDetail = () => {
                                     </svg>
                                 </div>
 
-                                {/* ЗМІНЕНО: Внутрішній блок Приготування тепер ПРОЗОРИЙ (bg-transparent), матовий фон працює лише там, де треба */}
+                                {/* Внутрішній блок Приготування */}
                                 <div className="w-full h-full bg-transparent min-[1500px]:backdrop-blur-none backdrop-blur-md rounded-[calc(2rem-4px)] p-6 sm:p-8 xl:p-10 flex flex-col items-center lg:items-start">
 
                                     <h3 className="text-[18px] sm:text-[20px] lg:text-[22px] font-bold font-['Inter'] text-[#B47231] mb-5 sm:mb-8 uppercase flex items-center justify-center lg:justify-start gap-2 sm:gap-3 w-full tracking-widest">
                                         ПРИГОТУВАННЯ
                                     </h3>
 
-                                    {/* ЗМІНЕНО: Зменшено відстань між кроками (space-y-3 sm:space-y-4 lg:space-y-4) */}
                                     <div className="space-y-2 sm:space-y-3 lg:space-y-3 w-full">
                                         {recipe.steps.map((step) => (
                                             <div key={step.step_number} className="flex items-start group">
-                                                {/* ЗМІНЕНО: Прибрано bg-white/50. Тепер кружечки повністю прозорі всередині */}
                                                 <div className="flex-shrink-0 w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 border-2 border-[#6A907B]/40 text-[#B47231] rounded-full flex items-center justify-center text-[13px] sm:text-[15px] lg:text-[15px] font-['Inter'] font-bold mt-0 mr-3 sm:mr-4 group-hover:border-[#B47231] transition-colors bg-transparent">
                                                     {step.step_number}
                                                 </div>
