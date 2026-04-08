@@ -5,6 +5,7 @@ import api from '../api';
 import { ENDPOINTS, TOKEN_KEY, API_URL } from '../constants/api';
 import { DICTIONARIES } from '../constants/translations';
 import recipeBgImage from '../assets/recipe/recipe.png';
+import iconClip from '../assets/recipe/icon_detail.png';
 
 // Допоміжна функція для правильного відмінювання слів
 const getPluralForm = (number, titles) => {
@@ -235,9 +236,9 @@ const RecipeDetail = () => {
                             ІНГРЕДІЄНТИ
                         </h3>
 
-                        <ul className="backdrop-blur-md rounded-2xl p-2 sm:p-4 lg:p-6">
+                        <ul className="backdrop-blur-md rounded-2xl p-2 sm:p-4 lg:p-3">
                             {recipe.recipe_ingredients.map((ing) => (
-                                <li key={ing.id} className="flex items-center text-gray-900 text-[14px] sm:text-[16px] lg:text-[18px] font-['Inter'] border-b border-gray-200/60 py-1 sm:py-1.5 lg:py-2 last:border-0">
+                                <li key={ing.id} className="flex items-center text-gray-900 text-[14px] sm:text-[16px] lg:text-[18px] font-['Inter'] border-b border-gray-200/60 py-1 sm:py-1 lg:py-1 last:border-0">
                                     {ing.ingredient_image ? (
                                         <img src={getImageUrl(ing.ingredient_image)} alt="" className="w-10 h-10 sm:w-11 sm:h-11 lg:w-12 lg:h-12 object-cover rounded-full mr-3 sm:mr-4 lg:mr-5 flex-shrink-0" />
                                     ) : (
@@ -282,81 +283,103 @@ const RecipeDetail = () => {
 
                 {/* БЛОК 4 та 5: ПРИГОТУВАННЯ І ДЕТАЛІ */}
                 <div className="order-3 lg:col-span-8 lg:col-start-1 w-full px-4 pl-5 sm:px-6 sm:pl-8 lg:px-16 lg:pl-[72px] pt-10 sm:pt-12 lg:pt-16 pb-10 sm:pb-12">
-                    <div className="flex flex-col lg:flex-row items-start w-full gap-10 sm:gap-12 lg:gap-8">
+                    <div className="flex flex-col-reverse lg:flex-row items-start w-full gap-12 sm:gap-16 lg:gap-8 xl:gap-12">
 
-                        {/* Блок 4: Приготування (Ліворуч) */}
-                        <div className="w-full lg:w-2/3 flex justify-center">
-                            <div className="w-full max-w-2xl font-serif text-[15px]">
-                                <h3 className="text-[18px] sm:text-[20px] lg:text-[22px] font-bold font-['Inter'] text-gray-900 mb-6 sm:mb-8 uppercase flex items-center gap-2 sm:gap-3">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="#B47231" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 shrink-0">
+                        {/* Блок 5: Деталі рецепту (Праворуч на ПК, знизу на мобільних) */}
+                        <div className="w-full lg:w-[45%] xl:w-[40%] flex items-center justify-center lg:justify-start pt-6 lg:pt-0">
+                            {/* ЗМІНЕНО: Градієнтний бордер. Для цього використовуємо обгортку з p-[4px] (або p-[6px] для товстішого бордера) і bg-gradient */}
+                            <div className="relative w-full max-w-md lg:max-w-none rounded-[2rem] p-[6px] bg-gradient-to-br from-[#DCE8D9] via-[#6A907B]/20 to-[#DCE8D9] shadow-sm mx-auto lg:mx-0">
+
+                                {/* ІКОНКА СКРІПКИ */}
+                                <img
+                                    src={iconClip}
+                                    alt="Деталі"
+                                    className="absolute -top-8 left-6 sm:-top-10 sm:left-10 lg:-top-10 lg:left-8 xl:-top-10 xl:left-10 w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 flex items-center justify-center bg-white rounded-full shadow-md z-10 p-2 border-2 border-[#B47231]/20"
+                                />
+
+                                {/* Внутрішній блок Деталей (ПРОЗОРИЙ) */}
+                                <div className="w-full h-full bg-transparent min-[1500px]:backdrop-blur-none backdrop-blur-md rounded-[calc(2rem-6px)] p-6 sm:p-8 lg:p-8 xl:p-8 font-['Inter']">
+
+                                    <h3 className="text-[18px] sm:text-[20px] font-bold font-['Inter'] text-[#B47231] mb-2 sm:mb-0 uppercase text-center tracking-widest mt-2 sm:mt-0">
+                                        ДЕТАЛІ
+                                    </h3>
+
+                                    <div className="space-y-2 sm:space-y-3 text-[14px] sm:text-[15px] lg:text-[16px] rounded-2xl p-0 sm:p-4 lg:p-6 mt-4 sm:mt-0">
+                                        <div className="flex justify-between items-start gap-4 border-b border-gray-200/60 pb-1">
+                                            <span className="text-gray-900 font-semibold w-24 sm:w-28 lg:w-32">Кухня:</span>
+                                            <span className="text-gray-900 text-right break-words">{formatArray(recipe.cuisine, DICTIONARIES.cuisine)}</span>
+                                        </div>
+                                        <div className="flex justify-between items-start gap-4 border-b border-gray-200/60 pb-1">
+                                            <span className="font-semibold text-gray-900 w-24 sm:w-28 lg:w-32">Прийом їжі:</span>
+                                            <span className="text-gray-900 text-right break-words">{formatArray(recipe.meal_times, DICTIONARIES.meal_times)}</span>
+                                        </div>
+                                        <div className="flex justify-between items-start gap-4 border-b border-gray-200/60 pb-1">
+                                            <span className="font-semibold text-gray-900 w-24 sm:w-28 lg:w-32">Тип страви:</span>
+                                            <span className="text-gray-900 text-right break-words">{formatArray(recipe.dish_types, DICTIONARIES.dish_types)}</span>
+                                        </div>
+                                        <div className="flex justify-between items-start gap-4 border-b border-gray-200/60 pb-1">
+                                            <span className="font-semibold text-gray-900 w-24 sm:w-28 lg:w-32">Тип харчування:</span>
+                                            <span className="text-gray-900 text-right break-words">{formatArray(recipe.dietary_tags, DICTIONARIES.dietary_tags)}</span>
+                                        </div>
+                                        <div className="flex justify-between items-start gap-4 border-b border-gray-200/60 pb-1">
+                                            <span className="font-semibold text-gray-900 w-24 sm:w-28 lg:w-32">Автор:</span>
+                                            <span className="text-gray-900 text-right break-words">{recipe.source || 'Невідомо'}</span>
+                                        </div>
+                                        <div className="flex justify-between items-start gap-4 border-b border-gray-200/60 pb-1 last:border-0">
+                                            <span className="font-semibold text-gray-900 w-24 sm:w-28 lg:w-32">Додано:</span>
+                                            <span className="text-gray-900 text-right break-words">
+                                                {recipe.created_at ? new Date(recipe.created_at).toLocaleDateString('uk-UA') : '—'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Блок 4: Приготування (Ліворуч на ПК, зверху на мобільних) */}
+                        <div className="w-full lg:w-[55%] xl:w-[60%] flex items-center justify-center lg:justify-start mx-auto lg:mx-0 pt-6 lg:pt-0">
+
+                            {/* Яскравий градієнтний бордер для ПРИГОТУВАННЯ */}
+                            <div className="relative w-full max-w-2xl lg:max-w-none rounded-[2rem] p-[4px] bg-gradient-to-br from-[#B47231]/20 via-[#6A907B]/30 to-[#B47231]/40 shadow-lg">
+
+                                {/* ІКОНКА КАСТРУЛІ (Розташована подібно до скріпки) */}
+                                {/* ЗАМІНІТЬ SVG НА <img src={iconPot} ... /> КОЛИ БУДЕ КАРТИНКА */}
+                                <div className="absolute -top-8 right-6 sm:-top-10 sm:right-10 lg:-top-10 lg:right-8 xl:-top-10 xl:right-10 w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 flex items-center justify-center bg-white rounded-full shadow-md z-10 p-2 border-2 border-[#B47231]/20">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="#B47231" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
                                         <path d="M4 11l1 10a1.5 1.5 0 0 0 1.5 1.5h11a1.5 1.5 0 0 0 1.5-1.5L20 11" />
                                         <path d="M3 10a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1" />
                                         <path d="M10 7a3 3 0 0 1 4 0h2a3.5 3.5 0 0 0-8 0h2" />
                                         <path d="M22 9.5H2" />
+                                        <path d="M8 3v2" /><path d="M12 2v3" /><path d="M16 3v2" />
                                     </svg>
-                                    ПРИГОТУВАННЯ
-                                </h3>
-                                <div className="space-y-4 sm:space-y-5 lg:space-y-6">
-                                    {recipe.steps.map((step) => (
-                                        <div key={step.step_number} className="flex items-start">
-                                            <div className="flex-shrink-0 w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 border border-gray-400 text-gray-600 flex items-center justify-center text-[12px] sm:text-[13px] lg:text-[14px] font-['Inter'] font-medium mt-0.5 sm:mt-1 mr-3 sm:mr-4">
-                                                {step.step_number}
+                                </div>
+
+                                {/* ЗМІНЕНО: Внутрішній блок Приготування тепер ПРОЗОРИЙ (bg-transparent), матовий фон працює лише там, де треба */}
+                                <div className="w-full h-full bg-transparent min-[1500px]:backdrop-blur-none backdrop-blur-md rounded-[calc(2rem-4px)] p-6 sm:p-8 xl:p-10 flex flex-col items-center lg:items-start">
+
+                                    <h3 className="text-[18px] sm:text-[20px] lg:text-[22px] font-bold font-['Inter'] text-[#B47231] mb-5 sm:mb-8 uppercase flex items-center justify-center lg:justify-start gap-2 sm:gap-3 w-full tracking-widest">
+                                        ПРИГОТУВАННЯ
+                                    </h3>
+
+                                    {/* ЗМІНЕНО: Зменшено відстань між кроками (space-y-3 sm:space-y-4 lg:space-y-4) */}
+                                    <div className="space-y-2 sm:space-y-3 lg:space-y-3 w-full">
+                                        {recipe.steps.map((step) => (
+                                            <div key={step.step_number} className="flex items-start group">
+                                                {/* ЗМІНЕНО: Прибрано bg-white/50. Тепер кружечки повністю прозорі всередині */}
+                                                <div className="flex-shrink-0 w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 border-2 border-[#6A907B]/40 text-[#B47231] rounded-full flex items-center justify-center text-[13px] sm:text-[15px] lg:text-[15px] font-['Inter'] font-bold mt-0 mr-3 sm:mr-4 group-hover:border-[#B47231] transition-colors bg-transparent">
+                                                    {step.step_number}
+                                                </div>
+                                                <p className="text-gray-800 font-['Inter'] font-medium text-[15px] sm:text-[16px] lg:text-[17px] xl:text-[18px] leading-relaxed break-words max-w-prose pt-1 sm:pt-0.5">
+                                                    {step.text}
+                                                </p>
                                             </div>
-                                            <p className="text-gray-900 font-['Inter'] font-normal text-[15px] sm:text-[16px] lg:text-[18px] leading-snug break-words max-w-prose">
-                                                {step.text}
-                                            </p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Блок 5: Деталі рецепту (Праворуч) */}
-                        <div className="w-full lg:w-1/3 flex justify-center">
-                            <div className="w-full max-w-sm font-['Inter']">
-                                <h3 className="text-[18px] sm:text-[20px] lg:text-[22px] font-bold font-['Inter'] text-gray-900 mb-6 sm:mb-8 uppercase flex items-center gap-2 sm:gap-3">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="#B47231" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 shrink-0">
-                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                        <polyline points="14 2 14 8 20 8"></polyline>
-                                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                                        <line x1="16" y1="17" x2="8" y2="17"></line>
-                                        <polyline points="10 9 9 9 8 9"></polyline>
-                                    </svg>
-                                    ДЕТАЛІ
-                                </h3>
-
-                                <div className="space-y-3 sm:space-y-4 text-[14px] sm:text-[15px] lg:text-[16px] backdrop-blur-md rounded-2xl p-2 sm:p-4 lg:p-6">
-                                    <div className="flex justify-between border-b border-gray-200/60 pb-2 sm:pb-2.5">
-                                        <span className="text-gray-500 w-28 sm:w-32 lg:w-36">Кухня:</span>
-                                        <span className="font-semibold text-gray-900 text-right">{formatArray(recipe.cuisine, DICTIONARIES.cuisine)}</span>
-                                    </div>
-                                    <div className="flex justify-between border-b border-gray-200/60 pb-2 sm:pb-2.5">
-                                        <span className="text-gray-500 w-28 sm:w-32 lg:w-36">Прийом їжі:</span>
-                                        <span className="font-semibold text-gray-900 text-right">{formatArray(recipe.meal_times, DICTIONARIES.meal_times)}</span>
-                                    </div>
-                                    <div className="flex justify-between border-b border-gray-200/60 pb-2 sm:pb-2.5">
-                                        <span className="text-gray-500 w-28 sm:w-32 lg:w-36">Тип страви:</span>
-                                        <span className="font-semibold text-gray-900 text-right">{formatArray(recipe.dish_types, DICTIONARIES.dish_types)}</span>
-                                    </div>
-                                    <div className="flex justify-between border-b border-gray-200/60 pb-2 sm:pb-2.5">
-                                        <span className="text-gray-500 w-28 sm:w-32 lg:w-36">Тип харчування:</span>
-                                        <span className="font-semibold text-gray-900 text-right">{formatArray(recipe.dietary_tags, DICTIONARIES.dietary_tags)}</span>
-                                    </div>
-                                    <div className="flex justify-between border-b border-gray-200/60 pb-2 sm:pb-2.5">
-                                        <span className="text-gray-500 w-28 sm:w-32 lg:w-36">Автор:</span>
-                                        <span className="font-semibold text-gray-900 text-right">{recipe.author_name || 'Невідомо'}</span>
-                                    </div>
-                                    <div className="flex justify-between border-b border-gray-200/60 pb-2 sm:pb-2.5 last:border-0">
-                                        <span className="text-gray-500 w-28 sm:w-32 lg:w-36">Додано:</span>
-                                        <span className="font-semibold text-gray-900 text-right">
-                                            {recipe.created_at ? new Date(recipe.created_at).toLocaleDateString('uk-UA') : '—'}
-                                        </span>
+                                        ))}
                                     </div>
                                 </div>
                             </div>
                         </div>
+
                     </div>
-
                 </div>
 
             </div>

@@ -32,32 +32,47 @@ const Home = () => {
     }, []);
 
     const fetchRecipeOfTheDay = async () => {
-        // Отримуємо поточну дату у форматі YYYY-MM-DD
-        const today = new Date().toLocaleDateString('en-CA');
-        const cachedDate = localStorage.getItem('recipe_of_day_date');
-        const cachedRecipe = localStorage.getItem('recipe_of_day_data');
-
-        // Якщо сьогоднішній рецепт вже є в кеші — використовуємо його
-        if (cachedDate === today && cachedRecipe) {
-            setRecipeOfDay(JSON.parse(cachedRecipe));
-            setLoading(false);
-            return;
-        }
-
-        // Якщо новий день або кеш порожній — йдемо на бекенд за новим рандомним
+        setLoading(true);
         try {
+            // ЗМІНЕНО: Прибрано локальне кешування, тепер завжди беремо актуальні дані з бекенду.
+            // Якщо ви зміните рецепт в адмінці, фронтенд побачить це при оновленні сторінки.
             const response = await api.get(`${ENDPOINTS.RECIPES}random_recipe/`);
             setRecipeOfDay(response.data);
-
-            // Зберігаємо новий рецепт та сьогоднішню дату в пам'ять
-            localStorage.setItem('recipe_of_day_date', today);
-            localStorage.setItem('recipe_of_day_data', JSON.stringify(response.data));
         } catch (error) {
             console.error("Помилка завантаження рецепту дня:", error);
         } finally {
             setLoading(false);
         }
     };
+
+// функція з кешуванням і отриманням з локалсторідж
+//     const fetchRecipeOfTheDay = async () => {
+//         // Отримуємо поточну дату у форматі YYYY-MM-DD
+//         const today = new Date().toLocaleDateString('en-CA');
+//         const cachedDate = localStorage.getItem('recipe_of_day_date');
+//         const cachedRecipe = localStorage.getItem('recipe_of_day_data');
+//
+//         // Якщо сьогоднішній рецепт вже є в кеші — використовуємо його
+//         if (cachedDate === today && cachedRecipe) {
+//             setRecipeOfDay(JSON.parse(cachedRecipe));
+//             setLoading(false);
+//             return;
+//         }
+//
+//         // Якщо новий день або кеш порожній — йдемо на бекенд за новим рандомним
+//         try {
+//             const response = await api.get(`${ENDPOINTS.RECIPES}random_recipe/`);
+//             setRecipeOfDay(response.data);
+//
+//             // Зберігаємо новий рецепт та сьогоднішню дату в пам'ять
+//             localStorage.setItem('recipe_of_day_date', today);
+//             localStorage.setItem('recipe_of_day_data', JSON.stringify(response.data));
+//         } catch (error) {
+//             console.error("Помилка завантаження рецепту дня:", error);
+//         } finally {
+//             setLoading(false);
+//         }
+//     };
 
     const getImageUrl = (path) => {
         if (!path) return null;
