@@ -109,7 +109,7 @@ const Home = () => {
                 <div className="relative z-10 w-full px-6 lg:px-20 xl:px-55 flex justify-center md:justify-end mt-20 md:mt-40 lg:mt-32 xl:mt-1 transition-all">
 
                     {/* Класи bg-white/40 backdrop-blur-md створюють матове скло. */}
-                    <div className="flex flex-col items-center md:items-start text-center md:text-left max-w-4xl lg:max-w-3xl xl:max-w-4xl lg:mr-0 xl:mr-12 bg-white/1 min-[1600px]:bg-transparent backdrop-blur-md min-[1600px]:backdrop-blur-none p-6 sm:p-8 xl:p-2 rounded-[2rem] transition-all duration-500">
+                    <div className="flex flex-col items-center md:items-start text-center md:text-left max-w-4xl lg:max-w-3xl xl:max-w-4xl lg:mr-0 xl:mr-12 bg-white/70 min-[1600px]:bg-transparent backdrop-blur-md min-[1600px]:backdrop-blur-none p-6 sm:p-8 xl:p-2 rounded-[2rem] transition-all duration-500">
 
                         <h2 className="text-[#8B0021] text-xl md:text-2xl lg:text-[45px] font-['El_Messiri'] mb-3 lg:mb-5 leading-tight drop-shadow-sm">
                             Твій особистий шеф-кухар
@@ -213,7 +213,7 @@ const Home = () => {
                             </div>
 
                             {/* Інформація про рецепт */}
-                            <div className="flex flex-col text-center md:text-left mt-0 bg-white/1 min-[1700px]:bg-transparent backdrop-blur-md min-[1700px]:backdrop-blur-none p-6 md:p-8 xl:p-0 rounded-[2rem] xl:rounded-none flex-1 w-full transition-all duration-500">
+                            <div className="flex flex-col text-center md:text-left mt-0 bg-white/70 min-[1700px]:bg-transparent backdrop-blur-md min-[1700px]:backdrop-blur-none p-6 md:p-8 xl:p-0 rounded-[2rem] xl:rounded-none flex-1 w-full transition-all duration-500">
                                 <h2 className="text-2xl sm:text-3xl md:text-4xl font-['El_Messiri'] text-[#1A1A1A] mb-4 mt-2">
                                     <Link to={`/recipe/${recipeOfDay.id}`} className="hover:text-[#42705D] transition-colors">
                                         {recipeOfDay.title}

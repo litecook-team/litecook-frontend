@@ -87,6 +87,9 @@ const Recipes = () => {
         setLoading(true);
         try {
             const params = new URLSearchParams();
+            // Якщо є searchQuery, ми використаємо спеціальний ендпоінт match/
+            const hasSearch = searchQuery.trim() !== '';
+
             if (searchQuery) params.append('search_query', searchQuery);
             if (selectedCuisines.length > 0) params.append('cuisine', selectedCuisines.join(','));
             if (selectedDifficulties.length > 0) params.append('difficulty', selectedDifficulties.join(','));
@@ -99,7 +102,12 @@ const Recipes = () => {
             if (selectedMonths.length > 0) params.append('months', selectedMonths.join(','));
             if (selectedIngredientCategories.length > 0) params.append('ingredient_categories', selectedIngredientCategories.join(','));
 
-            const response = await api.get(`${ENDPOINTS.RECIPES}?${params.toString()}`);
+            // Вибираємо правильний URL залежно від того, чи є текст у пошуку
+            const url = hasSearch
+                ? `${ENDPOINTS.RECIPES}match/?${params.toString()}`
+                : `${ENDPOINTS.RECIPES}?${params.toString()}`;
+
+            const response = await api.get(url);
             setRecipes(response.data.results || response.data);
             setVisibleCount(6);
         } catch (error) {
@@ -485,6 +493,19 @@ const Recipes = () => {
                                                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                                                 </svg>
                                             </button>
+
+                                            {/* Бейджик збігів (Справа) - показується ТІЛЬКИ якщо є match_count */}
+                                            {recipe.match_count > 0 && recipe.total_count > 0 && (
+                                                <div
+                                                    className="absolute top-4 right-4 h-10 px-3 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md z-10 text-[#6A907B] font-bold font-['Inter'] text-sm gap-1.5"
+                                                    title={`Знайдено ${recipe.match_count} з ${recipe.total_count} інгредієнтів`}
+                                                >
+                                                    <svg width="23" height="23" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M4 12.5C4 12.5 7.5 17 8.5 18C10 14 15 7.5 20 5"></path>
+                                                    </svg>
+                                                    {recipe.match_count}/{recipe.total_count}
+                                                </div>
+                                            )}
                                         </div>
 
                                         <h3 className="text-center font-['El_Messiri'] font-bold text-[#1A1A1A] text-base sm:text-lg md:text-xl lg:text-2xl uppercase px-2 line-clamp-2 min-h-[48px] md:min-h-[56px] flex items-center justify-center group-hover:text-[#5B826B] transition-colors">
