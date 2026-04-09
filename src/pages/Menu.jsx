@@ -81,7 +81,7 @@ const Menu = () => {
     const [exportError, setExportError] = useState(null); // Стан для помилок експорту
 
     // Стани для списку покупок
-    const [useFridge, setUseFridge] = useState(true); // Чи враховувати холодильник
+    const [useFridge, setUseFridge] = useState(true); // Чи враховувати мої продукти
     const [shoppingList, setShoppingList] = useState(null); // Сам список
     const [isShoppingListLoading, setIsShoppingListLoading] = useState(false); // Завантаження списку
     const [activeListScope, setActiveListScope] = useState(null); // 'day' або 'week'
@@ -469,11 +469,13 @@ const Menu = () => {
 
                                                             {/* Зображення (Адаптивне та збільшене) */}
                                                             <div className="w-full sm:w-[240px] lg:w-[280px] h-56 sm:h-36 lg:h-40 shrink-0 relative">
-                                                                <img
-                                                                    src={getImageUrl(recipe.image)}
-                                                                    alt={recipe.title}
-                                                                    className="w-full h-full object-cover rounded-[1rem] shadow-sm group-hover:scale-105 transition-transform duration-700"
-                                                                />
+                                                                <Link to={`/recipe/${recipe.id}`} className="block w-full h-full">
+                                                                    <img
+                                                                        src={getImageUrl(recipe.image)}
+                                                                        alt={recipe.title}
+                                                                        className="w-full h-full object-cover rounded-[1rem] shadow-sm group-hover:scale-105 transition-transform duration-700"
+                                                                    />
+                                                                </Link>
 
                                                                 {/* Кнопка видалення (На мобільних на картинці) */}
                                                                 <button
@@ -557,10 +559,10 @@ const Menu = () => {
                                 Список продуктів
                             </h3>
 
-                            {/* Тогл "Враховувати мій холодильник" */}
+                            {/* Тогл "Враховувати мої продукти" */}
                             <div className="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-xl p-3 mb-4 transition-colors hover:bg-gray-100">
                                 <span className="text-sm text-gray-700 font-['Inter'] font-semibold">
-                                    Мій холодильник
+                                    Мої продукти
                                 </span>
                                  <button
                                     onClick={() => {

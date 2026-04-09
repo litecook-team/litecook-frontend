@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
-import { ENDPOINTS, API_URL } from '../constants/api';
+import { ENDPOINTS, API_URL, TOKEN_KEY } from '../constants/api';
 import { DICTIONARIES } from '../constants/translations';
 
 // Імпортуємо зображення
@@ -26,6 +26,9 @@ const Home = () => {
     const navigate = useNavigate();
     const [recipeOfDay, setRecipeOfDay] = useState(null);
     const [loading, setLoading] = useState(true);
+
+    // Перевірка чи користувач авторизований
+    const isAuthenticated = !!localStorage.getItem(TOKEN_KEY) || !!sessionStorage.getItem(TOKEN_KEY);
 
     useEffect(() => {
         fetchRecipeOfTheDay();
@@ -163,7 +166,10 @@ const Home = () => {
                         </Link>
 
                         {/* Картка 3: Веде на сторінку "Вхід" (/login) */}
-                        <Link to="/login" className="bg-[#F6F3F4] backdrop-blur-md rounded-2xl p-6 sm:p-8 flex flex-col items-center text-center shadow-[0_8px_30px_rgb(0,0,0,0.08)] transform hover:-translate-y-1 transition-transform">
+                        <Link
+                            to={isAuthenticated ? "/menu" : "/login"}
+                            className="bg-[#F6F3F4] backdrop-blur-md rounded-2xl p-6 sm:p-8 flex flex-col items-center text-center shadow-[0_8px_30px_rgb(0,0,0,0.08)] transform hover:-translate-y-1 transition-transform"
+                        >
                             <div className="w-12 h-12 mb-4 flex items-center justify-center">
                                 <img src={iconLeaf} alt="Швидко та легко" className="w-14 h-14 object-contain drop-shadow-sm" />
                             </div>

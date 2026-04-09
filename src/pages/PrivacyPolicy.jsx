@@ -7,6 +7,7 @@ import imgData from '../assets/privacy/Data_collection.png';
 import imgUsage from '../assets/privacy/Using.png';
 import imgCookies from '../assets/privacy/Cookies.png';
 import imgControl from '../assets/privacy/Control.png';
+import bgPrivacy from '../assets/privacy/fon_privacy.jpg';
 
 const PrivacyPolicy = () => {
     const navigate = useNavigate();
@@ -28,8 +29,10 @@ const PrivacyPolicy = () => {
     };
 
     return (
-        <div className="w-full min-h-screen bg-[#F6F3F4] text-[#1A1A1A] font-['Inter'] flex flex-col items-center py-10 px-6 sm:px-10 lg:px-20 relative overflow-hidden">
-
+        <div
+            className="w-full min-h-screen text-[#1A1A1A] font-['Inter'] flex flex-col items-center py-10 px-6 sm:px-10 lg:px-20 relative overflow-hidden bg-cover bg-center "
+            style={{ backgroundImage: `url(${bgPrivacy})` }}
+        >
             {/* Контейнер контенту */}
             <div className="w-full max-w-6xl relative z-10">
 
@@ -65,7 +68,8 @@ const PrivacyPolicy = () => {
                 <div className="w-full max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8 mb-16 lg:mb-20 font-['Inter']">
 
                     {/* Картка 1: Збір даних */}
-                    <Link to="/privacy/data" className="bg-transparent border border-gray-500 rounded-[2rem] p-8 flex flex-col items-center text-center hover:bg-white transition-all duration-300 group">
+                    {/* ЗМІНЕНО: Додано легкий градієнт bg-gradient-to-br from-white/95 to-[#E8EFE6]/90 */}
+                    <Link to="/privacy/data" className="bg-gradient-to-br from-white/95 to-[#E8EFE6]/90 backdrop-blur-md border-[1.5px] border-white/50 rounded-[2.5rem] p-8 sm:p-10 flex flex-col items-center text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-md">
                         <div className="mb-4 flex items-center justify-center group-hover:scale-110 transition-transform">
                             <img
                                 src={imgData}
@@ -74,11 +78,11 @@ const PrivacyPolicy = () => {
                             />
                         </div>
                         <h3 className="text-2xl font-bold mb-3 text-gray-900">Збір даних</h3>
-                        <p className="text-gray-900 text-lg leading-snug">Нам потрібен ваш Email та<br/>ім’я, щоб зберігати рецепти</p>
+                        <p className="text-gray-800 text-lg leading-snug">Нам потрібен ваш Email та<br/>ім’я, щоб зберігати рецепти</p>
                     </Link>
 
                     {/* Картка 2: Використання */}
-                    <Link to="/privacy/usage" className="bg-transparent border border-gray-500 rounded-[2rem] p-8 flex flex-col items-center text-center hover:bg-white transition-all duration-300 group">
+                    <Link to="/privacy/usage" className="bg-gradient-to-br from-white/95 to-[#E8EFE6]/90 backdrop-blur-md border-[1.5px] border-white/50 rounded-[2.5rem] p-8 sm:p-10 flex flex-col items-center text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-md">
                         <div className="mb-4 flex items-center justify-center group-hover:scale-110 transition-transform">
                             <img
                                 src={imgUsage}
@@ -87,11 +91,11 @@ const PrivacyPolicy = () => {
                             />
                         </div>
                         <h3 className="text-2xl font-bold mb-3 text-gray-900">Використання</h3>
-                        <p className="text-gray-900 text-lg leading-snug">Щоб покращувати сервіс<br/>та надсилати новини</p>
+                        <p className="text-gray-800 text-lg leading-snug">Щоб покращувати сервіс<br/>та надсилати новини</p>
                     </Link>
 
                     {/* Картка 3: Куки */}
-                    <Link to="/privacy/cookies" className="bg-transparent border border-gray-500 rounded-[2rem] p-8 flex flex-col items-center text-center hover:bg-white transition-all duration-300 group">
+                    <Link to="/privacy/cookies" className="bg-gradient-to-br from-white/95 to-[#E8EFE6]/90 backdrop-blur-md border-[1.5px] border-white/50 rounded-[2.5rem] p-8 sm:p-10 flex flex-col items-center text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-md">
                         <div className="mb-4 flex items-center justify-center group-hover:scale-110 transition-transform">
                             <img
                                 src={imgCookies}
@@ -100,11 +104,11 @@ const PrivacyPolicy = () => {
                             />
                         </div>
                         <h3 className="text-2xl font-bold mb-3 text-gray-900">Куки(Cookies)</h3>
-                        <p className="text-gray-900 text-lg leading-snug">Наші “печива” лише для<br/>технічної роботи сайту</p>
+                        <p className="text-gray-800 text-lg leading-snug">Наші “печива” лише для<br/>технічної роботи сайту</p>
                     </Link>
 
                     {/* Картка 4: Контроль */}
-                    <Link to="/privacy/control" className="bg-transparent border border-gray-500 rounded-[2rem] p-8 flex flex-col items-center text-center hover:bg-white transition-all duration-300 group">
+                    <Link to="/privacy/control" className="bg-gradient-to-br from-white/95 to-[#E8EFE6]/90 backdrop-blur-md border-[1.5px] border-white/50 rounded-[2.5rem] p-8 sm:p-10 flex flex-col items-center text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-md">
                         <div className="mb-4 flex items-center justify-center group-hover:scale-110 transition-transform">
                             <img
                                 src={imgControl}
@@ -113,31 +117,31 @@ const PrivacyPolicy = () => {
                             />
                         </div>
                         <h3 className="text-2xl font-bold mb-3 text-gray-900">Контроль</h3>
-                        <p className="text-gray-900 text-lg leading-snug">Ви можете видалити<br/>акаунт будь коли</p>
+                        <p className="text-gray-800 text-lg leading-snug">Ви можете видалити<br/>акаунт будь коли</p>
                     </Link>
 
                 </div>
 
-                {/* СУЧАСНІ КНОПКИ З ЧІТКОЮ ІЄРАРХІЄЮ */}
+{/* СУЧАСНІ КНОПКИ З ЧІТКОЮ ІЄРАРХІЄЮ */}
                 <div className="flex flex-col sm:flex-row gap-5 mb-10 w-full justify-center">
-                    {/* Другорядна дія (Secondary) - Outline стиль */}
+                    {/* Другорядна дія (Secondary) - ЗМІНЕНО на градієнт */}
                     <Link
                         to="/privacy/full"
-                        className="px-8 py-3.5 border-2 border-[#1A1A1A] text-[#1A1A1A] rounded-full font-['El_Messiri'] text-xl text-center hover:bg-[#1A1A1A] hover:text-white transition-all w-full sm:w-auto min-w-[240px]"
+                        className="px-8 py-3.5 bg-gradient-to-r from-white to-[#E8EFE6] text-[#1A1A1A] border border-white/60 shadow-md rounded-full font-['El_Messiri'] text-xl text-center hover:shadow-lg hover:from-[#E8EFE6] hover:to-[#DCE8D9] transition-all w-full sm:w-auto min-w-[240px]"
                     >
                         Переглянути повністю
                     </Link>
 
-                    {/* Головна дія (Primary) - Акцентна */}
+                    {/* Головна дія (Primary) - ЗМІНЕНО на градієнт */}
                     {!isAccepted ? (
                         <button
                             onClick={handleAcceptPolicy}
-                            className="px-8 py-3.5 bg-[#42705D] text-white border-2 border-[#42705D] rounded-full font-['El_Messiri'] text-xl text-center shadow-md hover:bg-[#2B4B3C] hover:border-[#2B4B3C] hover:shadow-lg transition-all w-full sm:w-auto min-w-[240px]"
+                            className="px-8 py-3.5 bg-gradient-to-r from-[#42705D] to-[#5B826B] text-white rounded-full font-['El_Messiri'] text-xl text-center shadow-md hover:from-[#2B4B3C] hover:to-[#42705D] hover:shadow-lg transition-all w-full sm:w-auto min-w-[240px]"
                         >
                             Прийняти політику
                         </button>
                     ) : (
-                        <div className="px-8 py-3.5 bg-gray-200 text-gray-600 border-2 border-gray-200 rounded-full font-['El_Messiri'] text-xl text-center w-full sm:w-auto min-w-[240px] flex items-center justify-center gap-2 cursor-default">
+                        <div className="px-8 py-3.5 bg-white/60 backdrop-blur-sm text-gray-700 border border-white/50 rounded-full font-['El_Messiri'] text-xl text-center shadow-sm w-full sm:w-auto min-w-[240px] flex items-center justify-center gap-2 cursor-default">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"></path></svg>
                             Вже прийнято
                         </div>
