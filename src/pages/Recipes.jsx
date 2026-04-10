@@ -483,24 +483,26 @@ const Recipes = () => {
                                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                                             />
 
-                                            {/* Кнопка "Улюблені" (Сіра, якщо не в улюблених, червона - якщо так) */}
-                                            <button
-                                                onClick={(e) => toggleFavorite(e, recipe)}
-                                                className="absolute top-4 left-4 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform"
-                                                title={recipe.is_favorited ? "Видалити з улюблених" : "Додати в улюблені"}
-                                            >
-                                                <svg width="20" height="20" viewBox="0 0 24 24" fill={recipe.is_favorited ? "#EF4444" : "none"} stroke={recipe.is_favorited ? "#EF4444" : "#9CA3AF"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                                                </svg>
-                                            </button>
+                                            {/* Кнопка "Улюблені" показується ТІЛЬКИ авторизованим користувачам */}
+                                            {isAuthenticated && (
+                                                <button
+                                                    onClick={(e) => toggleFavorite(e, recipe)}
+                                                    className="absolute top-4 left-4 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform z-10"
+                                                    title={recipe.is_favorited ? "Видалити з улюблених" : "Додати в улюблені"}
+                                                >
+                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill={recipe.is_favorited ? "#EF4444" : "none"} stroke={recipe.is_favorited ? "#EF4444" : "#9CA3AF"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                                    </svg>
+                                                </button>
+                                            )}
 
-                                            {/* Бейджик збігів (Справа) - показується ТІЛЬКИ якщо є match_count */}
+                                            {/* Бейджик збігів (Справа) */}
                                             {recipe.match_count > 0 && recipe.total_count > 0 && (
                                                 <div
                                                     className="absolute top-4 right-4 h-10 px-3 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md z-10 text-[#6A907B] font-bold font-['Inter'] text-sm gap-1.5"
                                                     title={`Знайдено ${recipe.match_count} з ${recipe.total_count} інгредієнтів`}
                                                 >
-                                                    <svg width="23" height="23" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                                         <path d="M4 12.5C4 12.5 7.5 17 8.5 18C10 14 15 7.5 20 5"></path>
                                                     </svg>
                                                     {recipe.match_count}/{recipe.total_count}
