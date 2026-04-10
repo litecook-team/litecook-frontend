@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api';
 import { ENDPOINTS, API_URL, TOKEN_KEY } from '../constants/api';
@@ -16,15 +16,6 @@ const getPluralForm = (number, titles) => {
     if (n1 === 1) return titles[0];
     return titles[2];
 };
-
-// Швидкі інгредієнти для кнопок
-const QUICK_INGREDIENTS = [
-    { icon: '🥔', name: 'картопля' }, { icon: '🥕', name: 'морква' },
-    { icon: '🧄', name: 'часник' }, { icon: '🍅', name: 'помідори' },
-    { icon: '🧀', name: 'сир' }, { icon: '🍗', name: 'курка' },
-    { icon: '🥑', name: 'авокадо' }, { icon: '🥬', name: 'капуста' },
-    { icon: '🥒', name: 'огірок' }
-];
 
 // Словники для нових фільтрів
 const MONTHS_DICT = {
@@ -78,44 +69,114 @@ const Recipes = () => {
     const [maxCalories, setMaxCalories] = useState('');
     const [isSeasonal, setIsSeasonal] = useState(false);
 
+    // Нові стани для бази інгредієнтів та підказок
+    const [allIngredients, setAllIngredients] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const inputRef = useRef(null);
+    const suggestionsRef = useRef(null);
+
+    // Стан, який фіксує, чи БУЛО натиснуто кнопку пошуку з якимось фільтром
+    const [hasActiveFilters, setHasActiveFilters] = useState(false);
+
+    // Стан для відображення меню фільтрів на мобільному
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
     useEffect(() => {
-        fetchRecipes();
+        // Завантажуємо всі інгредієнти з БД для підказок та списку
+        const fetchIngredients = async () => {
+            try {
+                const res = await api.get('/api/ingredients/?limit=1000');
+                setAllIngredients(res.data.results || res.data);
+            } catch (e) {
+                console.error("Не вдалося завантажити базу інгредієнтів", e);
+            }
+        };
+        fetchIngredients();
+        fetchRecipes(false); // передаємо false, щоб не міняти заголовок при першому завантаженні
         window.scrollTo(0, 0);
     }, []);
 
-    const fetchRecipes = async () => {
+    // Закриття підказок при кліку поза ними
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (suggestionsRef.current && !suggestionsRef.current.contains(event.target) &&
+                inputRef.current && !inputRef.current.contains(event.target)) {
+                setShowSuggestions(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // Перетворюємо рядок "картопля банан, морква" у формат "картопля, банан, морква"
+    const formatQueryForBackend = (query) => {
+        if (!query) return '';
+        const terms = query.split(/[\s,]+/).filter(t => t.trim().length > 0);
+        return terms.join(', ');
+    };
+
+    const fetchRecipes = async (isUserAction = true, overrideParams = null) => {
         setLoading(true);
         try {
-            const params = new URLSearchParams();
-            // Якщо є searchQuery, ми використаємо спеціальний ендпоінт match/
-            const hasSearch = searchQuery.trim() !== '';
+            let url = '';
 
-            if (searchQuery) params.append('search_query', searchQuery);
-            if (selectedCuisines.length > 0) params.append('cuisine', selectedCuisines.join(','));
-            if (selectedDifficulties.length > 0) params.append('difficulty', selectedDifficulties.join(','));
-            if (selectedDiets.length > 0) params.append('dietary_tags', selectedDiets.join(','));
-            if (selectedDishTypes.length > 0) params.append('dish_types', selectedDishTypes.join(','));
-            if (selectedMealTimes.length > 0) params.append('meal_times', selectedMealTimes.join(','));
-            if (maxTime) params.append('max_time', maxTime);
-            if (maxCalories) params.append('max_calories', maxCalories);
-            if (isSeasonal) params.append('season', 'summer,autumn,winter,spring');
-            if (selectedMonths.length > 0) params.append('months', selectedMonths.join(','));
-            if (selectedIngredientCategories.length > 0) params.append('ingredient_categories', selectedIngredientCategories.join(','));
+            if (overrideParams === 'clear') {
+                url = `${ENDPOINTS.RECIPES}`;
+                setHasActiveFilters(false);
+            } else {
+                const params = new URLSearchParams();
+                const hasSearch = searchQuery.trim() !== '';
 
-            // Вибираємо правильний URL залежно від того, чи є текст у пошуку
-            const url = hasSearch
-                ? `${ENDPOINTS.RECIPES}match/?${params.toString()}`
-                : `${ENDPOINTS.RECIPES}?${params.toString()}`;
+                if (hasSearch) params.append('search_query', formatQueryForBackend(searchQuery));
+
+                if (selectedCuisines.length > 0) params.append('cuisine', selectedCuisines.join(','));
+                if (selectedDifficulties.length > 0) params.append('difficulty', selectedDifficulties.join(','));
+                if (selectedDiets.length > 0) params.append('dietary_tags', selectedDiets.join(','));
+                if (selectedDishTypes.length > 0) params.append('dish_types', selectedDishTypes.join(','));
+                if (selectedMealTimes.length > 0) params.append('meal_times', selectedMealTimes.join(','));
+                if (maxTime) params.append('max_time', maxTime);
+                if (maxCalories) params.append('max_calories', maxCalories);
+                if (isSeasonal) params.append('season', 'summer,autumn,winter,spring');
+                if (selectedMonths.length > 0) params.append('months', selectedMonths.join(','));
+                if (selectedIngredientCategories.length > 0) params.append('ingredient_categories', selectedIngredientCategories.join(','));
+
+                url = hasSearch
+                    ? `${ENDPOINTS.RECIPES}match/?${params.toString()}`
+                    : `${ENDPOINTS.RECIPES}?${params.toString()}`;
+
+                if (isUserAction) {
+                    const isFiltering = Array.from(params.keys()).length > 0;
+                    setHasActiveFilters(isFiltering);
+                }
+            }
 
             const response = await api.get(url);
             setRecipes(response.data.results || response.data);
             setVisibleCount(6);
+            setShowSuggestions(false);
         } catch (error) {
             console.error("Помилка завантаження рецептів:", error);
             showToast("❌ Помилка завантаження рецептів");
         } finally {
             setLoading(false);
         }
+    };
+
+    const clearAllFilters = () => {
+        setSearchQuery('');
+        setSelectedCuisines([]);
+        setSelectedDifficulties([]);
+        setSelectedDiets([]);
+        setSelectedDishTypes([]);
+        setSelectedMealTimes([]);
+        setSelectedMonths([]);
+        setSelectedIngredientCategories([]);
+        setMaxTime('');
+        setMaxCalories('');
+        setIsSeasonal(false);
+
+        // Відразу оновлюємо список, передаючи 'clear' щоб ігнорувати старий стейт
+        setTimeout(() => fetchRecipes(true, 'clear'), 0);
     };
 
     const showToast = (message) => {
@@ -144,12 +205,6 @@ const Recipes = () => {
         }
     };
 
-    const handleQuickAdd = (ingredientName) => {
-        if (!searchQuery.includes(ingredientName)) {
-            setSearchQuery(prev => prev ? `${prev}, ${ingredientName}` : ingredientName);
-        }
-    };
-
     const toggleArrayFilter = (state, setState, value) => {
         setState(prev => prev.includes(value) ? prev.filter(i => i !== value) : [...prev, value]);
     };
@@ -158,6 +213,61 @@ const Recipes = () => {
         if (!path) return null;
         if (path.startsWith('http')) return path;
         return `${API_URL}${path}`;
+    };
+
+    // ================= ЛОГІКА ІНТЕЛЕКТУАЛЬНОГО ПОШУКУ ТА РЕГІСТРУ =================
+
+    const capitalizeSearch = (str) => {
+        if (!str) return '';
+        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    };
+
+    const getCurrentSearchTerm = () => {
+        if (!searchQuery) return '';
+        // Розбиваємо рядок по пробілах АБО комах
+        const parts = searchQuery.split(/[\s,]+/);
+        return parts[parts.length - 1].trim().toLowerCase();
+    };
+
+    const currentTerm = getCurrentSearchTerm();
+    const suggestedIngredients = currentTerm.length > 0
+        ? allIngredients.filter(ing => ing.name.toLowerCase().includes(currentTerm))
+        : [];
+
+    const handleAddIngredientToSearch = (ingredientName) => {
+        const query = searchQuery;
+        const lastIndex = Math.max(query.lastIndexOf(','), query.lastIndexOf(' '));
+
+        let newQuery = '';
+        if (lastIndex === -1) {
+            newQuery = ingredientName + ', ';
+        } else {
+            newQuery = query.substring(0, lastIndex + 1).trim() + ' ' + ingredientName + ', ';
+        }
+
+        setSearchQuery(capitalizeSearch(newQuery));
+        setShowSuggestions(false);
+        if (inputRef.current) inputRef.current.focus();
+    };
+
+    const handleInputChange = (e) => {
+        setSearchQuery(capitalizeSearch(e.target.value));
+        setShowSuggestions(true);
+    };
+
+    // Підрахунок активних фільтрів для мобільного меню
+    const getActiveFiltersCount = () => {
+        return (searchQuery ? 1 : 0) +
+            selectedCuisines.length +
+            selectedDifficulties.length +
+            selectedDiets.length +
+            selectedDishTypes.length +
+            selectedMealTimes.length +
+            selectedMonths.length +
+            selectedIngredientCategories.length +
+            (maxTime ? 1 : 0) +
+            (maxCalories ? 1 : 0) +
+            (isSeasonal ? 1 : 0);
     };
 
     return (
@@ -172,78 +282,206 @@ const Recipes = () => {
             <div className="mx-auto px-4 sm:px-6 lg:px-12 xl:px-20 w-full pt-8 lg:pt-12">
 
                 {/* ================= ВЕРХНІЙ БЛОК: ФІЛЬТРИ ================= */}
-                <div className="bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-gray-100 p-6 lg:p-10 mb-16 relative overflow-hidden flex flex-col md:flex-row gap-8 min-h-[380px]">
+                <div className="bg-white/90 backdrop-blur-md rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-gray-100 p-4 sm:p-6 lg:p-10 mb-16 relative overflow-hidden flex flex-col lg:flex-row gap-6 lg:gap-8 min-h-[480px]">
 
-                    {/* ЗАГЛУШКА ДЛЯ ДЕКОРАТИВНОЇ КАРТИНКИ (Овочі справа) */}
-                    <div className="hidden lg:block absolute right-0 top-0 bottom-0 w-[200px] xl:w-[280px] overflow-hidden rounded-r-[2.5rem]">
-                        <img
-                            src={decorImage}
-                            alt="Овочі"
-                            className="w-full h-full object-cover object-left opacity-90 scale-[1.15]"
-                            style={{ objectPosition: 'left center' }}
-                        />
-                    </div>
+                    {/* ФОНОВЕ ЗОБРАЖЕННЯ НА ВЕСЬ БЛОК */}
+{/*                     <div className="absolute inset-0 z-0 opacity-[0.25] pointer-events-none mix-blend-multiply" */}
+{/*                          style={{ backgroundImage: `url(${decorImage})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}> */}
+{/*                     </div> */}
 
-                    {/* ЛІВА КОЛОНКА: ТАБИ (Меню фільтрів) */}
-                    <div className="w-full md:w-48 lg:w-56 shrink-0 flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-visible pb-4 md:pb-0 custom-scrollbar z-10">
-                        <div className="font-['El_Messiri'] font-bold text-xl text-gray-800 mb-2 hidden md:block pl-2">Фільтри</div>
-                        {TABS.map(tab => (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={`px-5 py-3 rounded-xl font-['Inter'] font-semibold text-sm md:text-base transition-all whitespace-nowrap text-left ${
-                                    activeTab === tab.id
-                                    ? 'bg-[#5B826B] text-white shadow-md'
-                                    : 'bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                                }`}
-                            >
-                                {tab.label}
-                            </button>
-                        ))}
+                    {/* ЛІВА КОЛОНКА: ТАБИ */}
+                    <div className="w-full lg:w-48 xl:w-56 shrink-0 z-10 flex flex-col relative">
+
+                        <div className="font-['El_Messiri'] font-bold text-xl text-gray-800 mb-4 hidden lg:block pl-2">Фільтри</div>
+
+                        {/* Сітка фільтрів для мобільного (постійно видима) */}
+                        <div className="block lg:hidden w-full mb-4">
+                            {/* ДОДАНО: Заголовок для мобільних */}
+                            <div className="font-['El_Messiri'] font-bold text-xl text-gray-800 mb-3 pl-1">Фільтри</div>
+
+                            <div className="grid grid-cols-2 gap-2">
+                                {TABS.map(tab => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`py-2.5 px-3 rounded-lg font-['Inter'] font-semibold text-[13px] transition-all text-center border ${
+                                            activeTab === tab.id
+                                            ? 'bg-[#5B826B] text-white border-[#5B826B] shadow-md'
+                                            : 'bg-white/90 text-gray-600 border-gray-200 hover:bg-gray-50 shadow-sm'
+                                        }`}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Звичайний список кнопок для ПК (від lg і вище) */}
+                        <div className="hidden lg:flex flex-col gap-2.5 flex-grow">
+                            {TABS.map(tab => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`px-5 py-3.5 rounded-xl font-['Inter'] font-semibold text-[15px] transition-all text-left shrink-0 border ${
+                                        activeTab === tab.id
+                                        ? 'bg-[#5B826B] text-white border-[#5B826B] shadow-md'
+                                        : 'bg-white/80 backdrop-blur-sm text-gray-700 border-gray-200 hover:bg-white hover:border-[#5B826B] hover:text-[#5B826B]'
+                                    }`}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     {/* ПРАВА КОЛОНКА: КОНТЕНТ ФІЛЬТРУ */}
-                    <div className="flex-grow z-10 lg:pr-[220px] xl:pr-[300px] flex flex-col">
+                    <div className="flex-grow z-10 flex flex-col h-full bg-white/60 md:bg-white/40 backdrop-blur-xl md:backdrop-blur-md rounded-3xl p-4 sm:p-6 md:p-8 border border-white/50 shadow-sm relative">
 
-                        <div className="flex items-center justify-end border-b border-gray-300 pb-2 mb-8 mt-2">
-                            <div className="w-3 h-3 bg-[#6A907B] mr-2"></div>
-                            <span className="font-['El_Messiri'] font-bold text-gray-800 tracking-wider uppercase text-sm lg:text-base">
-                                ПІДІБРАТИ РЕЦЕПТ
-                            </span>
+                        <div className="flex items-center justify-between border-b border-gray-300/60 pb-3 mb-6 md:mb-8 mt-1">
+                            {hasActiveFilters ? (
+                                <button
+                                    onClick={clearAllFilters}
+                                    className="flex items-center gap-1.5 bg-red-50 text-red-600 hover:bg-red-100 transition-colors font-['Inter'] text-[13px] font-bold px-4 py-1.5 rounded-full border border-red-200 shadow-sm animate-fade-in"
+                                >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                    <span className="hidden sm:inline">Скинути фільтри</span>
+                                </button>
+                            ) : (
+                                <div></div>
+                            )}
+
+                            <div className="flex items-center">
+                                <div className="w-3 h-3 bg-[#6A907B] mr-2"></div>
+                                <span className="font-['El_Messiri'] font-bold text-gray-800 tracking-wider uppercase text-sm lg:text-base">
+                                    ПІДІБРАТИ РЕЦЕПТ
+                                </span>
+                            </div>
                         </div>
 
                         {/* ТАБ 1: ІНГРЕДІЄНТИ / ПОШУК */}
                         {activeTab === 'ingredients' && (
                             <div className="animate-fade-in flex flex-col h-full font-['El_Messiri']">
                                 <h3 className="text-[22px] md:text-[28px] font-bold text-[#1A1A1A] mb-5">Введіть інгредієнти, які у вас є:</h3>
-                                <div className="relative mb-6 shadow-sm rounded-xl">
-                                    <input
-                                        type="text"
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        onKeyDown={(e) => e.key === 'Enter' && fetchRecipes()}
-                                        placeholder="наприклад: картопля, цибуля, яйця..."
-                                        className="w-full bg-gray-50 border-2 border-gray-200 rounded-xl px-5 py-4 pl-12 outline-none focus:border-[#6A907B] transition-colors text-gray-800 font-medium font-['Inter']"
-                                    />
-                                    <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+
+                                {/* БЛОК ПОШУКУ З ПІДКАЗКАМИ */}
+                                <div className="relative mb-6 shrink-0" ref={suggestionsRef}>
+                                    <div className="relative shadow-sm rounded-xl">
+                                        <input
+                                            ref={inputRef}
+                                            type="text"
+                                            value={searchQuery}
+                                            onChange={handleInputChange}
+                                            onFocus={() => setShowSuggestions(true)}
+                                            onKeyDown={(e) => e.key === 'Enter' && fetchRecipes()}
+                                            placeholder="Листя салату, Картопля, Бринза..."
+                                            className="w-full bg-white border-2 border-gray-200 rounded-xl px-5 py-4 pl-12 outline-none focus:border-[#6A907B] transition-colors text-gray-800 font-medium font-['Inter']"
+                                        />
+                                        <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                    </div>
+
+                                    {/* Випадаючий список підказок */}
+                                    {showSuggestions && suggestedIngredients.length > 0 && (
+                                        <ul className="absolute top-[105%] left-0 w-full mt-1 bg-white border border-gray-200 rounded-2xl shadow-xl max-h-60 overflow-y-auto py-2 custom-scrollbar z-50 font-['Inter']">
+                                            {suggestedIngredients.map(ing => (
+                                                <li
+                                                    key={ing.id}
+                                                    onClick={() => handleAddIngredientToSearch(ing.name)}
+                                                    className="flex items-center gap-4 px-5 py-2.5 hover:bg-[#F6F7FB] cursor-pointer transition-colors border-b border-gray-50 last:border-0"
+                                                >
+                                                    {ing.image ? (
+                                                        <img src={getImageUrl(ing.image)} className="w-8 h-8 rounded-full object-cover shadow-sm bg-gray-100" alt="" />
+                                                    ) : (
+                                                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs shadow-sm">•</div>
+                                                    )}
+                                                    <span className="font-medium text-gray-800 text-[15px] capitalize">{ing.name}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
                                 </div>
 
-{/*                                 <div className="mb-10 font-['Inter']"> */}
-{/*                                     <p className="text-[13px] font-bold text-gray-700 mb-4 flex items-center gap-1"> */}
-{/*                                         Швидкий вибір <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg> */}
-{/*                                     </p> */}
-{/*                                     <div className="flex flex-wrap gap-2.5"> */}
-{/*                                         {QUICK_INGREDIENTS.map(ing => ( */}
-{/*                                             <button */}
-{/*                                                 key={ing.name} */}
-{/*                                                 onClick={() => handleQuickAdd(ing.name)} */}
-{/*                                                 className="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:bg-[#6A907B] hover:text-white hover:border-[#6A907B] transition-colors flex items-center gap-1.5 shadow-sm" */}
-{/*                                             > */}
-{/*                                                 <span>{ing.icon}</span> {ing.name} */}
-{/*                                             </button> */}
-{/*                                         ))} */}
-{/*                                     </div> */}
-{/*                                 </div> */}
+                                {/* Дві колонки: Скролячий список (Швидкий вибір) та Інфо блок */}
+                                <div className="flex flex-col lg:flex-row gap-5 flex-grow font-['Inter'] min-h-[220px]">
+
+                                    {/* Ліва колонка: ШВИДКИЙ СКРОЛЯЧИЙ СПИСОК ІНГРЕДІЄНТІВ */}
+                                    <div className="w-full lg:w-[60%] flex flex-col bg-white border border-gray-200 rounded-2xl p-4 shadow-sm max-h-[320px]">
+                                        <p className="text-[14px] font-bold text-gray-800 mb-3 flex items-center gap-1 shrink-0">
+                                            Швидкий вибір <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+                                        </p>
+
+                                        {allIngredients.length > 0 ? (
+                                            <div className="flex flex-wrap gap-2.5 overflow-y-auto custom-scrollbar pr-2 content-start flex-grow">
+                                                {allIngredients.map(ing => (
+                                                    <button
+                                                        key={ing.id}
+                                                        onClick={() => handleAddIngredientToSearch(ing.name)}
+                                                        className="px-3.5 py-1.5 bg-white border border-gray-200 rounded-full text-[13.5px] font-medium text-gray-700 hover:border-[#6A907B] hover:text-[#6A907B] transition-all flex items-center gap-2 shadow-sm"
+                                                    >
+                                                        {ing.image ? (
+                                                            <img src={getImageUrl(ing.image)} alt={ing.name} className="w-5 h-5 rounded-full object-cover bg-gray-50" />
+                                                        ) : (
+                                                            <span className="text-gray-400">•</span>
+                                                        )}
+                                                        <span className="capitalize">{ing.name}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="text-sm text-gray-500 italic py-4">Завантаження бази інгредієнтів...</div>
+                                        )}
+                                    </div>
+
+                                    {/* Права колонка: ІНФОРМАЦІЯ ТА ПРОМО */}
+                                    <div className="w-full lg:w-[40%] flex flex-col">
+                                        <div className="bg-[#FDFBF7] border-2 border-[#DCE8D9] rounded-2xl p-5 shadow-sm flex flex-col h-full">
+
+                                            <h4 className="font-bold text-[#B47231] uppercase tracking-wider mb-3 text-[13px] flex items-center gap-2">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                                {hasActiveFilters ? 'Результати' : 'Усі страви'}
+                                            </h4>
+
+                                            <div className="text-gray-800 text-[14px] mb-4">
+                                                {hasActiveFilters ? (
+                                                    <>
+                                                        Знайдено рецептів: <span className="font-bold text-lg ml-1 text-[#1A1A1A]">{recipes.length}</span>
+                                                        <p className="text-[12px] text-gray-500 mt-1 leading-tight">
+                                                            за вашими критеріями пошуку
+                                                        </p>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        Доступно рецептів: <span className="font-bold text-lg ml-1 text-[#1A1A1A]">{recipes.length}</span>
+                                                        <p className="text-[12px] text-gray-500 mt-1 leading-tight">
+                                                            Оберіть інгредієнти або фільтри, щоб розпочати пошук.
+                                                        </p>
+                                                    </>
+                                                )}
+                                            </div>
+
+                                            {/* Блок промо реєстрації для гостей */}
+                                            {!isAuthenticated ? (
+                                                <div className="mt-auto bg-[#DCE8D9]/40 rounded-xl p-4 border border-[#DCE8D9]">
+                                                    <h5 className="font-bold text-[#5B826B] mb-2 text-sm">Список покупок 🛒</h5>
+                                                    <p className="text-[12px] text-gray-600 mb-4 leading-relaxed">
+                                                        Бракує інгредієнтів? Зареєструйтесь, щоб автоматично формувати список для покупок.
+                                                    </p>
+                                                    <Link to="/register" className="block text-center w-full py-2.5 bg-[#5B826B] text-white rounded-lg text-[13px] font-semibold hover:bg-[#42705D] transition-colors shadow-sm">
+                                                        Зареєструватися
+                                                    </Link>
+                                                </div>
+                                            ) : (
+                                                <div className="mt-auto bg-[#DCE8D9]/40 rounded-xl p-4 border border-[#DCE8D9]">
+                                                    <h5 className="font-bold text-[#5B826B] mb-2 text-sm">Тижневе меню 📅</h5>
+                                                    <p className="text-[12px] text-gray-600 leading-relaxed">
+                                                        Ви можете додати будь-який із цих рецептів у своє тижневе меню та згенерувати список покупок.
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                        </div>
+                                    </div>
+
+                                </div>
                             </div>
                         )}
 
@@ -257,7 +495,7 @@ const Recipes = () => {
                                         <button
                                             key={key}
                                             onClick={() => toggleArrayFilter(selectedIngredientCategories, setSelectedIngredientCategories, key)}
-                                            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all border ${selectedIngredientCategories.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B]' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
+                                            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all border ${selectedIngredientCategories.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
                                         >
                                             {value}
                                         </button>
@@ -275,7 +513,7 @@ const Recipes = () => {
                                         <button
                                             key={key}
                                             onClick={() => toggleArrayFilter(selectedMealTimes, setSelectedMealTimes, key)}
-                                            className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border ${selectedMealTimes.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B]' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
+                                            className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border ${selectedMealTimes.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
                                         >
                                             {value}
                                         </button>
@@ -293,7 +531,7 @@ const Recipes = () => {
                                         <button
                                             key={key}
                                             onClick={() => toggleArrayFilter(selectedDishTypes, setSelectedDishTypes, key)}
-                                            className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border ${selectedDishTypes.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B]' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
+                                            className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border ${selectedDishTypes.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
                                         >
                                             {value}
                                         </button>
@@ -311,7 +549,7 @@ const Recipes = () => {
                                         <button
                                             key={key}
                                             onClick={() => toggleArrayFilter(selectedCuisines, setSelectedCuisines, key)}
-                                            className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border ${selectedCuisines.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B]' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
+                                            className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border ${selectedCuisines.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
                                         >
                                             {value}
                                         </button>
@@ -329,7 +567,7 @@ const Recipes = () => {
                                         <button
                                             key={key}
                                             onClick={() => toggleArrayFilter(selectedDifficulties, setSelectedDifficulties, key)}
-                                            className={`px-6 py-3 rounded-xl text-base font-bold transition-all border ${selectedDifficulties.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B]' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
+                                            className={`px-6 py-3 rounded-xl text-base font-bold transition-all border ${selectedDifficulties.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
                                         >
                                             {value}
                                         </button>
@@ -347,7 +585,7 @@ const Recipes = () => {
                                         <button
                                             key={time}
                                             onClick={() => setMaxTime(maxTime === time ? '' : time)}
-                                            className={`px-6 py-3 rounded-xl text-base font-bold transition-all border ${maxTime === time ? 'bg-[#6A907B] text-white border-[#6A907B]' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
+                                            className={`px-6 py-3 rounded-xl text-base font-bold transition-all border ${maxTime === time ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
                                         >
                                             До {time} хв
                                         </button>
@@ -366,7 +604,7 @@ const Recipes = () => {
                                         <button
                                             key={cal}
                                             onClick={() => setMaxCalories(maxCalories === cal ? '' : cal)}
-                                            className={`px-6 py-3 rounded-xl text-base font-bold transition-all border ${maxCalories === cal ? 'bg-[#6A907B] text-white border-[#6A907B]' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
+                                            className={`px-6 py-3 rounded-xl text-base font-bold transition-all border ${maxCalories === cal ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
                                         >
                                             До {cal} ккал
                                         </button>
@@ -384,7 +622,7 @@ const Recipes = () => {
                                         <button
                                             key={key}
                                             onClick={() => toggleArrayFilter(selectedDiets, setSelectedDiets, key)}
-                                            className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all border ${selectedDiets.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B]' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
+                                            className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all border ${selectedDiets.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
                                         >
                                             {value}
                                         </button>
@@ -411,7 +649,7 @@ const Recipes = () => {
                                         <button
                                             key={key}
                                             onClick={() => toggleArrayFilter(selectedMonths, setSelectedMonths, key)}
-                                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all border ${selectedMonths.includes(key) ? 'bg-[#B47231] text-white border-[#B47231]' : 'bg-white text-gray-600 border-gray-300 hover:border-[#B47231]'}`}
+                                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all border ${selectedMonths.includes(key) ? 'bg-[#B47231] text-white border-[#B47231] shadow-md' : 'bg-white text-gray-600 border-gray-300 hover:border-[#B47231]'}`}
                                         >
                                             {value}
                                         </button>
@@ -421,25 +659,14 @@ const Recipes = () => {
                         )}
 
                         {/* КНОПКА ПОШУКУ */}
-                        {activeTab === 'ingredients' ? (
-                            <div className="mt-8 -mb-4 relative z-20 font-['Inter']">
-                                <button
-                                    onClick={fetchRecipes}
-                                    className="w-full md:w-[85%] py-4 bg-[#6A907B] text-white rounded-md font-bold text-[17px] hover:bg-[#5B826B] transition-colors shadow-md text-center tracking-wide"
-                                >
-                                    Знайти рецепт
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="mt-auto pt-6 font-['Inter']">
-                                <button
-                                    onClick={fetchRecipes}
-                                    className="w-full md:w-[85%] py-4 bg-[#6A907B] text-white rounded-md font-bold text-[17px] hover:bg-[#5B826B] transition-colors shadow-md text-center tracking-wide"
-                                >
-                                    Застосувати фільтри
-                                </button>
-                            </div>
-                        )}
+                        <div className="mt-8 lg:mt-auto pt-4 lg:pt-6 font-['Inter'] shrink-0 flex flex-col sm:flex-row items-center gap-4">
+                            <button
+                                onClick={() => fetchRecipes(true)}
+                                className="w-full sm:flex-1 md:w-max md:px-16 py-4 bg-[#6A907B] text-white rounded-xl font-bold text-[17px] hover:bg-[#5B826B] transition-colors shadow-lg text-center tracking-wide block"
+                            >
+                                {activeTab === 'ingredients' ? 'Знайти рецепт' : 'Застосувати фільтри'}
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -449,8 +676,9 @@ const Recipes = () => {
                     <div className="flex items-center justify-between mb-8 md:mb-12">
                         <div className="flex items-center gap-3 md:gap-4">
                             <div className="w-4 h-4 md:w-5 md:h-5 bg-[#5B826B] shrink-0"></div>
+                            {/* Заголовок залежить від того, чи дійсно натискали "Знайти" */}
                             <h2 className="text-xl md:text-2xl lg:text-[26px] font-['El_Messiri'] font-bold text-gray-800 tracking-wider uppercase whitespace-nowrap">
-                                {searchQuery || selectedCuisines.length || selectedDiets.length || selectedDifficulties.length || maxTime || isSeasonal ? 'Результат пошуку' : 'Всі рецепти'}
+                                {hasActiveFilters ? 'Результати пошуку' : 'Всі рецепти'}
                             </h2>
                         </div>
                         <div className="flex items-center gap-4 flex-grow">
