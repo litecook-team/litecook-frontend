@@ -344,7 +344,7 @@ const Recipes = () => {
                     {/* ПРАВА КОЛОНКА: КОНТЕНТ ФІЛЬТРУ */}
                     <div className="flex-grow z-10 flex flex-col h-full bg-white/60 md:bg-white/40 backdrop-blur-xl md:backdrop-blur-md rounded-3xl p-4 sm:p-6 md:p-8 border border-white/50 shadow-sm relative">
 
-                        <div className="flex items-center justify-between border-b border-gray-300/60 pb-3 mb-6 md:mb-8 mt-1">
+                        <div className="flex items-center justify-between border-b-2 border-gray-400 pb-3 mb-6 md:mb-8 mt-1">
                             {hasActiveFilters ? (
                                 <button
                                     onClick={clearAllFilters}

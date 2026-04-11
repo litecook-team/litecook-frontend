@@ -8,16 +8,65 @@ const ResetPassword = () => {
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
 
+    // Використовуємо надійну валідацію, що і при реєстрації
+    const validateEmail = (email) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return 'Будь ласка, введіть коректну електронну адресу (наприклад, name@example.com).';
+        }
+
+        const domain = email.split('@')[1].toLowerCase();
+
+        const ruDomains = ['.ru', '.su', '.рф', 'yandex', 'mail.ru', 'bk.ru', 'inbox.ru', 'list.ru'];
+        const isRuDomain = ruDomains.some(ru => domain.endsWith(ru) || domain.includes(ru));
+        if (isRuDomain) {
+            return 'Зазначена поштова скринька належить до країни-терориста. Наш сервіс не підтримує такі адреси.';
+        }
+
+        const blockedTypos = ['gmail.co', 'gmail.c', 'gmai.com', 'gmal.com', 'ukr.ne', 'yahoo.c', 'yaho.com'];
+        if (blockedTypos.includes(domain)) {
+            return "Схоже, ви припустилися помилки в домені пошти. Будь ласка, перевірте правильність.";
+        }
+
+        return '';
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setMessage('');
         setError('');
+
+        // 1. Валідація на фронтенді
+        const emailError = validateEmail(email);
+        if (emailError) {
+            setError(emailError);
+            return;
+        }
+
         try {
+            // Якщо бекенд знаходить пошту і все добре, він має повернути успішну відповідь
             await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/password/reset/`, { email });
-            setMessage('Інструкцію з відновлення пароля відправлено на вашу пошту. Будь ласка, перевірте скриньку.');
+            setMessage('Інструкцію з відновлення пароля відправлено на вашу пошту. Будь ласка, перевірте пошту.');
             setEmail('');
         } catch (err) {
-            setError('Сталася помилка. Перевірте, чи правильно введена електронна пошта, і чи існує такий акаунт.');
+            // 2. Обробка помилок від бекенда (бекенд повертає 400 з текстом)
+            let errorMsg = 'Сталася помилка при відправці запиту. Спробуйте пізніше.';
+
+            if (err.response && err.response.data) {
+                const data = err.response.data;
+
+                // Бекенд тепер викидає ValidationError для 'email'
+                if (data.email) {
+                    // drf повертає помилки у вигляді масиву: {"email": ["текст помилки"]}
+                    errorMsg = Array.isArray(data.email) ? data.email[0] : data.email;
+                } else if (data.detail) {
+                    errorMsg = data.detail;
+                } else if (typeof data === 'string') {
+                    errorMsg = data;
+                }
+            }
+
+            setError(errorMsg);
         }
     };
 

@@ -18,17 +18,59 @@ const Register = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    // Функція для валідації формату email
+    const validateEmail = (email) => {
+        // 1. Базова перевірка на наявність @ та крапки
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return 'Будь ласка, введіть коректну електронну адресу (наприклад, name@example.com).';
+        }
+
+        const domain = email.split('@')[1].toLowerCase();
+
+        // 2. Блокування пошт країни-агресора
+        const ruDomains = ['.ru', '.su', '.рф', 'yandex', 'mail.ru', 'bk.ru', 'inbox.ru', 'list.ru'];
+        const isRuDomain = ruDomains.some(ru => domain.endsWith(ru) || domain.includes(ru));
+        if (isRuDomain) {
+            return 'Реєстрація з поштових скриньок країни-терориста заборонена! Використовуйте українські або міжнародні поштові сервіси.';
+        }
+
+        // 3. Блокування типових одруківок
+        const blockedTypos = ['gmail.co', 'gmail.c', 'gmai.com', 'gmal.com', 'ukr.ne', 'yahoo.c', 'yaho.com'];
+        if (blockedTypos.includes(domain)) {
+            return "Схоже, ви зробили помилку в домені пошти. Будь ласка, перевірте правильність.";
+        }
+
+        // Якщо все добре, повертаємо порожній рядок (помилок немає)
+        return '';
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setMessage({ text: '', type: '' });
 
+        // Валідація: Умови використання
         if (!agreed) {
-            setMessage({ text: 'Будь ласка, погодьтеся з умовами використання', type: 'error' });
+            setMessage({ text: 'Будь ласка, погодьтеся з умовами використання.', type: 'error' });
             return;
         }
 
+        // Валідація формату email
+        const emailError = validateEmail(formData.email);
+        if (emailError) {
+            setMessage({ text: emailError, type: 'error' });
+            return; // Зупиняємо відправку на сервер
+        }
+
+        // Валідація довжини пароля
+        if (formData.password1.length < 8) {
+            setMessage({ text: 'Пароль повинен містити щонайменше 8 символів.', type: 'error' });
+            return;
+        }
+
+        // Валідація: Співпадіння паролів
         if (formData.password1 !== formData.password2) {
-            setMessage({ text: 'Паролі не співпадають', type: 'error' });
+            setMessage({ text: 'Паролі не співпадають.', type: 'error' });
             return;
         }
 
@@ -40,7 +82,23 @@ const Register = () => {
             });
             setFormData({ first_name: '', email: '', password1: '', password2: '' });
         } catch (err) {
-            setMessage({ text: 'Помилка реєстрації. Можливо, така пошта вже існує.', type: 'error' });
+            // Спроба отримати конкретну помилку від бекенда, якщо є
+            let errorMsg = 'Помилка реєстрації. Перевірте введені дані.';
+
+            if (err.response && err.response.data) {
+                // Якщо бекенд повертає об'єкт з помилками для конкретних полів (наприклад, Django Rest Auth)
+                if (err.response.data.email) {
+                    errorMsg = 'Користувач з такою поштою вже існує.';
+                } else if (err.response.data.password1 || err.response.data.password) {
+                    errorMsg = 'Пароль надто простий або поширений.';
+                } else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                } else if (typeof err.response.data === 'string') {
+                     errorMsg = err.response.data;
+                }
+            }
+
+            setMessage({ text: errorMsg, type: 'error' });
         }
     };
 
@@ -114,14 +172,17 @@ const Register = () => {
                             <input type="password" name="password2" value={formData.password2} onChange={handleChange} required placeholder="Повторіть пароль" className="w-full px-5 py-3 md:py-2.5 font-['El_Messiri'] rounded-full border border-gray-300 focus:outline-none focus:border-[#42705D] transition text-base md:text-lg text-gray-700 bg-white" />
                         </div>
 
-                        <div className="flex items-center pl-4 pt-1">
-                            <input type="checkbox" id="terms" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="w-4 h-4 text-[#42705D] bg-gray-100 border-gray-300 rounded focus:ring-[#42705D] cursor-pointer shrink-0" />
-                            <label htmlFor="terms" className="ml-2 inline-block text-sm md:text-base font-semibold font-['El_Messiri'] text-gray-800">
-                                Я згоден з {' '}
+                        {/* Перероблена структура checkbox + label для ідеального вирівнювання */}
+                        <div className="flex items-start pl-4 pt-2">
+                            <div className="flex items-center h-5">
+                                <input type="checkbox" id="terms" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="w-4 h-4 text-[#42705D] bg-gray-100 border-gray-300 rounded focus:ring-[#42705D] cursor-pointer shrink-0" />
+                            </div>
+                            <div className="ml-2 text-sm md:text-base font-semibold font-['El_Messiri'] text-gray-800 leading-tight pt-[1px]">
+                                <label htmlFor="terms" className="cursor-pointer">Я згоден з </label>
                                 <span onClick={(e) => { e.preventDefault(); setShowTerms(true); }} className="text-blue-600 hover:text-[#42705D] hover:underline cursor-pointer transition">
                                     умовами використання
                                 </span>
-                            </label>
+                            </div>
                         </div>
 
                         <button type="submit" className="w-full bg-[#1A1A1A] text-white font-['El_Messiri'] font-medium rounded-full py-3 md:py-2.5 hover:bg-gray-800 transition mt-4 text-base md:text-lg shadow-md">
