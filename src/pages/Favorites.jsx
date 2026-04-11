@@ -98,15 +98,21 @@ const Favorites = () => {
                                         <div key={recipe.id} className="flex flex-col relative group">
 
                                             <div className="relative w-full h-64 sm:h-60 md:h-72 rounded-[2rem] overflow-hidden mb-5 shadow-sm">
-                                                <img
-                                                    src={getImageUrl(recipe.image)}
-                                                    alt={recipe.title}
-                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                                                />
+                                                {/* ЗМІНЕНО: Зображення тепер клікабельне (обгорнуто в Link) */}
+                                                <Link to={`/recipe/${recipe.id}`} className="block w-full h-full">
+                                                    <img
+                                                        src={getImageUrl(recipe.image)}
+                                                        alt={recipe.title}
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                                    />
+                                                </Link>
 
                                                 <button
-                                                    onClick={() => removeFavorite(recipe.id)}
-                                                    className="absolute top-4 left-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform"
+                                                    onClick={(e) => {
+                                                        e.preventDefault(); // Запобігаємо переходу за посиланням при кліку на кнопку видалення
+                                                        removeFavorite(recipe.id);
+                                                    }}
+                                                    className="absolute top-4 left-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform z-10"
                                                     title="Видалити з улюблених"
                                                 >
                                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="#EF4444" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -116,9 +122,13 @@ const Favorites = () => {
                                             </div>
 
                                             {/* Назва рецепту */}
-                                            <h3 className="text-center font-['El_Messiri'] font-bold text-[#1A1A1A] text-base sm:text-lg md:text-xl lg:text-2xl uppercase px-2 line-clamp-2 min-h-[48px] md:min-h-[56px] flex items-center justify-center">
+                                            {/* ЗМІНЕНО: Назва тепер клікабельна (обгорнута в Link) з ефектом наведення */}
+                                            <Link
+                                                to={`/recipe/${recipe.id}`}
+                                                className="text-center font-['El_Messiri'] font-bold text-[#1A1A1A] group-hover:text-[#42705D] transition-colors text-base sm:text-lg md:text-xl lg:text-2xl uppercase px-2 line-clamp-2 min-h-[48px] md:min-h-[56px] flex items-center justify-center cursor-pointer"
+                                            >
                                                 {recipe.title}
-                                            </h3>
+                                            </Link>
 
                                             {/* Статистика */}
                                              <div className="flex justify-between items-start mt-3 mb-6 px-1 font-['El_Messiri'] w-full">

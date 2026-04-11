@@ -297,13 +297,15 @@ const Recipes = () => {
                     {/* ЛІВА КОЛОНКА: ТАБИ */}
                     <div className="w-full lg:w-48 xl:w-56 shrink-0 z-10 flex flex-col relative">
 
-                        <div className="block lg:hidden w-full mb-4">
-                            <div className="mb-3 inline-block">
-                                <h3 className="font-['El_Messiri'] font-bold text-xl text-gray-800 px-3 py-1 bg-white/70 backdrop-blur-md rounded-lg shadow-sm border border-white/50">
-                                    Фільтри
-                                </h3>
-                            </div>
+                        {/* ЄДИНИЙ ЗАГОЛОВОК "ФІЛЬТРИ" ДЛЯ ВСІХ ЕКРАНІВ */}
+                        <div className="mb-3 lg:mb-4 inline-block w-max">
+                            <h3 className="font-['El_Messiri'] font-bold text-xl text-gray-800 px-3 py-1 bg-white/70 backdrop-blur-md rounded-lg shadow-sm border border-white/50">
+                                Фільтри
+                            </h3>
+                        </div>
 
+                        {/* Блок з табами для мобільних (сітка) */}
+                        <div className="block lg:hidden w-full mb-4">
                             <div className="grid grid-cols-2 gap-2 overflow-x-auto pb-2 custom-scrollbar">
                                 {TABS.map(tab => (
                                     <button
@@ -319,12 +321,6 @@ const Recipes = () => {
                                     </button>
                                 ))}
                             </div>
-                        </div>
-
-                        <div className="hidden lg:block mb-4 inline-block w-max">
-                            <h3 className="font-['El_Messiri'] font-bold text-xl text-gray-800 px-3 py-1 bg-white/70 backdrop-blur-md rounded-lg shadow-sm border border-white/50">
-                                Фільтри
-                            </h3>
                         </div>
 
                         {/* Звичайний список кнопок для ПК (від lg і вище) */}
@@ -362,8 +358,8 @@ const Recipes = () => {
                             )}
 
                             <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 bg-[#6A907B] mr-2 shrink-0"></div>
-                                <span className="font-['El_Messiri'] font-bold text-gray-800 tracking-wider uppercase text-sm lg:text-base">
+                                <div className="w-4 h-4 bg-[#6A907B] mr-2 shrink-0"></div>
+                                <span className="font-['El_Messiri'] font-bold text-gray-800 tracking-wider uppercase text-sm text-xl">
                                     ПІДІБРАТИ РЕЦЕПТ
                                 </span>
                             </div>
@@ -684,17 +680,18 @@ const Recipes = () => {
                 {/* ================= НИЖНІЙ БЛОК: РЕЗУЛЬТАТИ ================= */}
                 <div className="w-full">
                     {/* Хедер результатів */}
-                    <div className="flex items-center justify-between mb-8 md:mb-12">
-                        <div className="flex items-center gap-3 md:gap-4">
+                    <div className="flex items-center justify-between mb-8 md:mb-12 gap-4">
+                        <div className="flex items-center gap-3 md:gap-4 shrink-0">
                             <div className="w-4 h-4 md:w-5 md:h-5 bg-[#5B826B] shrink-0"></div>
-                            {/* Заголовок залежить від того, чи дійсно натискали "Знайти" */}
                             <h2 className="text-xl md:text-2xl lg:text-[26px] font-['El_Messiri'] font-bold text-gray-800 tracking-wider uppercase whitespace-nowrap">
                                 {hasActiveFilters ? 'Результати пошуку' : 'Всі рецепти'}
                             </h2>
                         </div>
-                        <div className="flex items-center gap-4 flex-grow">
-                            <div className="flex-grow border-t-[3px] border-gray-300 ml-4 hidden sm:block"></div>
-                            <span className="text-sm md:text-base font-semibold text-gray-500 font-['Inter'] whitespace-nowrap">
+
+                        {/* Контейнер для лінії та лічильника */}
+                        <div className="flex items-center gap-4 flex-grow min-w-0">
+                            <div className="flex-grow border-t-[3px] border-gray-300"></div>
+                            <span className="text-sm md:text-base font-semibold text-gray-500 font-['Inter'] whitespace-nowrap shrink-0">
                                 {recipes.length} {getPluralForm(recipes.length, ['рецепт', 'рецепти', 'рецептів'])}
                             </span>
                         </div>
@@ -755,26 +752,26 @@ const Recipes = () => {
 
                                         <div className="flex justify-between items-start mt-3 mb-6 px-1 font-['El_Messiri'] w-full">
                                             <div className="flex flex-col items-center flex-1 px-0.5">
-                                                <svg className="mb-1.5 md:mb-2 text-[#B47231] w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                                                <span className="text-[10px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-medium text-gray-800 leading-tight text-center">
+                                                <svg className="mb-1.5 md:mb-2 text-[#B47231] w-9 h-9 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                                <span className="text-[14px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-medium text-gray-800 leading-tight text-center">
                                                     {recipe.cooking_time} {getPluralForm(recipe.cooking_time, ['хвилина', 'хвилини', 'хвилин'])}
                                                 </span>
                                             </div>
                                             <div className="flex flex-col items-center flex-1 px-0.5">
-                                                <svg className="mb-1.5 md:mb-2 text-[#B47231] w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0"><path d="M17 8h1a4 4 0 1 1 0 8h-1"></path><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"></path><line x1="6" y1="2" x2="6" y2="4"></line><line x1="10" y1="2" x2="10" y2="4"></line><line x1="14" y1="2" x2="14" y2="4"></line></svg>
-                                                <span className="text-[10px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-medium text-gray-800 leading-tight text-center">
+                                                <svg className="mb-1.5 md:mb-2 text-[#B47231] w-9 h-9 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0"><path d="M17 8h1a4 4 0 1 1 0 8h-1"></path><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"></path><line x1="6" y1="2" x2="6" y2="4"></line><line x1="10" y1="2" x2="10" y2="4"></line><line x1="14" y1="2" x2="14" y2="4"></line></svg>
+                                                <span className="text-[14px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-medium text-gray-800 leading-tight text-center">
                                                     {recipe.portions || 1} {getPluralForm(recipe.portions || 1, ['порція', 'порції', 'порцій'])}
                                                 </span>
                                             </div>
                                             <div className="flex flex-col items-center flex-1 px-0.5">
-                                                <svg className="mb-1.5 md:mb-2 text-[#B47231] w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
-                                                <span className="text-[10px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-medium text-gray-800 leading-tight text-center break-words">
+                                                <svg className="mb-1.5 md:mb-2 text-[#B47231] w-9 h-9 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
+                                                <span className="text-[14px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-medium text-gray-800 leading-tight text-center break-words">
                                                     {recipe.calories} ккал/порція
                                                 </span>
                                             </div>
                                             <div className="flex flex-col items-center flex-1 px-0.5">
-                                                <svg className="mb-1.5 md:mb-2 text-[#B47231] w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-                                                <span className="text-[10px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-medium text-gray-800 leading-tight text-center break-words">
+                                                <svg className="mb-1.5 md:mb-2 text-[#B47231] w-9 h-9 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                                                <span className="text-[14px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-medium text-gray-800 leading-tight text-center break-words">
                                                     {DICTIONARIES.difficulty[recipe.difficulty] || recipe.difficulty}
                                                 </span>
                                             </div>

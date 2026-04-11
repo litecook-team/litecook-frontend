@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api';
-import { ENDPOINTS, API_URL } from '../constants/api';
+import { ENDPOINTS, API_URL, TOKEN_KEY } from '../constants/api';
 import { DICTIONARIES } from '../constants/translations';
 
 import { pdf } from '@react-pdf/renderer';
@@ -19,6 +19,12 @@ const getPluralForm = (number, titles) => {
 
 // Функція для написання ТІЛЬКИ першої літери великою
 const capitalizeFirstLetter = (str) => {
+    if (!str) return '';
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+};
+
+// ЗМІНЕНО: Нова функція форматування для пошуку (тільки перша літера велика)
+const formatCapitalization = (str) => {
     if (!str) return '';
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };
@@ -71,6 +77,12 @@ const Menu = () => {
     const [visibleRecipeCount, setVisibleRecipeCount] = useState(10); // Скільки показувати зараз
     const [isSearching, setIsSearching] = useState(false);
 
+    // ЗМІНЕНО: Нові стани для інгредієнтів як на сторінці рецептів
+    const [allIngredients, setAllIngredients] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const inputRef = useRef(null);
+    const suggestionsRef = useRef(null);
+
     // Стан для помилки всередині модалки
     const [modalError, setModalError] = useState(null)
 
@@ -86,17 +98,40 @@ const Menu = () => {
     const [isShoppingListLoading, setIsShoppingListLoading] = useState(false); // Завантаження списку
     const [activeListScope, setActiveListScope] = useState(null); // 'day' або 'week'
 
-    // 1. Завантаження поточного меню
+    // 1. Завантаження поточного меню та інгредієнтів
     useEffect(() => {
         fetchMenu();
+        fetchIngredients();
         window.scrollTo(0, 0);
     }, []);
+
+    // ЗМІНЕНО: Функція завантаження інгредієнтів для підказок
+    const fetchIngredients = async () => {
+        try {
+            const res = await api.get('/api/ingredients/?limit=1000');
+            setAllIngredients(res.data.results || res.data);
+        } catch (e) {
+            console.error("Не вдалося завантажити базу інгредієнтів", e);
+        }
+    };
 
     // Очищаємо список продуктів при перемиканні днів тижня
     useEffect(() => {
         setShoppingList(null);
         setActiveListScope(null);
     }, [activeDay]);
+
+    // ЗМІНЕНО: Закриття підказок при кліку поза ними
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (suggestionsRef.current && !suggestionsRef.current.contains(event.target) &&
+                inputRef.current && !inputRef.current.contains(event.target)) {
+                setShowSuggestions(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const fetchMenu = async () => {
         try {
@@ -109,6 +144,13 @@ const Menu = () => {
         }
     };
 
+    // ЗМІНЕНО: Логіка парсингу пошукового рядка (як у Recipes.jsx)
+    const formatQueryForBackend = (query) => {
+        if (!query) return '';
+        const terms = query.split(/[\s,]+/).filter(t => t.trim().length > 0);
+        return terms.join(', ');
+    };
+
     // Живий пошук та рандомізація
     useEffect(() => {
         if (!isAddModalOpen) return;
@@ -117,14 +159,19 @@ const Menu = () => {
             setIsSearching(true);
             setModalError(null);
             try {
-                const response = await api.get(`${ENDPOINTS.RECIPES}?search_query=${searchQuery}`);
+                // ЗМІНЕНО: використовуємо форматований запит
+                const formattedSearch = formatQueryForBackend(searchQuery);
+                const url = formattedSearch
+                    ? `${ENDPOINTS.RECIPES}match/?search_query=${formattedSearch}`
+                    : `${ENDPOINTS.RECIPES}`;
+
+                const response = await api.get(url);
                 let recipesData = response.data.results ? response.data.results : response.data;
 
-                if (!searchQuery && recipesData.length > 0) {
+                if (!formattedSearch && recipesData.length > 0) {
                     // Якщо пошук порожній, перемішуємо і беремо 10 випадкових
                     recipesData = recipesData.sort(() => 0.5 - Math.random()).slice(0, 10);
                 }
-                // Якщо є searchQuery, ми НЕ обрізаємо масив! Зберігаємо всі результати.
 
                 setAllFetchedRecipes(recipesData);
                 setVisibleRecipeCount(10); // Скидаємо відображення до 10 при новому запиті
@@ -153,7 +200,7 @@ const Menu = () => {
             await api.delete(`${ENDPOINTS.WEEKLY_MENU}${id}/`);
             setMenuItems(menuItems.filter(item => item.id !== id));
             showToast("🤍 Видалено з меню");
-            // ДОДАНО: Скидаємо список покупок
+            // Скидаємо список покупок
             setShoppingList(null);
             setActiveListScope(null);
         } catch (error) {
@@ -223,10 +270,6 @@ const Menu = () => {
     const hasRecipesForScope = activeListScope === 'day'
         ? activeDayItems.length > 0
         : menuItems.length > 0;
-
-    if (loading) {
-        return <div className="min-h-screen bg-[#F6F3F4] flex items-center justify-center text-2xl font-['El_Messiri']">Завантаження...</div>;
-    }
 
     // Функція, що додає +10 рецептів, коли користувач гортає вниз
     const handleScroll = (e) => {
@@ -373,16 +416,50 @@ const Menu = () => {
 
         // Якщо в словнику це масив (наприклад, ['зубчик', 'зубчики', 'зубчиків'])
         if (Array.isArray(unitData)) {
-            // Використовуємо нашу функцію getPluralForm для вибору правильного слова
             return `${numAmount} ${getPluralForm(numAmount, unitData)}`;
         }
 
-        // Якщо це просто рядок (наприклад, 'г' або 'шт.')
         return `${numAmount} ${unitData || unitKey}`;
     };
 
+    // ЗМІНЕНО: Логіка визначення поточного слова для підказок
+    const getCurrentSearchTerm = () => {
+        if (!searchQuery) return '';
+        const parts = searchQuery.split(/[\s,]+/);
+        return parts[parts.length - 1].trim().toLowerCase();
+    };
+
+    const currentTerm = getCurrentSearchTerm();
+    const suggestedIngredients = currentTerm.length > 0
+        ? allIngredients.filter(ing => ing.name.toLowerCase().includes(currentTerm))
+        : [];
+
+    const handleAddIngredientToSearch = (ingredientName) => {
+        const query = searchQuery;
+        const lastIndex = Math.max(query.lastIndexOf(','), query.lastIndexOf(' '));
+
+        let newQuery = '';
+        if (lastIndex === -1) {
+            newQuery = ingredientName + ', ';
+        } else {
+            newQuery = query.substring(0, lastIndex + 1).trim() + ' ' + ingredientName.toLowerCase() + ', ';
+        }
+
+        setSearchQuery(formatCapitalization(newQuery));
+        setShowSuggestions(false);
+        if (inputRef.current) inputRef.current.focus();
+    };
+
+    const handleInputChange = (e) => {
+        setSearchQuery(formatCapitalization(e.target.value));
+        setShowSuggestions(true);
+    };
+
+    if (loading) {
+        return <div className="min-h-screen bg-[#F6F3F4] flex items-center justify-center text-2xl font-['El_Messiri']">Завантаження...</div>;
+    }
+
     return (
-        // 1. Звичайний фон, без градієнтів
         <div className="bg-[#F6F3F4] w-full min-h-[calc(100vh-80px)] flex flex-col font-sans pb-24">
 
             {toastMessage && (
@@ -396,18 +473,15 @@ const Menu = () => {
                 {/* ЗАГОЛОВОК (Зелений квадратик + ТИЖНЕВЕ МЕНЮ) */}
                 <div className="flex items-center gap-3 md:gap-4 mb-3 shrink-0">
                      <div className="w-4 h-4 md:w-5 md:h-5 bg-[#5B826B] shrink-0"></div>
-                     {/* 2. Збільшено розмір тексту (text-2xl md:text-3xl замість 18/20px) */}
                      <h2 className="text-2xl md:text-3xl font-['El_Messiri'] font-bold text-[#1A1A1A] tracking-widest uppercase whitespace-nowrap">
                          ТИЖНЕВЕ МЕНЮ
                      </h2>
                 </div>
 
-                {/* 3. Лінія: стала жирнішою (border-t-2) і з меншим відступом (mb-6) */}
                 <div className="border-t-2 border-gray-800 mb-6 w-full shrink-0"></div>
 
                 {/* БЛОК 1: ДНІ ТИЖНЯ */}
                 <div className="mb-10 w-full shrink-0">
-                    {/* flex-wrap дозволяє кнопкам переноситися на нові рядки, justify-center - центрує їх завжди, gap - задає відстань */}
                     <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
                         {DAYS_OF_WEEK.map((day) => (
                             <button
@@ -417,15 +491,14 @@ const Menu = () => {
                                     px-5 sm:px-6 md:px-8 lg:px-10 py-3 md:py-3.5
                                     font-['Inter'] font-semibold text-sm md:text-base lg:text-lg
                                     transition-all duration-300 rounded-xl
-                                    border /* Обов'язково додаємо базовий контур для кожної кнопки */
+                                    border
                                     ${
                                         activeDay === day.id
-                                            ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md transform scale-[1.02]' // Активний стан (замальована кнопка)
-                                            : 'bg-white text-gray-900 border-gray-300 hover:border-[#6A907B] hover:text-[#6A907B] hover:bg-gray-50 shadow-sm' // Неактивний стан (біла кнопка з контуром)
+                                            ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md transform scale-[1.02]'
+                                            : 'bg-white text-gray-900 border-gray-300 hover:border-[#6A907B] hover:text-[#6A907B] hover:bg-gray-50 shadow-sm'
                                     }
                                 `}
                             >
-                                {/* Адаптивність назв залишаємо */}
                                 <span className="hidden lg:inline">{day.name}</span>
                                 <span className="lg:hidden">{day.short}</span>
                             </button>
@@ -465,10 +538,10 @@ const Menu = () => {
                                                     const recipe = item.recipe;
 
                                                     return (
-                                                        <div key={item.id} className="bg-transparent flex flex-col sm:flex-row items-center sm:items-stretch gap-4 sm:gap-6 group transition-all py-1.5 border-b border-gray-100 last:border-b-0 pb-6 last:pb-0">
+                                                        <div key={item.id} className="bg-transparent flex flex-col xl:flex-row items-center xl:items-stretch gap-4 xl:gap-6 group transition-all py-1.5 border-b border-gray-100 last:border-b-0 pb-6 last:pb-0">
 
                                                             {/* Зображення (Адаптивне та збільшене) */}
-                                                            <div className="w-full sm:w-[240px] lg:w-[280px] h-56 sm:h-36 lg:h-40 shrink-0 relative">
+                                                            <div className="w-full xl:w-[280px] h-56 md:h-64 xl:h-40 shrink-0 relative">
                                                                 <Link to={`/recipe/${recipe.id}`} className="block w-full h-full">
                                                                     <img
                                                                         src={getImageUrl(recipe.image)}
@@ -478,10 +551,9 @@ const Menu = () => {
                                                                 </Link>
 
                                                                 {/* Кнопка видалення (На мобільних і планшетах на картинці) */}
-                                                                {/* ЗМІНЕНО: lg:hidden гарантує, що кнопка не вилізе за межі на менших екранах */}
                                                                 <button
                                                                     onClick={() => removeFromMenu(item.id)}
-                                                                    className="absolute top-3 right-3 lg:hidden w-9 h-9 bg-white/90 backdrop-blur-sm text-gray-500 hover:text-red-500 rounded-full flex items-center justify-center shadow-md transition-colors z-10"
+                                                                    className="absolute top-3 right-3 xl:hidden w-9 h-9 bg-white/90 backdrop-blur-sm text-gray-500 hover:text-red-500 rounded-full flex items-center justify-center shadow-md transition-colors z-10"
                                                                     title="Видалити з меню"
                                                                 >
                                                                     <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
@@ -489,25 +561,22 @@ const Menu = () => {
                                                             </div>
 
                                                             {/* Текстова інформація */}
-                                                            {/* ЗМІНЕНО: Додано min-w-0 для уникнення переповнення */}
-                                                            <div className="flex-grow flex flex-col justify-center text-center sm:text-left w-full py-1 min-w-0">
+                                                            <div className="flex-grow flex flex-col justify-center text-center xl:text-left w-full py-1 min-w-0">
                                                                 <Link to={`/recipe/${recipe.id}`} className="font-['El_Messiri'] font-bold text-lg md:text-xl lg:text-2xl uppercase text-[#1A1A1A] hover:text-[#6A907B] transition-colors line-clamp-1 mb-1.5">
                                                                     {recipe.title}
                                                                 </Link>
 
-                                                                <p className="text-sm md:text-[15px] text-gray-600 font-['Inter'] line-clamp-2 md:line-clamp-3 leading-relaxed mb-3">
+                                                                <p className="text-sm md:text-[15px] text-gray-600 font-['Inter'] line-clamp-3 leading-relaxed mb-3 px-2 xl:px-0">
                                                                     {recipe.description || 'Чудовий вибір для вашого меню! Завдяки збалансованому складу ви отримаєте заряд енергії та неперевершений смак.'}
                                                                 </p>
 
-                                                                <div className="flex items-center justify-center sm:justify-start mt-auto gap-2">
+                                                                <div className="flex items-center justify-center xl:justify-start mt-auto gap-2">
                                                                     {/* Статистика (час, калорії) */}
-                                                                    {/* ЗМІНЕНО: Прибрано hidden sm:inline для розділювача '|' */}
-                                                                    <p className="text-[13px] md:text-sm text-gray-500 font-['Inter'] font-semibold tracking-wide flex items-center justify-center sm:justify-start gap-2 sm:gap-3 flex-wrap">
+                                                                    <p className="text-[13px] md:text-sm text-gray-500 font-['Inter'] font-semibold tracking-wide flex items-center justify-center xl:justify-start gap-2 sm:gap-3 flex-wrap">
                                                                         <span className="flex items-center gap-1.5 whitespace-nowrap">
                                                                             <svg className="w-4 h-4 md:w-5 md:h-5 text-[#B47231]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                                                                             {recipe.cooking_time} {getPluralForm(recipe.cooking_time, ['хвилина', 'хвилини', 'хвилин'])}
                                                                         </span>
-                                                                        {/* Ця лінія тепер відображатиметься завжди */}
                                                                         <span className="text-gray-300">|</span>
                                                                         <span className="flex items-center gap-1.5 whitespace-nowrap">
                                                                             <svg className="w-4 h-4 md:w-5 md:h-5 text-[#B47231]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
@@ -518,8 +587,7 @@ const Menu = () => {
                                                             </div>
 
                                                             {/* Кнопка видалення (На ПК - збоку) */}
-                                                            {/* ЗМІНЕНО: hidden lg:flex гарантує, що вона буде збоку тільки коли є вдосталь місця */}
-                                                            <div className="hidden lg:flex items-center justify-center shrink-0 lg:pr-2">
+                                                            <div className="hidden xl:flex items-center justify-center shrink-0 lg:pr-2">
                                                                 <button
                                                                     onClick={() => removeFromMenu(item.id)}
                                                                     className="w-10 h-10 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-110 shrink-0"
@@ -575,9 +643,7 @@ const Menu = () => {
                                     onClick={() => {
                                         const newFridgeState = !useFridge;
                                         setUseFridge(newFridgeState);
-                                        // Якщо вже якийсь список відкритий, автоматично його перегенеровуємо з новим стейтом
                                         if (activeListScope) {
-                                            // Щоб уникнути проблем із замиканнями (closure) і старим стейтом
                                             setIsShoppingListLoading(true);
                                             const url = activeListScope === 'day'
                                                 ? `${ENDPOINTS.WEEKLY_MENU}shopping_list/?day_of_week=${activeDay}&use_fridge=${newFridgeState}`
@@ -611,7 +677,7 @@ const Menu = () => {
                                             : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
                                     }`}
                                 >
-                                    На {DAYS_ACCUSATIVE[activeDay]} {/* Правильне відмінювання */}
+                                    На {DAYS_ACCUSATIVE[activeDay]}
                                 </button>
                                 <button
                                     onClick={() => generateShoppingList('week')}
@@ -669,13 +735,13 @@ const Menu = () => {
                                     <button
                                         onClick={() => {
                                             setIsExportModalOpen(true);
-                                            setExportError(null); // Очищаємо помилку при відкритті
-                                            setExportEmail(''); // Очищуємо пошту
+                                            setExportError(null);
+                                            setExportEmail('');
                                         }}
                                         className="w-full border-2 border-dashed border-[#6A907B]/40 text-[#6A907B] py-3.5 rounded-xl hover:bg-[#6A907B]/5 hover:border-[#6A907B] transition-colors flex items-center justify-center gap-2 font-bold"
                                     >
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                                        Завантажити / надіслати на пошту
+                                        Завантажити / Надіслати на пошту
                                     </button>
                                 </div>
                             </div>
@@ -688,28 +754,26 @@ const Menu = () => {
             {isAddModalOpen && (
                 <div
                     className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm transform-gpu w-full h-full"
-                    onClick={() => { setIsAddModalOpen(false); setModalError(null); }} //закриття по темному фону
+                    onClick={() => { setIsAddModalOpen(false); setModalError(null); }}
                 >
                     <div
-                        className="bg-white rounded-[2rem] p-5 sm:p-8 w-full max-w-4xl h-[90vh] sm:h-[85vh] flex flex-col shadow-2xl relative font-['Inter']"
-                        onClick={(e) => e.stopPropagation()} // блокуємо закриття при кліку на саме вікно
+                        className="bg-white rounded-[2.5rem] p-5 sm:p-8 w-full max-w-4xl h-[90vh] sm:h-[85vh] flex flex-col shadow-2xl relative font-['Inter']"
+                        onClick={(e) => e.stopPropagation()}
                     >
                         <button
                             onClick={() => {
                                 setIsAddModalOpen(false);
-                                setModalError(null); // Очищаємо помилку при закритті
+                                setModalError(null);
                             }}
                             className="absolute top-4 right-4 sm:top-6 sm:right-6 w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-900 transition-colors"
                         >
                             <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                         </button>
 
-                        {/* Використовуємо новий словник для правильного відмінювання */}
                         <h2 className="text-xl sm:text-2xl font-bold font-['El_Messiri'] text-gray-900 mb-6 uppercase tracking-wide pr-10">
                             Підібрати рецепт на {MEAL_NAMES_ACCUSATIVE[selectedMealForAdd]}
                         </h2>
 
-                        {/* Повідомлення про помилку В МОДАЛЦІ */}
                         {modalError && (
                             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm font-medium flex items-center gap-2 shrink-0 animate-pulse">
                                 <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
@@ -717,22 +781,60 @@ const Menu = () => {
                             </div>
                         )}
 
-                        {/* Пошук у модалці */}
-                        <div className="mb-6 shrink-0">
-                            <div className="relative">
+                        {/* ЗМІНЕНО: Блок пошуку з підказками як на Recipes.jsx */}
+                        <div className="mb-4 shrink-0 relative" ref={suggestionsRef}>
+                            <div className="relative shadow-sm rounded-xl">
                                 <input
+                                    ref={inputRef}
                                     type="text"
-                                    placeholder="Назва рецепту або інгредієнти через кому..."
+                                    placeholder="Листя салату, Картопля, Бринза..."
                                     value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className={`w-full bg-gray-50 border rounded-xl px-5 py-3.5 sm:py-4 pl-12 outline-none transition-colors text-gray-800 font-medium ${modalError ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-[#6A907B]'}`}
+                                    onChange={handleInputChange}
+                                    onFocus={() => setShowSuggestions(true)}
+                                    className={`w-full bg-white border-2 rounded-xl px-5 py-3.5 sm:py-4 pl-12 outline-none transition-colors text-gray-800 font-medium font-['Inter'] ${modalError ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-[#6A907B]'}`}
                                 />
                                 <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                             </div>
-                            {/* Підказка для користувача */}
-                            <p className="text-[13px] text-gray-500 ml-2 mt-2 font-medium">
-                                💡 Вводьте декілька інгредієнтів через кому (наприклад: <span className="text-[#B47231]">картопля, буряк</span>)
-                            </p>
+
+                            {/* Випадаючий список підказок */}
+                            {showSuggestions && suggestedIngredients.length > 0 && (
+                                <ul className="absolute top-[105%] left-0 w-full mt-1 bg-white border border-gray-200 rounded-2xl shadow-xl max-h-60 overflow-y-auto py-2 custom-scrollbar z-50 font-['Inter']">
+                                    {suggestedIngredients.map(ing => (
+                                        <li
+                                            key={ing.id}
+                                            onClick={() => handleAddIngredientToSearch(ing.name)}
+                                            className="flex items-center gap-4 px-5 py-2.5 hover:bg-[#F6F7FB] cursor-pointer transition-colors border-b border-gray-50 last:border-0"
+                                        >
+                                            {ing.image ? (
+                                                <img src={getImageUrl(ing.image)} className="w-8 h-8 rounded-full object-cover shadow-sm bg-gray-100" alt="" />
+                                            ) : (
+                                                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs shadow-sm">•</div>
+                                            )}
+                                            <span className="font-medium text-gray-800 text-[15px] capitalize">{ing.name}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+
+                        {/* ЗМІНЕНО: Швидкий скролячий список інгредієнтів (горизонтальна стрічка) */}
+                        <div className="mb-6 shrink-0 w-full">
+                            <div className="flex gap-2.5 overflow-x-auto custom-scrollbar pb-2 pt-1 px-1">
+                                {allIngredients.map(ing => (
+                                    <button
+                                        key={ing.id}
+                                        onClick={() => handleAddIngredientToSearch(ing.name)}
+                                        className="px-3.5 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-[13.5px] font-medium text-gray-700 hover:border-[#6A907B] hover:text-[#6A907B] hover:shadow-md transition-all flex items-center gap-2 shrink-0 group"
+                                    >
+                                        {ing.image ? (
+                                            <img src={getImageUrl(ing.image)} alt={ing.name} className="w-5 h-5 rounded-full object-cover bg-white shadow-sm group-hover:scale-110 transition-transform" />
+                                        ) : (
+                                            <span className="text-gray-400">•</span>
+                                        )}
+                                        <span className="capitalize">{ing.name}</span>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
                         {/* Список результатів */}
@@ -748,15 +850,12 @@ const Menu = () => {
                                 </div>
                             ) : (
                                 availableRecipes.map(recipe => (
-                                    // Відцентровано елементи за допомогою items-center
                                     <div key={recipe.id} className="bg-white border border-gray-100 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-center sm:items-stretch gap-4 sm:gap-6 hover:shadow-md transition-shadow">
 
-                                        {/* Зображення (Адаптивне: на телефоні високе, на ПК - горизонтальне) */}
                                         <div className="w-full sm:w-50 md:w-60 h-40 sm:h-28 md:h-34 shrink-0 flex items-center justify-center">
-                                            <img src={getImageUrl(recipe.image)} alt={recipe.title} className="w-full h-full rounded-xl object-cover shadow-sm" />
+                                            <img src={getImageUrl(recipe.image || recipe.image_url)} alt={recipe.title} className="w-full h-full rounded-xl object-cover shadow-sm" />
                                         </div>
 
-                                        {/* Текстова інформація (Відцентрована на мобільному) */}
                                         <div className="flex-grow w-full flex flex-col justify-center text-center sm:text-left py-1">
                                             <Link
                                                 to={`/recipe/${recipe.id}`}
@@ -764,12 +863,22 @@ const Menu = () => {
                                             >
                                                 {recipe.title}
                                             </Link>
+
+                                            {/* ЗМІНЕНО: Додано бейджик з кількістю збігів, якщо вони є */}
+                                            {recipe.match_count > 0 && recipe.total_count > 0 && (
+                                                <div className="inline-flex items-center justify-center sm:justify-start gap-1.5 text-sm font-semibold text-[#6A907B] mb-2">
+                                                    <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M4 12.5C4 12.5 7.5 17 8.5 18C10 14 15 7.5 20 5"></path>
+                                                    </svg>
+                                                    Знайдено {recipe.match_count} з {recipe.total_count} інгредієнтів
+                                                </div>
+                                            )}
+
                                             <p className="text-xs sm:text-sm text-gray-500 font-medium mt-auto">
                                                 {recipe.cooking_time} хв • {recipe.calories} ккал
                                             </p>
                                         </div>
 
-                                        {/* Кнопка додавання (По центру на мобільному) */}
                                         <div className="flex items-center justify-center w-full sm:w-auto shrink-0 pb-1 sm:pb-0">
                                             <button
                                                 onClick={() => handleAddRecipeToMenu(recipe.id)}
@@ -782,7 +891,6 @@ const Menu = () => {
                                 ))
                             )}
 
-                            {/* Повідомлення, якщо рецептів багато, а пошук порожній */}
                             {!searchQuery && allFetchedRecipes.length > 0 && (
                                 <p className="text-center text-xs text-gray-400 py-4 italic">
                                     Показано 10 випадкових рецептів. Скористайтеся пошуком, щоб знайти інші.
