@@ -297,7 +297,7 @@ const Menu = () => {
 
             // Якщо список порожній — показуємо помилку В МОДАЛЦІ і не закриваємо її
             if (listToExport.length === 0) {
-                setExportError('Список продуктів порожній. Немає чого експортувати.');
+                setExportError('Список продуктів порожній. Немає чого завантажувати/надсилати.');
                 return;
             }
 
@@ -477,10 +477,11 @@ const Menu = () => {
                                                                     />
                                                                 </Link>
 
-                                                                {/* Кнопка видалення (На мобільних на картинці) */}
+                                                                {/* Кнопка видалення (На мобільних і планшетах на картинці) */}
+                                                                {/* ЗМІНЕНО: lg:hidden гарантує, що кнопка не вилізе за межі на менших екранах */}
                                                                 <button
                                                                     onClick={() => removeFromMenu(item.id)}
-                                                                    className="absolute top-3 right-3 sm:hidden w-9 h-9 bg-white/90 backdrop-blur-sm text-gray-500 hover:text-red-500 rounded-full flex items-center justify-center shadow-md transition-colors"
+                                                                    className="absolute top-3 right-3 lg:hidden w-9 h-9 bg-white/90 backdrop-blur-sm text-gray-500 hover:text-red-500 rounded-full flex items-center justify-center shadow-md transition-colors z-10"
                                                                     title="Видалити з меню"
                                                                 >
                                                                     <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
@@ -488,7 +489,8 @@ const Menu = () => {
                                                             </div>
 
                                                             {/* Текстова інформація */}
-                                                            <div className="flex-grow flex flex-col justify-center text-center sm:text-left w-full py-1">
+                                                            {/* ЗМІНЕНО: Додано min-w-0 для уникнення переповнення */}
+                                                            <div className="flex-grow flex flex-col justify-center text-center sm:text-left w-full py-1 min-w-0">
                                                                 <Link to={`/recipe/${recipe.id}`} className="font-['El_Messiri'] font-bold text-lg md:text-xl lg:text-2xl uppercase text-[#1A1A1A] hover:text-[#6A907B] transition-colors line-clamp-1 mb-1.5">
                                                                     {recipe.title}
                                                                 </Link>
@@ -497,27 +499,33 @@ const Menu = () => {
                                                                     {recipe.description || 'Чудовий вибір для вашого меню! Завдяки збалансованому складу ви отримаєте заряд енергії та неперевершений смак.'}
                                                                 </p>
 
-                                                                <p className="text-[13px] md:text-sm text-gray-500 font-['Inter'] font-semibold tracking-wide flex items-center justify-center sm:justify-start gap-3 mt-auto">
-                                                                    <span className="flex items-center gap-1.5">
-                                                                        <svg className="w-4 h-4 md:w-5 md:h-5 text-[#B47231]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                                                                        {recipe.cooking_time} {getPluralForm(recipe.cooking_time, ['хвилина', 'хвилини', 'хвилин'])}
-                                                                    </span>
-                                                                    <span className="text-gray-300">|</span>
-                                                                    <span className="flex items-center gap-1.5">
-                                                                        <svg className="w-4 h-4 md:w-5 md:h-5 text-[#B47231]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
-                                                                        {recipe.calories} ккал/порція
-                                                                    </span>
-                                                                </p>
+                                                                <div className="flex items-center justify-center sm:justify-start mt-auto gap-2">
+                                                                    {/* Статистика (час, калорії) */}
+                                                                    {/* ЗМІНЕНО: Прибрано hidden sm:inline для розділювача '|' */}
+                                                                    <p className="text-[13px] md:text-sm text-gray-500 font-['Inter'] font-semibold tracking-wide flex items-center justify-center sm:justify-start gap-2 sm:gap-3 flex-wrap">
+                                                                        <span className="flex items-center gap-1.5 whitespace-nowrap">
+                                                                            <svg className="w-4 h-4 md:w-5 md:h-5 text-[#B47231]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                                                            {recipe.cooking_time} {getPluralForm(recipe.cooking_time, ['хвилина', 'хвилини', 'хвилин'])}
+                                                                        </span>
+                                                                        {/* Ця лінія тепер відображатиметься завжди */}
+                                                                        <span className="text-gray-300">|</span>
+                                                                        <span className="flex items-center gap-1.5 whitespace-nowrap">
+                                                                            <svg className="w-4 h-4 md:w-5 md:h-5 text-[#B47231]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
+                                                                            {recipe.calories} ккал/порція
+                                                                        </span>
+                                                                    </p>
+                                                                </div>
                                                             </div>
 
                                                             {/* Кнопка видалення (На ПК - збоку) */}
-                                                            <div className="hidden sm:flex items-center justify-center shrink-0 sm:pr-2">
+                                                            {/* ЗМІНЕНО: hidden lg:flex гарантує, що вона буде збоку тільки коли є вдосталь місця */}
+                                                            <div className="hidden lg:flex items-center justify-center shrink-0 lg:pr-2">
                                                                 <button
                                                                     onClick={() => removeFromMenu(item.id)}
-                                                                    className="w-11 h-11 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-110"
+                                                                    className="w-10 h-10 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-110 shrink-0"
                                                                     title="Видалити з меню"
                                                                 >
-                                                                    <svg width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                    <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                                         <polyline points="3 6 5 6 21 6"></polyline>
                                                                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                                                                         <line x1="10" y1="11" x2="10" y2="17"></line>
@@ -550,7 +558,6 @@ const Menu = () => {
                             })}
                         </div>
                     </div>
-
                     {/* БЛОК 3: СПИСОК ПРОДУКТІВ (Світлий дизайн) */}
                     <div className="w-full lg:w-[320px] xl:w-[380px] shrink-0">
                         <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 md:p-8 sticky top-10 flex flex-col">
@@ -668,7 +675,7 @@ const Menu = () => {
                                         className="w-full border-2 border-dashed border-[#6A907B]/40 text-[#6A907B] py-3.5 rounded-xl hover:bg-[#6A907B]/5 hover:border-[#6A907B] transition-colors flex items-center justify-center gap-2 font-bold"
                                     >
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                                        Експорт PDF / Пошта
+                                        Завантажити / надіслати на пошту
                                     </button>
                                 </div>
                             </div>
@@ -824,7 +831,7 @@ const Menu = () => {
                         </div>
 
                         <h2 className="text-2xl font-bold font-['El_Messiri'] text-gray-900 mb-2 text-center uppercase tracking-wide">
-                            Експорт списку
+                            Завантаження списку
                         </h2>
                         <p className="text-[13px] text-gray-500 mb-4 text-center font-medium leading-relaxed px-4">
                             Завантажте файл на пристрій або відправте його собі на електронну пошту.
@@ -845,7 +852,7 @@ const Menu = () => {
                             </button>
                         </div>
 
-                        {/* Повідомлення про помилку ЕКСПОРТУ В МОДАЛЦІ - ПЕРЕМІЩЕНО СЮДИ (НАД КНОПКОЮ) */}
+                        {/* Повідомлення про помилку ЕКСПОРТУ В МОДАЛЦІ - НАД КНОПКОЮ */}
                         {exportError && (
                             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm font-medium flex items-center justify-center gap-2 shrink-0 animate-pulse text-center">
                                 <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
@@ -859,7 +866,7 @@ const Menu = () => {
                             className="w-full bg-[#5B826B] text-white py-3.5 rounded-[1.2rem] font-bold hover:bg-gray-800 transition-all shadow-md flex justify-center items-center gap-2 mb-4"
                         >
                             <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                            Завантажити PDF
+                            Завантажити
                         </button>
 
                         <div className="relative flex py-3 items-center">
@@ -884,7 +891,7 @@ const Menu = () => {
                             className="w-full bg-white border-2 border-[#B47231] text-[#B47231] py-3.5 rounded-[1.2rem] font-bold hover:bg-[#B47231] hover:text-white transition-all flex justify-center items-center gap-2"
                         >
                             <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                            Відправити лист
+                            Надіслати на пошту
                         </button>
                     </div>
                 </div>

@@ -282,29 +282,34 @@ const Recipes = () => {
             <div className="mx-auto px-4 sm:px-6 lg:px-12 xl:px-20 w-full pt-8 lg:pt-12">
 
                 {/* ================= ВЕРХНІЙ БЛОК: ФІЛЬТРИ ================= */}
-                <div className="bg-white/90 backdrop-blur-md rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-gray-100 p-4 sm:p-6 lg:p-10 mb-16 relative overflow-hidden flex flex-col lg:flex-row gap-6 lg:gap-8 min-h-[480px]">
+                <div className="bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-gray-100 p-4 sm:p-6 lg:p-10 mb-16 relative overflow-hidden flex flex-col lg:flex-row gap-6 lg:gap-8 min-h-[480px]">
 
                     {/* ФОНОВЕ ЗОБРАЖЕННЯ НА ВЕСЬ БЛОК */}
-{/*                     <div className="absolute inset-0 z-0 opacity-[0.25] pointer-events-none mix-blend-multiply" */}
-{/*                          style={{ backgroundImage: `url(${decorImage})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}> */}
-{/*                     </div> */}
+                    <div className="absolute inset-0 z-0 pointer-events-none"
+                         style={{
+                             backgroundImage: `url(${decorImage})`,
+                             backgroundSize: 'cover', // Розтягує зображення на весь блок. Можна спробувати '100% 100%' або 'contain'
+                             backgroundPosition: 'left center', // Зображення вирівнюється по лівому краю і центру
+                             backgroundRepeat: 'no-repeat'
+                         }}>
+                    </div>
 
                     {/* ЛІВА КОЛОНКА: ТАБИ */}
                     <div className="w-full lg:w-48 xl:w-56 shrink-0 z-10 flex flex-col relative">
 
-                        <div className="font-['El_Messiri'] font-bold text-xl text-gray-800 mb-4 hidden lg:block pl-2">Фільтри</div>
-
-                        {/* Сітка фільтрів для мобільного (постійно видима) */}
                         <div className="block lg:hidden w-full mb-4">
-                            {/* ДОДАНО: Заголовок для мобільних */}
-                            <div className="font-['El_Messiri'] font-bold text-xl text-gray-800 mb-3 pl-1">Фільтри</div>
+                            <div className="mb-3 inline-block">
+                                <h3 className="font-['El_Messiri'] font-bold text-xl text-gray-800 px-3 py-1 bg-white/70 backdrop-blur-md rounded-lg shadow-sm border border-white/50">
+                                    Фільтри
+                                </h3>
+                            </div>
 
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="grid grid-cols-2 gap-2 overflow-x-auto pb-2 custom-scrollbar">
                                 {TABS.map(tab => (
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
-                                        className={`py-2.5 px-3 rounded-lg font-['Inter'] font-semibold text-[13px] transition-all text-center border ${
+                                        className={`py-2.5 px-3 rounded-lg font-['Inter'] font-semibold text-[13px] transition-all text-center border whitespace-nowrap ${
                                             activeTab === tab.id
                                             ? 'bg-[#5B826B] text-white border-[#5B826B] shadow-md'
                                             : 'bg-white/90 text-gray-600 border-gray-200 hover:bg-gray-50 shadow-sm'
@@ -314,6 +319,12 @@ const Recipes = () => {
                                     </button>
                                 ))}
                             </div>
+                        </div>
+
+                        <div className="hidden lg:block mb-4 inline-block w-max">
+                            <h3 className="font-['El_Messiri'] font-bold text-xl text-gray-800 px-3 py-1 bg-white/70 backdrop-blur-md rounded-lg shadow-sm border border-white/50">
+                                Фільтри
+                            </h3>
                         </div>
 
                         {/* Звичайний список кнопок для ПК (від lg і вище) */}
@@ -350,8 +361,8 @@ const Recipes = () => {
                                 <div></div>
                             )}
 
-                            <div className="flex items-center">
-                                <div className="w-3 h-3 bg-[#6A907B] mr-2"></div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 bg-[#6A907B] mr-2 shrink-0"></div>
                                 <span className="font-['El_Messiri'] font-bold text-gray-800 tracking-wider uppercase text-sm lg:text-base">
                                     ПІДІБРАТИ РЕЦЕПТ
                                 </span>
