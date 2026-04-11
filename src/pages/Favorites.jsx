@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import api from '../api';
 import { ENDPOINTS, API_URL } from '../constants/api';
 import { DICTIONARIES } from '../constants/translations';
+import avocadoImg from '../assets/favorites/avocado_runs.png';
 
 // Допоміжна функція для правильного відмінювання слів
 const getPluralForm = (number, titles) => {
@@ -84,10 +85,46 @@ const Favorites = () => {
                             <div className="flex-grow border-t-[3px] border-gray-400 ml-2"></div>
                         </div>
 
-                        {/* СІТКА КАРТОК */}
+                        {/* СІТКА КАРТОК АБО СТАН "ПОРОЖНЬО" */}
                         {favorites.length === 0 ? (
-                            <div className="text-center text-gray-500 font-['Inter'] mt-20 text-lg">
-                                У вас поки немає улюблених рецептів.
+                            // красивий блок для порожнього стану
+                            // ДОДАНО: 2xl:gap-24 для збільшення відстані між колонками на величезних екранах
+                            <div className="flex flex-col md:flex-row items-center justify-center w-full flex-grow relative py-10 md:py-0 gap-10 md:gap-4 lg:gap-8 xl:gap-16 2xl:gap-24">
+
+                                {/* Текстовий блок (Ліворуч на ПК та планшетах, зверху на мобільних) */}
+                                {/* ДОДАНО: 2xl:pl-32 для більшого відступу зліва */}
+                                <div className="w-full md:w-1/2 flex flex-col items-center md:items-start text-center md:text-left relative z-10 px-4 sm:px-8 md:px-0 md:pl-6 lg:pl-12 xl:pl-20 2xl:pl-32 shrink-0">
+
+                                    {/* ДОДАНО: 2xl:text-[42px] та 2xl:max-w-5xl для пропорційного збільшення тексту */}
+                                    <p className="text-2xl sm:text-2xl md:text-[20px] lg:text-[25px] xl:text-[32px] 2xl:text-[42px] font-['El_Messiri'] text-[#1A1A1A] leading-tight mb-4 lg:mb-6 max-w-md md:max-w-sm lg:max-w-lg xl:max-w-4xl 2xl:max-w-5xl">
+                                        Тут будуть зберігатися твої улюблені рецепти. Обирай рецепт на сайті та збирай свою персональну кулінарну колекцію
+                                    </p>
+                                </div>
+
+                                {/* Блок із зображенням авокадо (Праворуч на ПК, знизу на мобільних) */}
+                                {/* ДОДАНО: 2xl:-translate-x-[0px] для ідеального центрування на великих моніторах */}
+                                <div className="w-full md:w-1/2 flex justify-center md:justify-start items-center relative z-10 md:-translate-x-8 lg:-translate-x-12 xl:-translate-x-[10px] 2xl:-translate-x-[0px]">
+
+                                    {/* ДОДАНО: 2xl:max-w-[900px] щоб авокадо ставало ще більшим на моніторах 1536px+ */}
+                                    <div className="relative w-full max-w-[280px] sm:max-w-[350px] md:max-w-[420px] lg:max-w-[500px] xl:max-w-[760px] 2xl:max-w-[900px] aspect-square">
+
+                                        {/* ДОДАНО: 2xl:top-[2%] 2xl:right-[15%] та 2xl:w-[105px] 2xl:h-[105px] для збільшення і точного позиціонування сердечка */}
+                                        <div className="absolute top-[2%] right-[12%] sm:top-[4%] sm:right-[15%] md:top-[6%] md:right-[18%] lg:top-[5%] lg:right-[14%] xl:top-[2%] xl:right-[15%] 2xl:top-[2%] 2xl:right-[16%] animate-bounce z-20" style={{ animationDuration: '3s' }}>
+                                            <svg viewBox="0 0 24 24" fill="#FF4B4B" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-lg opacity-90 transform rotate-0 w-[45px] h-[45px] sm:w-[55px] sm:h-[55px] md:w-[50px] md:h-[50px] lg:w-[65px] lg:h-[65px] xl:w-[85px] xl:h-[85px] 2xl:w-[105px] 2xl:h-[105px]">
+                                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                            </svg>
+                                        </div>
+
+                                        <div className="absolute inset-0 flex items-center justify-center mix-blend-multiply transform -scale-x-100">
+                                             {/* ДОДАНО: 2xl:scale-[1.3] для пропорційного скейлу самого зображення */}
+                                             <img
+                                                src={avocadoImg}
+                                                alt="Авокадо кухар"
+                                                className="w-full h-full object-contain transform scale-[1.2] xl:scale-[1.25] 2xl:scale-[1.3] translate-y-4"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-12 md:gap-x-10 lg:gap-x-14 md:gap-y-16">
