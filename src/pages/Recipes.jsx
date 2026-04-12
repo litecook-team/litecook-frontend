@@ -5,7 +5,7 @@ import { ENDPOINTS, API_URL, TOKEN_KEY } from '../constants/api';
 import { DICTIONARIES } from '../constants/translations';
 
 // декоративне зображення
-import decorImage from '../assets/recipe/fon_filter.png';
+import decorImage from '../assets/recipe/fon_filter.jpg';
 
 // Допоміжна функція для правильного відмінювання слів
 const getPluralForm = (number, titles) => {
@@ -290,7 +290,8 @@ const Recipes = () => {
                              backgroundImage: `url(${decorImage})`,
                              backgroundSize: 'cover', // Розтягує зображення на весь блок. Можна спробувати '100% 100%' або 'contain'
                              backgroundPosition: 'left center', // Зображення вирівнюється по лівому краю і центру
-                             backgroundRepeat: 'no-repeat'
+                             backgroundRepeat: 'no-repeat',
+                             transform: 'scaleX(-1)'
                          }}>
                     </div>
 
@@ -342,7 +343,7 @@ const Recipes = () => {
                     </div>
 
                     {/* ПРАВА КОЛОНКА: КОНТЕНТ ФІЛЬТРУ */}
-                    <div className="flex-grow z-10 flex flex-col h-full bg-white/60 md:bg-white/40 backdrop-blur-xl md:backdrop-blur-md rounded-3xl p-4 sm:p-6 md:p-8 border border-white/50 shadow-sm relative">
+                    <div className="flex-grow z-10 flex flex-col h-full bg-white/40 md:bg-white/40 backdrop-blur-xl md:backdrop-blur-md rounded-3xl p-4 sm:p-6 md:p-8 relative">
 
                         <div className="flex items-center justify-between border-b-2 border-gray-400 pb-3 mb-6 md:mb-8 mt-1">
                             {hasActiveFilters ? (
@@ -669,7 +670,7 @@ const Recipes = () => {
                         <div className="mt-8 lg:mt-auto pt-4 lg:pt-6 font-['Inter'] shrink-0 flex flex-col sm:flex-row items-center gap-4">
                             <button
                                 onClick={() => fetchRecipes(true)}
-                                className="w-full sm:flex-1 md:w-max md:px-16 py-4 bg-[#6A907B] text-white rounded-xl font-bold text-[17px] hover:bg-[#5B826B] transition-colors shadow-lg text-center tracking-wide block"
+                                className="w-full sm:flex-1 md:w-max md:px-16 py-3 bg-[#6A907B] text-white rounded-xl font-bold text-[17px] hover:bg-[#5B826B] transition-colors shadow-lg text-center tracking-wide block"
                             >
                                 {activeTab === 'ingredients' ? 'Знайти рецепт' : 'Застосувати фільтри'}
                             </button>
