@@ -6,6 +6,7 @@ import { ENDPOINTS, TOKEN_KEY, API_URL } from '../constants/api';
 import { DICTIONARIES } from '../constants/translations';
 import recipeBgImage from '../assets/recipe/recipe.png';
 import iconClip from '../assets/recipe/icon_detail.png';
+import NotFound from './NotFound';
 
 // Допоміжна функція для правильного відмінювання слів
 const getPluralForm = (number, titles) => {
@@ -108,7 +109,7 @@ const RecipeDetail = () => {
     };
 
     if (loading) return <div className="min-h-screen bg-[#F6F3F4] flex items-center justify-center text-2xl font-serif">Завантаження...</div>;
-    if (!recipe) return <div className="min-h-screen bg-[#F6F3F4] flex items-center justify-center text-2xl font-serif">Рецепт не знайдено</div>;
+    if (!recipe) return <NotFound />;
 
     return (
         <div className="bg-[#F6F3F4] min-h-screen w-full relative font-sans pb-20 lg:pb-0 overflow-hidden">
