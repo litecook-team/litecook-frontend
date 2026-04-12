@@ -23,7 +23,7 @@ const capitalizeFirstLetter = (str) => {
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };
 
-// ЗМІНЕНО: Нова функція форматування для пошуку (тільки перша літера велика)
+// функція форматування для пошуку (тільки перша літера велика)
 const formatCapitalization = (str) => {
     if (!str) return '';
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
@@ -77,7 +77,7 @@ const Menu = () => {
     const [visibleRecipeCount, setVisibleRecipeCount] = useState(10); // Скільки показувати зараз
     const [isSearching, setIsSearching] = useState(false);
 
-    // ЗМІНЕНО: Нові стани для інгредієнтів як на сторінці рецептів
+    // стани для інгредієнтів як на сторінці рецептів
     const [allIngredients, setAllIngredients] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const inputRef = useRef(null);
@@ -105,7 +105,7 @@ const Menu = () => {
         window.scrollTo(0, 0);
     }, []);
 
-    // ЗМІНЕНО: Функція завантаження інгредієнтів для підказок
+    // Функція завантаження інгредієнтів для підказок
     const fetchIngredients = async () => {
         try {
             const res = await api.get('/api/ingredients/?limit=1000');
@@ -121,7 +121,7 @@ const Menu = () => {
         setActiveListScope(null);
     }, [activeDay]);
 
-    // ЗМІНЕНО: Закриття підказок при кліку поза ними
+    // Закриття підказок при кліку поза ними
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (suggestionsRef.current && !suggestionsRef.current.contains(event.target) &&
@@ -144,7 +144,7 @@ const Menu = () => {
         }
     };
 
-    // ЗМІНЕНО: Логіка парсингу пошукового рядка (як у Recipes.jsx)
+    // Логіка парсингу пошукового рядка
     const formatQueryForBackend = (query) => {
         if (!query) return '';
         const terms = query.split(/[\s,]+/).filter(t => t.trim().length > 0);
@@ -159,7 +159,7 @@ const Menu = () => {
             setIsSearching(true);
             setModalError(null);
             try {
-                // ЗМІНЕНО: використовуємо форматований запит
+                // використовуємо форматований запит
                 const formattedSearch = formatQueryForBackend(searchQuery);
                 const url = formattedSearch
                     ? `${ENDPOINTS.RECIPES}match/?search_query=${formattedSearch}`
@@ -422,7 +422,7 @@ const Menu = () => {
         return `${numAmount} ${unitData || unitKey}`;
     };
 
-    // ЗМІНЕНО: Логіка визначення поточного слова для підказок
+    // Логіка визначення поточного слова для підказок
     const getCurrentSearchTerm = () => {
         if (!searchQuery) return '';
         const parts = searchQuery.split(/[\s,]+/);
@@ -463,7 +463,7 @@ const Menu = () => {
         <div className="bg-[#F6F3F4] w-full min-h-[calc(100vh-80px)] flex flex-col font-sans pb-24">
 
             {toastMessage && (
-                <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl z-50 transition-all font-medium flex items-center gap-2">
+                <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl z-[9999] transition-all font-medium flex items-center gap-2">
                     {toastMessage}
                 </div>
             )}
@@ -781,7 +781,7 @@ const Menu = () => {
                             </div>
                         )}
 
-                        {/* ЗМІНЕНО: Блок пошуку з підказками як на Recipes.jsx */}
+                        {/* Блок пошуку з підказками */}
                         <div className="mb-4 shrink-0 relative" ref={suggestionsRef}>
                             <div className="relative shadow-sm rounded-xl">
                                 <input
@@ -817,7 +817,7 @@ const Menu = () => {
                             )}
                         </div>
 
-                        {/* ЗМІНЕНО: Швидкий скролячий список інгредієнтів (горизонтальна стрічка) */}
+                        {/* Швидкий скролячий список інгредієнтів (горизонтальна стрічка) */}
                         <div className="mb-6 shrink-0 w-full">
                             <div className="flex gap-2.5 overflow-x-auto custom-scrollbar pb-2 pt-1 px-1">
                                 {allIngredients.map(ing => (
@@ -864,7 +864,7 @@ const Menu = () => {
                                                 {recipe.title}
                                             </Link>
 
-                                            {/* ЗМІНЕНО: Додано бейджик з кількістю збігів, якщо вони є */}
+                                            {/* бейджик з кількістю збігів, якщо вони є */}
                                             {recipe.match_count > 0 && recipe.total_count > 0 && (
                                                 <div className="inline-flex items-center justify-center sm:justify-start gap-1.5 text-sm font-semibold text-[#6A907B] mb-2">
                                                     <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
