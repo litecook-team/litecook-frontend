@@ -20,6 +20,8 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import PrivacyDetail from './pages/PrivacyDetail';
 import { TOKEN_KEY } from './constants/api'; // Імпорт ключа токена
 
+import NotFound from './pages/NotFound';
+
 // =========================================================================
 // HOC (High Order Component) для захисту сторінок, доступних ТІЛЬКИ ГОСТЯМ
 // (наприклад, Login, Register). Якщо юзер вже увійшов - його перекине в профіль.
@@ -96,6 +98,9 @@ function App() {
                     <Menu />
                   </ProtectedRoute>
                 } />
+                {/* 404. ОБОВ'ЯЗКОВО МАЄ БУТИ ОСТАННІМ У СПИСКУ! */}
+                {/* Символ "*" ловить абсолютно будь-який URL, який не співпав з попередніми */}
+                <Route path="*" element={<NotFound />} />
             </Routes>
         </main>
         <Footer />
