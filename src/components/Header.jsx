@@ -138,16 +138,19 @@ const Header = () => {
                     {isAuthenticated ? (
                         <div className="flex items-center space-x-4 h-full">
 
-                            {/* Кнопка Адмін-панелі */}
+                            {/* Кнопка Адмін-панелі (ЗМІНЕНО ДИЗАЙН) */}
                             {user?.is_staff && (
                                 <a
                                     href={`${import.meta.env.VITE_API_URL}/${import.meta.env.VITE_ADMIN_URL}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="hidden md:flex items-center space-x-2 px-4 py-2 bg-white border border-gray-200 hover:border-[#42705D] hover:text-[#42705D] text-gray-500 text-xs font-semibold rounded-full transition duration-300 font-['Inter'] shadow-sm"
+                                    className="hidden md:flex items-center space-x-2.5 px-5 py-2.5 bg-gradient-to-tr from-white via-[#fcfbf9] to-[#f4f7f5] border border-[#B47231]/30 text-gray-800 text-[11px] uppercase tracking-widest font-bold rounded-full transition-all duration-300 font-['Inter'] shadow-[0_2px_10px_-2px_rgba(180,114,49,0.15)] hover:shadow-[0_4px_15px_-2px_rgba(180,114,49,0.3)] hover:border-[#B47231]/60 transform hover:-translate-y-0.5 group relative overflow-hidden"
                                 >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                    <span>Адмін-панель</span>
+                                    {/* Блік при наведенні */}
+                                    <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
+
+                                    <svg className="w-4 h-4 text-[#B47231] group-hover:rotate-90 transition-transform duration-500 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    <span className="relative z-10 group-hover:text-[#B47231] transition-colors">Адмін-панель</span>
                                 </a>
                             )}
 
@@ -227,10 +230,17 @@ const Header = () => {
                             <>
                                 <Link to="/favorites" className="py-3 text-gray-800 hover:text-[#42705D] border-b border-gray-100">Улюблені</Link>
                                 <Link to="/menu" className="py-3 text-gray-800 hover:text-[#42705D] border-b border-gray-100">Тижневе меню</Link>
+                                {/* Мобільна кнопка Адмін-панелі */}
                                 {user?.is_staff && (
-                                    <a href={`${import.meta.env.VITE_API_URL}/${import.meta.env.VITE_ADMIN_URL}`} target="_blank" rel="noopener noreferrer" className="py-3 text-blue-600 hover:text-blue-800 border-b border-gray-100 flex items-center">
-                                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                        Адмін-панель
+                                    <a
+                                        href={`${import.meta.env.VITE_API_URL}/${import.meta.env.VITE_ADMIN_URL}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="mt-4 mb-2 py-3 px-4 bg-gradient-to-tr from-white via-[#fcfbf9] to-[#f4f7f5] text-gray-800 rounded-xl flex items-center justify-center shadow-[0_2px_10px_-2px_rgba(180,114,49,0.15)] font-bold tracking-wide transition-transform active:scale-95 group border border-[#B47231]/30 relative overflow-hidden"
+                                    >
+                                        <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-active:animate-[shimmer_1s_infinite]"></div>
+                                        <svg className="w-5 h-5 mr-2.5 text-[#B47231] group-hover:rotate-90 transition-transform duration-500 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                        <span className="relative z-10">Адмін-панель</span>
                                     </a>
                                 )}
                             </>

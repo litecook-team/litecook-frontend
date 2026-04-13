@@ -90,7 +90,8 @@ const Menu = () => {
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [exportEmail, setExportEmail] = useState('');
     const [exportScope, setExportScope] = useState('day');
-    const [exportError, setExportError] = useState(null); // Стан для помилок експорту
+
+    const [exportStatus, setExportStatus] = useState(null); // Стан для помилок експорту
 
     // Стани для списку покупок
     const [useFridge, setUseFridge] = useState(true); // Чи враховувати мої продукти
@@ -312,17 +313,18 @@ const Menu = () => {
         }
     };
 
-    // Функція експорту (Сучасний підхід з @react-pdf/renderer)
+    // Функція експорту керує локальним станом exportStatus
     const handleExport = async (actionType) => {
-        setExportError(null); // Очищаємо помилку перед новою спробою
+        setExportStatus(null); // Очищаємо помилку перед новою спробою
 
         if (actionType === 'email' && !exportEmail) {
-            setExportError('Будь ласка, введіть email для відправки.');
+            setExportStatus({ type: 'error', text: 'Будь ласка, введіть email для відправки.' });
             return;
         }
 
         try {
-            showToast('⏳ Завантажуємо дані та формуємо PDF...');
+            // Встановлюємо статус "Завантаження" у модальному вікні
+            setExportStatus({ type: 'loading', text: 'Завантажуємо дані та формуємо PDF...' });
 
             // 1. САМОСТІЙНО ОТРИМУЄМО ДАНІ ДЛЯ PDF
             // (незалежно від того, чи згенеровані вони на екрані)
@@ -340,7 +342,7 @@ const Menu = () => {
 
             // Якщо список порожній — показуємо помилку В МОДАЛЦІ і не закриваємо її
             if (listToExport.length === 0) {
-                setExportError('Список продуктів порожній. Немає чого завантажувати/надсилати.');
+                setExportStatus({ type: 'error', text: 'Список продуктів порожній. Немає чого завантажувати/надсилати.' });
                 return;
             }
 
@@ -378,8 +380,13 @@ const Menu = () => {
                 link.remove();
                 window.URL.revokeObjectURL(fileUrl); // Очищаємо пам'ять браузера
 
-                showToast('✅ PDF успішно завантажено!');
-                setIsExportModalOpen(false);
+                setExportStatus({ type: 'success', text: 'PDF успішно завантажено!' });
+
+                // Закриваємо модалку через 2.5 секунди
+                setTimeout(() => {
+                    setIsExportModalOpen(false);
+                    setExportStatus(null);
+                }, 2500);
             } else {
                 const formData = new FormData();
                 formData.append('email', exportEmail);
@@ -389,12 +396,17 @@ const Menu = () => {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
 
-                showToast('✉️ PDF відправлено на вашу пошту!');
-                setIsExportModalOpen(false);
+                setExportStatus({ type: 'success', text: 'PDF відправлено на вашу пошту!' });
+
+                // Закриваємо модалку через 2.5 секунди
+                setTimeout(() => {
+                    setIsExportModalOpen(false);
+                    setExportStatus(null);
+                }, 2500);
             }
         } catch (error) {
             console.error(error);
-            setExportError('Виникла помилка при генерації або відправці PDF. Спробуйте ще раз.');
+            setExportStatus({ type: 'error', text: 'Виникла помилка при генерації або відправці PDF. Спробуйте ще раз.' });
         }
     };
 
@@ -735,7 +747,7 @@ const Menu = () => {
                                     <button
                                         onClick={() => {
                                             setIsExportModalOpen(true);
-                                            setExportError(null);
+                                            setExportStatus(null);
                                             setExportEmail('');
                                         }}
                                         className="w-full border-2 border-dashed border-[#6A907B]/40 text-[#6A907B] py-3.5 rounded-xl hover:bg-[#6A907B]/5 hover:border-[#6A907B] transition-colors flex items-center justify-center gap-2 font-bold"
@@ -913,7 +925,7 @@ const Menu = () => {
                     className="fixed top-0 left-0 w-screen h-screen z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm transform-gpu transition-all"
                     onClick={() => {
                         setIsExportModalOpen(false);
-                        setExportError(null);
+                        setExportStatus(null);
                         setExportEmail(''); // очищуємо пошту при закритті по фону
                     }}
                 >
@@ -924,7 +936,7 @@ const Menu = () => {
                         <button
                             onClick={() => {
                                 setIsExportModalOpen(false);
-                                setExportError(null);
+                                setExportStatus(null);
                                 setExportEmail(''); // очищуємо пошту при натисканні на хрестик
                             }}
                             className="absolute top-5 right-5 w-10 h-10 flex items-center justify-center bg-gray-50 rounded-full text-gray-400 hover:text-gray-900 hover:bg-gray-200 transition-all"
@@ -961,46 +973,59 @@ const Menu = () => {
                         </div>
 
                         {/* Повідомлення про помилку ЕКСПОРТУ В МОДАЛЦІ - НАД КНОПКОЮ */}
-                        {exportError && (
-                            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm font-medium flex items-center justify-center gap-2 shrink-0 animate-pulse text-center">
-                                <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                                <span>{exportError}</span>
+                        {exportStatus && (
+                            <div className={`mb-4 p-3 border rounded-xl text-sm font-medium flex items-center justify-center gap-2 shrink-0 text-center transition-colors ${
+                                exportStatus.type === 'error' ? 'bg-red-50 border-red-200 text-red-600 animate-pulse' :
+                                exportStatus.type === 'loading' ? 'bg-blue-50 border-blue-200 text-blue-600' :
+                                'bg-green-50 border-green-200 text-green-700'
+                            }`}>
+                                {exportStatus.type === 'error' && (
+                                    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                )}
+                                {exportStatus.type === 'loading' && (
+                                    <svg className="animate-spin h-5 w-5 shrink-0 text-blue-500" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                )}
+                                {exportStatus.type === 'success' && (
+                                    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                                )}
+                                <span>{exportStatus.text}</span>
                             </div>
                         )}
 
                         {/* Кнопка Завантаження */}
-                        <button
-                            onClick={() => handleExport('download')}
-                            className="w-full bg-[#5B826B] text-white py-3.5 rounded-[1.2rem] font-bold hover:bg-gray-800 transition-all shadow-md flex justify-center items-center gap-2 mb-4"
-                        >
-                            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                            Завантажити
-                        </button>
+                        <div className="overflow-y-auto custom-scrollbar flex-grow pr-1 space-y-4">
+                            <button
+                                onClick={() => handleExport('download')}
+                                className="w-full bg-[#5B826B] text-white py-3.5 rounded-[1.2rem] font-bold hover:bg-gray-800 transition-all shadow-md flex justify-center items-center gap-2 shrink-0"
+                            >
+                                <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                Завантажити
+                            </button>
 
-                        <div className="relative flex py-3 items-center">
-                            <div className="flex-grow border-t border-gray-200"></div>
-                            <span className="flex-shrink-0 mx-4 text-gray-400 text-xs font-bold uppercase tracking-widest">Або на пошту</span>
-                            <div className="flex-grow border-t border-gray-200"></div>
+                            <div className="relative flex py-1 items-center shrink-0">
+                                <div className="flex-grow border-t border-gray-200"></div>
+                                <span className="flex-shrink-0 mx-4 text-gray-400 text-xs font-bold uppercase tracking-widest">Або на пошту</span>
+                                <div className="flex-grow border-t border-gray-200"></div>
+                            </div>
+
+                            <div className="relative shrink-0">
+                                <input
+                                    type="email"
+                                    placeholder="Введіть email..."
+                                    value={exportEmail}
+                                    onChange={(e) => setExportEmail(e.target.value)}
+                                    className="w-full bg-transparent border-2 border-gray-200 rounded-[1.2rem] px-5 py-3.5 outline-none focus:border-[#B47231] text-gray-800 font-semibold text-sm transition-colors"
+                                />
+                            </div>
+
+                            <button
+                                onClick={() => handleExport('email')}
+                                className="w-full bg-white border-2 border-[#B47231] text-[#B47231] py-3.5 rounded-[1.2rem] font-bold hover:bg-[#B47231] hover:text-white transition-all flex justify-center items-center gap-2 shrink-0"
+                            >
+                                <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                                Надіслати на пошту
+                            </button>
                         </div>
-
-                        {/* Відправка на пошту */}
-                        <div className="relative mb-4 mt-2">
-                            <input
-                                type="email"
-                                placeholder="Введіть email..."
-                                value={exportEmail}
-                                onChange={(e) => setExportEmail(e.target.value)}
-                                className="w-full bg-transparent border-2 border-gray-200 rounded-[1.2rem] px-5 py-3.5 outline-none focus:border-[#B47231] text-gray-800 font-semibold text-sm transition-colors"
-                            />
-                        </div>
-
-                        <button
-                            onClick={() => handleExport('email')}
-                            className="w-full bg-white border-2 border-[#B47231] text-[#B47231] py-3.5 rounded-[1.2rem] font-bold hover:bg-[#B47231] hover:text-white transition-all flex justify-center items-center gap-2"
-                        >
-                            <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                            Надіслати на пошту
-                        </button>
                     </div>
                 </div>
             )}

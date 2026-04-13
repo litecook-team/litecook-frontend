@@ -213,7 +213,7 @@ const Home = () => {
                             </div>
 
                             {/* Інформація про рецепт */}
-                            <div className="flex flex-col text-center md:text-left mt-0 bg-white/70 min-[1700px]:bg-transparent backdrop-blur-md min-[1700px]:backdrop-blur-none p-6 md:p-8 xl:p-0 rounded-[2rem] xl:rounded-none flex-1 w-full transition-all duration-500">
+                            <div className="flex flex-col text-center md:text-left mt-0 bg-white/70 min-[1700px]:bg-transparent backdrop-blur-md min-[1700px]:backdrop-blur-none p-6 md:p-8 xl:p-2 rounded-[2rem] flex-1 w-full transition-all duration-500">
                                 <h2 className="text-2xl sm:text-3xl md:text-4xl font-['El_Messiri'] text-[#1A1A1A] mb-4 mt-2">
                                     <Link to={`/recipe/${recipeOfDay.id}`} className="hover:text-[#42705D] transition-colors">
                                         {recipeOfDay.title}
@@ -276,7 +276,7 @@ const Home = () => {
                                 <div className="flex justify-center md:justify-start mb-4 ml-4 md:ml-0">
                                     <Link
                                         to={`/recipe/${recipeOfDay.id}`}
-                                        className="px-10 py-3.5 border-2 border-black rounded-[30px] font-['Inter'] lg:text-[18px] hover:bg-black hover:text-white transition-colors w-max"
+                                        className="px-10 py-3 border-2 border-black rounded-[30px] font-['Inter'] lg:text-[18px] hover:bg-black hover:text-white transition-colors w-max"
                                     >
                                         Переглянути рецепт
                                     </Link>
