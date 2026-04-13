@@ -733,16 +733,56 @@ const Recipes = () => {
                                                 </button>
                                             )}
 
-                                            {/* Бейджик збігів (Справа) */}
+                                            {/* Стильний компактний бейджик */}
                                             {recipe.match_count > 0 && recipe.total_count > 0 && (
-                                                <div
-                                                    className="absolute top-4 right-4 h-10 px-3 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md z-10 text-[#6A907B] font-bold font-['Inter'] text-sm gap-1.5"
-                                                    title={`Знайдено ${recipe.match_count} з ${recipe.total_count} інгредієнтів`}
-                                                >
-                                                    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                                        <path d="M4 12.5C4 12.5 7.5 17 8.5 18C10 14 15 7.5 20 5"></path>
-                                                    </svg>
-                                                    {recipe.match_count}/{recipe.total_count}
+                                                <div className="absolute top-3 right-3 bg-[#FDFBF7]/85 backdrop-blur-md font-['Inter'] rounded-2xl p-1.5 sm:p-2 shadow-[0_8px_20px_rgba(0,0,0,0.08)] z-10 flex flex-col items-center min-w-[50px] sm:min-w-[60px] transform origin-top-right transition-transform hover:scale-105">
+
+                                                    {/* Інформація про те, скільки всього */}
+                                                    <div className="w-full border-b border-gray-200/80 pb-1 mb-1 text-center pt-0.5">
+                                                        <div className="flex items-center justify-center gap-1">
+                                                            <span className="text-[15px] sm:text-[17px] font-black text-[#1A1A1A] leading-none">{recipe.total_count}</span>
+
+                                                            {/* Інгредієнти/Овочі */}
+                                                            <svg className="w-4 h-4 sm:w-4.5 sm:h-4.5" viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                                                                {/* Зелень */}
+                                                                <path d="M4 14c-2-3 2-6 4-3 1-2 4-1 3 2-2 3-5 4-7 1z" fill="#DCE8D9" stroke="#5B826B" strokeWidth="1.2" />
+                                                                <path d="M20 12c1-2-2-5-4-3-1-2-4-1-3 2 2 3 5 4 7 1z" fill="#DCE8D9" stroke="#5B826B" strokeWidth="1.2" />
+
+                                                                {/* Ананас */}
+                                                                <ellipse cx="8" cy="14" rx="3.5" ry="4.5" fill="#FFEAA7" stroke="#D9A05B" strokeWidth="1.2" />
+                                                                {/* Хвостик ананаса */}
+                                                                <path d="M8 9.5l-1.5-3.5 1.5 2 1-3 1 3 1.5-2L10 9.5" fill="#DCE8D9" stroke="#5B826B" strokeWidth="1" />
+                                                                {/* Текстура ананаса */}
+                                                                <path d="M5.5 12.5l5 3M9.5 12.5l-3 3" stroke="#D9A05B" strokeWidth="1" opacity="0.6" />
+
+                                                                {/* Банан */}
+                                                                <path d="M12 18c5 3 9 1 10-4-1 1-4 1-6 0-3-1-4-3-4-5 0 3-1 6 0 9z" fill="#FCE7A1" stroke="#D9B44A" strokeWidth="1.2" />
+
+                                                                {/* Помідор */}
+                                                                <circle cx="13" cy="17" r="4" fill="#FFB4A2" stroke="#E56B55" strokeWidth="1.2" />
+                                                                <path d="M13 13v1.5M12 14h2" stroke="#5B826B" strokeWidth="1.2" />
+                                                            </svg>
+                                                        </div>
+                                                        <div className="text-[7px] sm:text-[8px] uppercase tracking-widest text-gray-500 font-bold mt-1 leading-none">Всього</div>
+                                                    </div>
+
+                                                    {/* Інформація про те, що Є У МЕНЕ */}
+                                                    <div className="w-full border-b border-gray-200/80 pb-1 mb-1 text-center">
+                                                        <div className="flex items-center justify-center gap-1">
+                                                            <span className="text-[15px] sm:text-[17px] font-black text-[#5B826B] leading-none">{recipe.match_count}</span>
+                                                            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#5B826B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                        </div>
+                                                        <div className="text-[7px] sm:text-[8px] uppercase tracking-tight sm:tracking-normal text-gray-500 font-bold mt-1 leading-none">В наявності</div>
+                                                    </div>
+
+                                                    {/* Інформація про те, чого НЕ ВИСТАЧАЄ (Докупити) */}
+                                                    <div className="w-full text-center pb-0.5">
+                                                        <div className="flex items-center justify-center gap-1">
+                                                            <span className="text-[15px] sm:text-[17px] font-black text-[#B47231] leading-none">{recipe.total_count - recipe.match_count}</span>
+                                                            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#B47231]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path><line x1="16" y1="10" x2="16" y2="14"></line><line x1="14" y1="12" x2="18" y2="12"></line></svg>
+                                                        </div>
+                                                        <div className="text-[7px] sm:text-[8px] uppercase tracking-wide text-gray-500 font-bold mt-1 leading-none">Докупити</div>
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
