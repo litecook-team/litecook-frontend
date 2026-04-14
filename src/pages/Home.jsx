@@ -123,7 +123,7 @@ const Home = () => {
 
                         <Link
                             to="/recipes"
-                            className="px-8 py-3 bg-white/50 lg:bg-transparent border lg:text-[20px] border-black rounded-[30px] font-['Inter'] hover:bg-white/80 transition-colors shadow-sm"
+                            className="px-8 py-3 bg-white/50 lg:bg-transparent border lg:text-[20px] border-black rounded-[30px] font-['Inter'] hover:bg-white/80 transition-colors shadow-sm cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group"
                         >
                             Підібрати рецепт
                         </Link>
@@ -148,7 +148,7 @@ const Home = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-12 max-w-[1400px] mx-auto">
 
                         {/* Картка 1: Веде на сторінку "Про нас" (/about) */}
-                        <Link to="/about" className="bg-[#F6F3F4] backdrop-blur-md rounded-2xl px-6 py-10 sm:px-8 sm:py-10 flex flex-col items-center text-center shadow-[0_8px_30px_rgb(0,0,0,0.08)] transform hover:-translate-y-1 transition-transform">
+                        <Link to="/about" className="bg-[#F6F3F4] backdrop-blur-md rounded-2xl px-6 py-10 sm:px-8 sm:py-10 flex flex-col items-center text-center shadow-[0_8px_30px_rgb(0,0,0,0.08)] transform hover:-translate-y-1 transition-transform cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group">
                             <div className="w-12 h-12 mb-4 flex items-center justify-center">
                                 <img src={iconLocation} alt="Готує із того, що є вдома" className="w-14 h-14 object-contain drop-shadow-sm" />
                             </div>
@@ -157,7 +157,7 @@ const Home = () => {
                         </Link>
 
                         {/* Картка 2: Веде на сторінку "Підбір рецепта" (/recipes) */}
-                        <Link to="/recipes" className="bg-[#F6F3F4] backdrop-blur-md rounded-2xl p-6 sm:p-8 flex flex-col items-center text-center shadow-[0_8px_30px_rgb(0,0,0,0.08)] transform hover:-translate-y-1 transition-transform">
+                        <Link to="/recipes" className="bg-[#F6F3F4] backdrop-blur-md rounded-2xl p-6 sm:p-8 flex flex-col items-center text-center shadow-[0_8px_30px_rgb(0,0,0,0.08)] transform hover:-translate-y-1 transition-transform cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group">
                             <div className="w-12 h-12 mb-4 flex items-center justify-center">
                                 <img src={iconSun} alt="Прості інгредієнти" className="w-14 h-14 object-contain drop-shadow-sm" />
                             </div>
@@ -168,7 +168,7 @@ const Home = () => {
                         {/* Картка 3: Веде на сторінку "Вхід" (/login) */}
                         <Link
                             to={isAuthenticated ? "/menu" : "/login"}
-                            className="bg-[#F6F3F4] backdrop-blur-md rounded-2xl p-6 sm:p-8 flex flex-col items-center text-center shadow-[0_8px_30px_rgb(0,0,0,0.08)] transform hover:-translate-y-1 transition-transform"
+                            className="bg-[#F6F3F4] backdrop-blur-md rounded-2xl p-6 sm:p-8 flex flex-col items-center text-center shadow-[0_8px_30px_rgb(0,0,0,0.08)] transform hover:-translate-y-1 transition-transform cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group"
                         >
                             <div className="w-12 h-12 mb-4 flex items-center justify-center">
                                 <img src={iconLeaf} alt="Швидко та легко" className="w-14 h-14 object-contain drop-shadow-sm" />
@@ -308,7 +308,7 @@ const Home = () => {
 
                          <button
                              onClick={() => navigate('/recipes')}
-                             className="px-8 py-2.5 border border-black rounded-[30px] font-['Inter'] text-lg lg:mr-5 hover:bg-black hover:text-white transition-colors whitespace-nowrap"
+                             className="px-8 py-2.5 border border-black rounded-[30px] font-['Inter'] text-lg lg:mr-5 hover:bg-black hover:text-white transition-colors whitespace-nowrap cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group"
                          >
                              Підібрати рецепт
                          </button>

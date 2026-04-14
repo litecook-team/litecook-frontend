@@ -81,6 +81,12 @@ const Recipes = () => {
     // Стан для відображення меню фільтрів на мобільному
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+    // Стан для зберігання рецепту, обраного для модалки з інгредієнтами
+    const [selectedRecipeForModal, setSelectedRecipeForModal] = useState(null);
+
+    // Стан для збереження ID інгредієнтів з поточного пошуку (щоб знати, що є в наявності)
+    const [matchedIngredientIds, setMatchedIngredientIds] = useState([]);
+
     useEffect(() => {
         // Завантажуємо всі інгредієнти з БД для підказок та списку
         const fetchIngredients = async () => {
@@ -115,10 +121,56 @@ const Recipes = () => {
         return terms.join(', ');
     };
 
+    // Допоміжна функція для пошуку ID інгредієнтів за поточним пошуковим запитом
+    const getIngredientIdsFromSearch = (query) => {
+        if (!query) return [];
+        const terms = query.toLowerCase().split(/[\s,]+/).filter(t => t.trim().length > 0);
+
+        const matchedIds = [];
+        terms.forEach(term => {
+            const matches = allIngredients.filter(ing => ing.name.toLowerCase().includes(term));
+            matches.forEach(match => matchedIds.push(match.id));
+        });
+        return [...new Set(matchedIds)]; // Унікальні ID
+    };
+
     const fetchRecipes = async (isUserAction = true, overrideParams = null) => {
+        // Перевірка на те, чи обрані фільтри перед відправкою запиту (тільки для дій користувача)
+        if (isUserAction && overrideParams !== 'clear') {
+            const hasAnyFilter =
+                searchQuery.trim() !== '' ||
+                selectedCuisines.length > 0 ||
+                selectedDifficulties.length > 0 ||
+                selectedDiets.length > 0 ||
+                selectedDishTypes.length > 0 ||
+                selectedMealTimes.length > 0 ||
+                selectedMonths.length > 0 ||
+                selectedIngredientCategories.length > 0 ||
+                maxTime !== '' ||
+                maxCalories !== '' ||
+                isSeasonal;
+
+            if (!hasAnyFilter) {
+                // Виводимо повідомлення залежно від активної вкладки
+                if (activeTab === 'ingredients') {
+                    showToast("🥗 Будь ласка, введіть або оберіть інгредієнти для пошуку рецептів");
+                } else {
+                    showToast("🔍 Оберіть хоча б один фільтр, щоб звузити пошук");
+                }
+                return; // Зупиняємо виконання функції, запит до БД не йде
+            }
+        }
+
         setLoading(true);
         try {
             let url = '';
+
+            // Оновлюємо список ID, які ми зараз шукаємо
+            if (overrideParams === 'clear') {
+                setMatchedIngredientIds([]);
+            } else {
+                setMatchedIngredientIds(getIngredientIdsFromSearch(searchQuery));
+            }
 
             if (overrideParams === 'clear') {
                 url = `${ENDPOINTS.RECIPES}`;
@@ -270,6 +322,18 @@ const Recipes = () => {
             (isSeasonal ? 1 : 0);
     };
 
+    // Допоміжна функція для форматування кількості
+    const formatAmount = (amount, unit) => {
+        if (amount === null || parseFloat(amount) === 0) {
+            const unitTrans = DICTIONARIES.units[unit];
+            if (['taste', 'garnish', 'frying'].includes(unit)) return unitTrans;
+            return `за потребою / 1 ${Array.isArray(unitTrans) ? unitTrans[0] : unitTrans}`;
+        }
+        const numAmount = parseFloat(amount);
+        const unitData = DICTIONARIES.units[unit];
+        return `${numAmount} ${Array.isArray(unitData) ? getPluralForm(numAmount, unitData) : (unitData || unit)}`;
+    };
+
     return (
         <div className="bg-[#F6F3F4] w-full min-h-screen flex flex-col font-sans pb-20">
 
@@ -312,7 +376,7 @@ const Recipes = () => {
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
-                                        className={`py-2.5 px-3 rounded-lg font-['Inter'] font-semibold text-[13px] transition-all text-center border whitespace-nowrap ${
+                                        className={`py-2.5 px-3 rounded-lg font-['Inter'] font-semibold text-[13px] transition-all text-center border whitespace-nowrap cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${
                                             activeTab === tab.id
                                             ? 'bg-[#5B826B] text-white border-[#5B826B] shadow-md'
                                             : 'bg-white/90 text-gray-600 border-gray-200 hover:bg-gray-50 shadow-sm'
@@ -330,7 +394,7 @@ const Recipes = () => {
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
-                                    className={`px-5 py-3.5 rounded-xl font-['Inter'] font-semibold text-[15px] transition-all text-left shrink-0 border ${
+                                    className={`px-5 py-3.5 rounded-xl font-['Inter'] font-semibold text-[15px] transition-all text-left shrink-0 border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${
                                         activeTab === tab.id
                                         ? 'bg-[#5B826B] text-white border-[#5B826B] shadow-md'
                                         : 'bg-white/80 backdrop-blur-sm text-gray-700 border-gray-200 hover:bg-white hover:border-[#5B826B] hover:text-[#5B826B]'
@@ -352,7 +416,7 @@ const Recipes = () => {
                                     className="flex items-center gap-1.5 bg-red-50 text-red-600 hover:bg-red-100 transition-colors font-['Inter'] text-[13px] font-bold px-4 py-1.5 rounded-full border border-red-200 shadow-sm animate-fade-in"
                                 >
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                                    <span className="hidden sm:inline">Скинути фільтри</span>
+                                    <span className="hidden sm:inline cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out hover:shadow-[0_12px_25px_rgba(180,114,49,0.15)] active:scale-95 group">Очистити фільтри</span>
                                 </button>
                             ) : (
                                 <div></div>
@@ -381,7 +445,7 @@ const Recipes = () => {
                                             onChange={handleInputChange}
                                             onFocus={() => setShowSuggestions(true)}
                                             onKeyDown={(e) => e.key === 'Enter' && fetchRecipes()}
-                                            placeholder="Листя салату, Картопля, Бринза..."
+                                            placeholder="Листя салату, картопля, бринза..."
                                             className="w-full bg-white border-2 border-gray-200 rounded-xl px-5 py-4 pl-12 outline-none focus:border-[#6A907B] transition-colors text-gray-800 font-medium font-['Inter']"
                                         />
                                         <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -423,7 +487,7 @@ const Recipes = () => {
                                                     <button
                                                         key={ing.id}
                                                         onClick={() => handleAddIngredientToSearch(ing.name)}
-                                                        className="px-3.5 py-1.5 bg-white border border-gray-200 rounded-full text-[13.5px] font-medium text-gray-700 hover:border-[#6A907B] hover:text-[#6A907B] transition-all flex items-center gap-2 shadow-sm"
+                                                        className="px-3.5 py-1.5 bg-white border border-gray-200 rounded-full text-[13.5px] font-medium text-gray-700 hover:border-[#6A907B] hover:text-[#6A907B] transition-all flex items-center gap-2 shadow-sm cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group"
                                                     >
                                                         {ing.image ? (
                                                             <img src={getImageUrl(ing.image)} alt={ing.name} className="w-5 h-5 rounded-full object-cover bg-gray-50" />
@@ -503,7 +567,7 @@ const Recipes = () => {
                                         <button
                                             key={key}
                                             onClick={() => toggleArrayFilter(selectedIngredientCategories, setSelectedIngredientCategories, key)}
-                                            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all border ${selectedIngredientCategories.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
+                                            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${selectedIngredientCategories.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
                                         >
                                             {value}
                                         </button>
@@ -521,7 +585,7 @@ const Recipes = () => {
                                         <button
                                             key={key}
                                             onClick={() => toggleArrayFilter(selectedMealTimes, setSelectedMealTimes, key)}
-                                            className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border ${selectedMealTimes.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
+                                            className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${selectedMealTimes.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
                                         >
                                             {value}
                                         </button>
@@ -539,7 +603,7 @@ const Recipes = () => {
                                         <button
                                             key={key}
                                             onClick={() => toggleArrayFilter(selectedDishTypes, setSelectedDishTypes, key)}
-                                            className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border ${selectedDishTypes.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
+                                            className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${selectedDishTypes.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
                                         >
                                             {value}
                                         </button>
@@ -557,7 +621,7 @@ const Recipes = () => {
                                         <button
                                             key={key}
                                             onClick={() => toggleArrayFilter(selectedCuisines, setSelectedCuisines, key)}
-                                            className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border ${selectedCuisines.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
+                                            className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${selectedCuisines.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
                                         >
                                             {value}
                                         </button>
@@ -575,7 +639,7 @@ const Recipes = () => {
                                         <button
                                             key={key}
                                             onClick={() => toggleArrayFilter(selectedDifficulties, setSelectedDifficulties, key)}
-                                            className={`px-6 py-3 rounded-xl text-base font-bold transition-all border ${selectedDifficulties.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
+                                            className={`px-6 py-3 rounded-xl text-base font-bold transition-all border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${selectedDifficulties.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
                                         >
                                             {value}
                                         </button>
@@ -593,7 +657,7 @@ const Recipes = () => {
                                         <button
                                             key={time}
                                             onClick={() => setMaxTime(maxTime === time ? '' : time)}
-                                            className={`px-6 py-3 rounded-xl text-base font-bold transition-all border ${maxTime === time ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
+                                            className={`px-6 py-3 rounded-xl text-base font-bold transition-all border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${maxTime === time ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
                                         >
                                             До {time} хв
                                         </button>
@@ -612,7 +676,7 @@ const Recipes = () => {
                                         <button
                                             key={cal}
                                             onClick={() => setMaxCalories(maxCalories === cal ? '' : cal)}
-                                            className={`px-6 py-3 rounded-xl text-base font-bold transition-all border ${maxCalories === cal ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
+                                            className={`px-6 py-3 rounded-xl text-base font-bold transition-all border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${maxCalories === cal ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
                                         >
                                             До {cal} ккал
                                         </button>
@@ -630,7 +694,7 @@ const Recipes = () => {
                                         <button
                                             key={key}
                                             onClick={() => toggleArrayFilter(selectedDiets, setSelectedDiets, key)}
-                                            className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all border ${selectedDiets.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
+                                            className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${selectedDiets.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
                                         >
                                             {value}
                                         </button>
@@ -646,7 +710,7 @@ const Recipes = () => {
 
                                 <button
                                     onClick={() => setIsSeasonal(!isSeasonal)}
-                                    className={`px-8 py-3.5 rounded-xl text-base font-bold transition-all border w-max shadow-sm mb-8 ${isSeasonal ? 'bg-[#6A907B] text-white border-[#6A907B]' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
+                                    className={`px-8 py-3.5 rounded-xl text-base font-bold transition-all border w-max shadow-sm mb-8 cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${isSeasonal ? 'bg-[#6A907B] text-white border-[#6A907B]' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
                                 >
                                     {isSeasonal ? '✅ Увімкнено (Всі сезонні)' : 'Вимкнено (Показувати все)'}
                                 </button>
@@ -657,7 +721,7 @@ const Recipes = () => {
                                         <button
                                             key={key}
                                             onClick={() => toggleArrayFilter(selectedMonths, setSelectedMonths, key)}
-                                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all border ${selectedMonths.includes(key) ? 'bg-[#B47231] text-white border-[#B47231] shadow-md' : 'bg-white text-gray-600 border-gray-300 hover:border-[#B47231]'}`}
+                                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${selectedMonths.includes(key) ? 'bg-[#B47231] text-white border-[#B47231] shadow-md' : 'bg-white text-gray-600 border-gray-300 hover:border-[#B47231]'}`}
                                         >
                                             {value}
                                         </button>
@@ -670,7 +734,7 @@ const Recipes = () => {
                         <div className="mt-8 lg:mt-auto pt-4 lg:pt-6 font-['Inter'] shrink-0 flex flex-col sm:flex-row items-center gap-4">
                             <button
                                 onClick={() => fetchRecipes(true)}
-                                className="w-full sm:flex-1 md:w-max md:px-16 py-3 bg-[#6A907B] text-white rounded-xl font-bold text-[17px] hover:bg-[#5B826B] transition-colors shadow-lg text-center tracking-wide block"
+                                className="w-full sm:flex-1 md:w-max md:px-16 py-3 bg-[#6A907B] text-white rounded-xl font-bold text-[17px] hover:bg-[#5B826B] transition-colors shadow-lg text-center tracking-wide block cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out hover:shadow-[0_12px_25px_rgba(180,114,49,0.15)] active:scale-95 group"
                             >
                                 {activeTab === 'ingredients' ? 'Знайти рецепт' : 'Застосувати фільтри'}
                             </button>
@@ -711,7 +775,7 @@ const Recipes = () => {
                         <>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-12 md:gap-x-10 lg:gap-x-14 md:gap-y-16">
                                 {recipes.slice(0, visibleCount).map((recipe) => (
-                                    <Link to={`/recipe/${recipe.id}`} key={recipe.id} className="flex flex-col relative group block w-full h-full">
+                                    <Link to={`/recipe/${recipe.id}`} key={recipe.id} className="flex flex-col relative group block w-full h-full cursor-pointer transition-all duration-300 ease-out active:scale-99 group">
 
                                         <div className="relative w-full h-64 sm:h-60 md:h-72 rounded-[2rem] overflow-hidden mb-5 shadow-sm">
                                             <img
@@ -724,7 +788,7 @@ const Recipes = () => {
                                             {isAuthenticated && (
                                                 <button
                                                     onClick={(e) => toggleFavorite(e, recipe)}
-                                                    className="absolute top-4 left-4 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform z-10"
+                                                    className="absolute top-4 left-4 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform z-10 cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group"
                                                     title={recipe.is_favorited ? "Видалити з улюблених" : "Додати в улюблені"}
                                                 >
                                                     <svg width="20" height="20" viewBox="0 0 24 24" fill={recipe.is_favorited ? "#EF4444" : "none"} stroke={recipe.is_favorited ? "#EF4444" : "#9CA3AF"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -735,8 +799,14 @@ const Recipes = () => {
 
                                             {/* Стильний компактний бейджик */}
                                             {recipe.match_count > 0 && recipe.total_count > 0 && (
-                                                <div className="absolute top-3 right-3 bg-[#FDFBF7]/85 backdrop-blur-md font-['Inter'] rounded-2xl p-1.5 sm:p-2 shadow-[0_8px_20px_rgba(0,0,0,0.08)] z-10 flex flex-col items-center min-w-[50px] sm:min-w-[60px] transform origin-top-right transition-transform hover:scale-105">
-
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.preventDefault(); // Запобігає переходу на сторінку рецепту
+                                                        setSelectedRecipeForModal(recipe);
+                                                    }}
+                                                    className="absolute top-3 right-3 bg-[#FDFBF7]/85 backdrop-blur-md font-['Inter'] rounded-2xl p-1.5 sm:p-1.5 shadow-[0_8px_20px_rgba(0,0,0,0.08)] z-10 flex flex-col items-center min-w-[50px] sm:min-w-[60px] transform origin-top-right cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out hover:scale-105 hover:-translate-y-1 hover:shadow-[0_12px_25px_rgba(180,114,49,0.15)] active:scale-95 group"
+                                                    title="Натисніть, щоб переглянути список інгредієнтів"
+                                                >
                                                     {/* Інформація про те, скільки всього */}
                                                     <div className="w-full border-b border-gray-200/80 pb-1 mb-1 text-center pt-0.5">
                                                         <div className="flex items-center justify-center gap-1">
@@ -763,7 +833,7 @@ const Recipes = () => {
                                                                 <path d="M13 13v1.5M12 14h2" stroke="#5B826B" strokeWidth="1.2" />
                                                             </svg>
                                                         </div>
-                                                        <div className="text-[7px] sm:text-[8px] uppercase tracking-widest text-gray-500 font-bold mt-1 leading-none">Всього</div>
+                                                        <div className="text-[7px] sm:text-[8px] uppercase tracking-widest text-gray-500 font-bold mt-1 leading-tight">Всього</div>
                                                     </div>
 
                                                     {/* Інформація про те, що Є У МЕНЕ */}
@@ -783,7 +853,7 @@ const Recipes = () => {
                                                         </div>
                                                         <div className="text-[7px] sm:text-[8px] uppercase tracking-wide text-gray-500 font-bold mt-1 leading-none">Докупити</div>
                                                     </div>
-                                                </div>
+                                                </button>
                                             )}
                                         </div>
 
@@ -832,7 +902,7 @@ const Recipes = () => {
                                 <div className="flex justify-center mt-12 md:mt-16">
                                     <button
                                         onClick={() => setVisibleCount(prev => prev + 6)}
-                                        className="px-10 py-3.5 bg-transparent border-2 border-[#5B826B] text-[#5B826B] rounded-full font-bold font-['Inter'] hover:bg-[#5B826B] hover:text-white transition-colors"
+                                        className="px-10 py-3.5 bg-transparent border-2 border-[#5B826B] text-[#5B826B] rounded-full font-bold font-['Inter'] hover:bg-[#5B826B] hover:text-white transition-colors cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group"
                                     >
                                         Показати ще рецепти
                                     </button>
@@ -842,6 +912,156 @@ const Recipes = () => {
                     )}
                 </div>
             </div>
+
+            {/* модальне вікно для відображення інгредієнтів */}
+            {selectedRecipeForModal && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm transform-gpu"
+                    onClick={() => setSelectedRecipeForModal(null)} // Закриття по кліку на фон
+                >
+                    <div
+                        className="bg-white rounded-[2.5rem] p-6 sm:p-10 max-w-[650px] w-full shadow-2xl relative flex flex-col max-h-[90vh] font-['Inter']"
+                        onClick={(e) => e.stopPropagation()} // Блокуємо закриття при кліку на саме вікно
+                    >
+                        {/* Кнопка закриття */}
+                        <button
+                            onClick={() => setSelectedRecipeForModal(null)}
+                            className="absolute top-5 right-5 sm:top-6 sm:right-6 w-10 h-10 flex items-center justify-center bg-gray-50 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-900 transition-all shadow-sm cursor-pointer duration-300 ease-out active:scale-95 group"
+                        >
+                            <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+
+                        <div className="flex flex-col items-center mb-6">
+
+                            <h2 className="text-[20px] sm:text-[24px] font-bold font-['El_Messiri'] text-[#1A1A1A] text-center uppercase tracking-wider px-6 leading-tight mb-4">
+                                {selectedRecipeForModal.title}
+                            </h2>
+
+                            {/* Додано блок статистики рецепту з іконками */}
+                            <div className="flex flex-wrap justify-center gap-4 sm:gap-6 mb-4 font-['El_Messiri']">
+                                <div className="flex items-center gap-1.5">
+                                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-[#B47231]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                    <span className="text-[13px] sm:text-[15px] font-medium text-gray-800">
+                                        {selectedRecipeForModal.cooking_time} {getPluralForm(selectedRecipeForModal.cooking_time, ['хв', 'хв', 'хв'])}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-[#B47231]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 8h1a4 4 0 1 1 0 8h-1"></path><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"></path><line x1="6" y1="2" x2="6" y2="4"></line><line x1="10" y1="2" x2="10" y2="4"></line><line x1="14" y1="2" x2="14" y2="4"></line></svg>
+                                    <span className="text-[13px] sm:text-[15px] font-medium text-gray-800">
+                                        {selectedRecipeForModal.portions || 1} {getPluralForm(selectedRecipeForModal.portions || 1, ['порція', 'порції', 'порцій'])}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-[#B47231]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
+                                    <span className="text-[13px] sm:text-[15px] font-medium text-gray-800">
+                                        {selectedRecipeForModal.calories} ккал/порція
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-[#B47231]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                                    <span className="text-[13px] sm:text-[15px] font-medium text-gray-800">
+                                        {DICTIONARIES.difficulty[selectedRecipeForModal.difficulty] || selectedRecipeForModal.difficulty}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <p className="text-gray-500 text-[13px] sm:text-sm text-center font-medium max-w-sm">
+                                Інгредієнти, які необхідні для приготування:
+                            </p>
+                        </div>
+
+                        {/* Списки інгредієнтів */}
+                        <div className="overflow-y-auto custom-scrollbar pr-2 flex-grow">
+                            <div className="flex flex-col sm:flex-row gap-6 sm:gap-8">
+
+                                {/* КОЛОНКА 1: В наявності */}
+                                <div className="flex-1 bg-[#F6F8F6] border border-[#DCE8D9] rounded-[1.5rem] p-5">
+                                    <div className="flex items-center gap-2 border-b border-[#DCE8D9] pb-3 mb-4">
+                                        <div className="w-7 h-7 rounded-full bg-white shadow-sm flex items-center justify-center shrink-0">
+                                            <svg className="w-4 h-4 text-[#5B826B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                                        </div>
+                                        {/* Динамічний заголовок зі схилянням */}
+                                        <h3 className="font-bold text-[#5B826B] uppercase tracking-wide text-[12px] sm:text-[13px] leading-tight">
+                                            В наявності {selectedRecipeForModal.match_count} {getPluralForm(selectedRecipeForModal.match_count, ['інгредієнт', 'інгредієнти', 'інгредієнтів'])}
+                                        </h3>
+                                    </div>
+
+                                    <ul className="space-y-3">
+                                        {selectedRecipeForModal.recipe_ingredients
+                                            .filter(ing => matchedIngredientIds.includes(ing.ingredient))
+                                            .map(ing => (
+                                                <li key={ing.id} className="flex items-center gap-3">
+                                                    {ing.ingredient_image ? (
+                                                        <img src={getImageUrl(ing.ingredient_image)} className="w-10 h-10 rounded-full object-cover shadow-sm bg-white shrink-0 border border-gray-100" alt="" />
+                                                    ) : (
+                                                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-400 text-xs shadow-sm shrink-0 border border-gray-100">•</div>
+                                                    )}
+                                                    <div className="flex flex-col min-w-0">
+                                                        <span className="text-[14px] font-bold text-gray-800 truncate capitalize">{ing.ingredient_name}</span>
+                                                        <span className="text-[12px] text-gray-500 font-medium">{formatAmount(ing.amount, ing.unit)}</span>
+                                                    </div>
+                                                </li>
+                                            ))
+                                        }
+                                    </ul>
+                                </div>
+
+                                {/* КОЛОНКА 2: Докупити */}
+                                <div className="flex-1 bg-[#FDFBF7] border border-[#EAE3D9] rounded-[1.5rem] p-5">
+                                    <div className="flex items-center gap-2 border-b border-[#EAE3D9] pb-3 mb-4">
+                                        <div className="w-7 h-7 rounded-full bg-white shadow-sm flex items-center justify-center shrink-0">
+                                            <svg className="w-3.5 h-3.5 text-[#B47231]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path><line x1="16" y1="10" x2="16" y2="14"></line><line x1="14" y1="12" x2="18" y2="12"></line></svg>
+                                        </div>
+                                        {/* Динамічний заголовок зі схилянням */}
+                                        <h3 className="font-bold text-[#B47231] uppercase tracking-wide text-[12px] sm:text-[13px] leading-tight">
+                                            Докупити {selectedRecipeForModal.total_count - selectedRecipeForModal.match_count} {getPluralForm(selectedRecipeForModal.total_count - selectedRecipeForModal.match_count, ['інгредієнт', 'інгредієнти', 'інгредієнтів'])}
+                                        </h3>
+                                    </div>
+
+                                    <ul className="space-y-3">
+                                        {selectedRecipeForModal.recipe_ingredients
+                                            .filter(ing => !matchedIngredientIds.includes(ing.ingredient))
+                                            .map(ing => (
+                                                <li key={ing.id} className="flex items-center gap-3">
+                                                    {ing.ingredient_image ? (
+                                                        <img src={getImageUrl(ing.ingredient_image)} className="w-10 h-10 rounded-full object-cover shadow-sm bg-white shrink-0 border border-gray-100 opacity-60" alt="" />
+                                                    ) : (
+                                                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-400 text-xs shadow-sm shrink-0 border border-gray-100">•</div>
+                                                    )}
+                                                    <div className="flex flex-col min-w-0">
+                                                        <span className="text-[14px] font-bold text-gray-800 truncate capitalize opacity-90">{ing.ingredient_name}</span>
+                                                        <span className="text-[12px] text-gray-500 font-medium">{formatAmount(ing.amount, ing.unit)}</span>
+                                                    </div>
+                                                </li>
+                                            ))
+                                        }
+                                        {/* Якщо докуповувати нічого не треба */}
+                                        {(selectedRecipeForModal.total_count - selectedRecipeForModal.match_count) === 0 && (
+                                            <li className="text-center py-6">
+                                                <span className="text-2xl mb-2 block">🎉</span>
+                                                <p className="text-xs font-bold text-gray-500">У вас є всі інгредієнти!</p>
+                                            </li>
+                                        )}
+                                    </ul>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        {/* Кнопка переходу на сторінку рецепту */}
+                        <div className="mt-8 shrink-0 flex justify-center border-t border-gray-100 pt-6">
+                            <Link
+                                to={`/recipe/${selectedRecipeForModal.id}`}
+                                className="px-10 py-3.5 bg-[#1A1A1A] text-white rounded-[20px] font-bold text-[15px] hover:bg-[#6A907B] transition-colors shadow-lg shadow-black/10 flex items-center gap-2 group w-full sm:w-auto justify-center cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group"
+                            >
+                                Переглянути спосіб приготування
+                                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path></svg>
+                            </Link>
+                        </div>
+
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

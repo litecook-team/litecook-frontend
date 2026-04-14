@@ -93,13 +93,13 @@ const NotFound = () => {
                 <div className="w-full flex flex-col sm:flex-row gap-6 lg:gap-16 justify-center md:justify-start items-start z-20 order-3 md:col-start-1 md:row-start-2 mt-12 md:mt-0 pb-10 md:pb-20">
                     <Link
                         to="/recipes"
-                        className="px-8 py-3.5 sm:py-3 bg-white text-[#1A1A1A] border border-gray-800 rounded-full font-['El_Messiri'] text-xl lg:text-1xl text-center hover:bg-gray-50 transition-all w-full sm:w-auto min-w-[220px] shadow-sm"
+                        className="px-8 py-3.5 sm:py-3 bg-white text-[#1A1A1A] border border-gray-800 rounded-full font-['El_Messiri'] text-xl lg:text-1xl text-center hover:bg-gray-50 transition-all w-full sm:w-auto min-w-[220px] shadow-sm cursor-pointer duration-300 ease-out active:scale-95 group"
                     >
                         Пошук рецептів...
                     </Link>
                     <Link
                         to="/"
-                        className="px-8 py-3.5 sm:py-3 bg-[#B5C9AD] text-[#1A1A1A] rounded-full font-['El_Messiri'] text-xl lg:text-1xl text-center hover:bg-[#A3B89B] transition-all w-full sm:w-auto min-w-[250px] shadow-sm"
+                        className="px-8 py-3.5 sm:py-3 bg-[#B5C9AD] text-[#1A1A1A] rounded-full font-['El_Messiri'] text-xl lg:text-1xl text-center hover:bg-[#A3B89B] transition-all w-full sm:w-auto min-w-[250px] shadow-sm cursor-pointer duration-300 ease-out active:scale-95 group"
                     >
                         На головну
                     </Link>

@@ -504,6 +504,7 @@ const Menu = () => {
                                     font-['Inter'] font-semibold text-sm md:text-base lg:text-lg
                                     transition-all duration-300 rounded-xl
                                     border
+                                    cursor-pointer transition-all duration-300 ease-out active:scale-95 group
                                     ${
                                         activeDay === day.id
                                             ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md transform scale-[1.02]'
@@ -558,14 +559,14 @@ const Menu = () => {
                                                                     <img
                                                                         src={getImageUrl(recipe.image)}
                                                                         alt={recipe.title}
-                                                                        className="w-full h-full object-cover rounded-[1rem] shadow-sm group-hover:scale-105 transition-transform duration-700"
+                                                                        className="w-full h-full object-cover rounded-[1rem] shadow-sm group-hover:scale-105 transition-transform duration-700 cursor-pointer transition-all duration-300 ease-out active:scale-100 group"
                                                                     />
                                                                 </Link>
 
                                                                 {/* Кнопка видалення (На мобільних і планшетах на картинці) */}
                                                                 <button
                                                                     onClick={() => removeFromMenu(item.id)}
-                                                                    className="absolute top-3 right-3 xl:hidden w-9 h-9 bg-white/90 backdrop-blur-sm text-gray-500 hover:text-red-500 rounded-full flex items-center justify-center shadow-md transition-colors z-10"
+                                                                    className="absolute top-3 right-3 xl:hidden w-9 h-9 bg-white/90 backdrop-blur-sm text-gray-500 hover:text-red-500 rounded-full flex items-center justify-center shadow-md transition-colors z-10 cursor-pointer transition-all duration-300 ease-out active:scale-95 group"
                                                                     title="Видалити з меню"
                                                                 >
                                                                     <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
@@ -574,7 +575,7 @@ const Menu = () => {
 
                                                             {/* Текстова інформація */}
                                                             <div className="flex-grow flex flex-col justify-center text-center xl:text-left w-full py-1 min-w-0">
-                                                                <Link to={`/recipe/${recipe.id}`} className="font-['El_Messiri'] font-bold text-lg md:text-xl lg:text-2xl uppercase text-[#1A1A1A] hover:text-[#6A907B] transition-colors line-clamp-1 mb-1.5">
+                                                                <Link to={`/recipe/${recipe.id}`} className="font-['El_Messiri'] font-bold text-lg md:text-xl lg:text-2xl uppercase text-[#1A1A1A] hover:text-[#6A907B] transition-colors line-clamp-1 mb-1.5 cursor-pointer transition-all duration-300 ease-out active:scale-98 group">
                                                                     {recipe.title}
                                                                 </Link>
 
@@ -602,7 +603,7 @@ const Menu = () => {
                                                             <div className="hidden xl:flex items-center justify-center shrink-0 lg:pr-2">
                                                                 <button
                                                                     onClick={() => removeFromMenu(item.id)}
-                                                                    className="w-10 h-10 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-110 shrink-0"
+                                                                    className="w-10 h-10 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-110 shrink-0 cursor-pointer transition-all duration-300 ease-out active:scale-95 group"
                                                                     title="Видалити з меню"
                                                                 >
                                                                     <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -626,7 +627,7 @@ const Menu = () => {
                                         {/* Зменшена кнопка додавання рецепту */}
                                         <button
                                             onClick={() => openAddModal(meal.id)}
-                                            className="w-full py-3 sm:py-3.5 mt-2 bg-gray-50 border-2 border-dashed border-[#6A907B]/40 hover:border-[#6A907B] text-[#6A907B] rounded-2xl hover:bg-[#6A907B]/5 transition-all duration-300 font-['Inter'] font-semibold text-sm sm:text-[15px] flex items-center justify-center gap-2.5 group"
+                                            className="w-full py-3 sm:py-3.5 mt-2 bg-gray-50 border-2 border-dashed border-[#6A907B]/40 hover:border-[#6A907B] text-[#6A907B] rounded-2xl hover:bg-[#6A907B]/5 transition-all duration-300 font-['Inter'] font-semibold text-sm sm:text-[15px] flex items-center justify-center gap-2.5 cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-97 group"
                                         >
                                             <div className="w-7 h-7 rounded-full bg-[#6A907B]/10 flex items-center justify-center group-hover:scale-110 transition-transform">
                                                 <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -668,7 +669,7 @@ const Menu = () => {
                                             });
                                         }
                                     }}
-                                    className={`w-11 h-6 rounded-full p-1 transition-colors duration-300 focus:outline-none ${useFridge ? 'bg-[#6A907B]' : 'bg-gray-300'}`}
+                                    className={`w-11 h-6 rounded-full p-1 transition-colors duration-300 cursor-pointer transition-all duration-300 ease-out active:scale-95 group focus:outline-none ${useFridge ? 'bg-[#6A907B]' : 'bg-gray-300'}`}
                                 >
                                     <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300 ${useFridge ? 'transform translate-x-5' : ''}`}></div>
                                 </button>
@@ -683,7 +684,7 @@ const Menu = () => {
                             <div className="space-y-3 font-['Inter'] font-semibold text-[15px]">
                                 <button
                                     onClick={() => generateShoppingList('day')}
-                                    className={`w-full py-3.5 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 border ${
+                                    className={`w-full py-3.5 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 border cursor-pointer transition-all duration-300 ease-out active:scale-95 group ${
                                         activeListScope === 'day'
                                             ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md'
                                             : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
@@ -693,7 +694,7 @@ const Menu = () => {
                                 </button>
                                 <button
                                     onClick={() => generateShoppingList('week')}
-                                    className={`w-full py-3.5 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 border ${
+                                    className={`w-full py-3.5 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 border cursor-pointer transition-all duration-300 ease-out active:scale-95 group ${
                                         activeListScope === 'week'
                                             ? 'bg-[#B47231] text-white border-[#B47231] shadow-md'
                                             : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
@@ -750,7 +751,7 @@ const Menu = () => {
                                             setExportStatus(null);
                                             setExportEmail('');
                                         }}
-                                        className="w-full border-2 border-dashed border-[#6A907B]/40 text-[#6A907B] py-3.5 rounded-xl hover:bg-[#6A907B]/5 hover:border-[#6A907B] transition-colors flex items-center justify-center gap-2 font-bold"
+                                        className="w-full border-2 border-dashed border-[#6A907B]/40 text-[#6A907B] py-3.5 rounded-xl hover:bg-[#6A907B]/5 hover:border-[#6A907B] transition-colors flex items-center justify-center gap-2 font-bold cursor-pointer transition-all duration-300 ease-out active:scale-95 group"
                                     >
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                                         Завантажити / Надіслати на пошту
@@ -777,7 +778,7 @@ const Menu = () => {
                                 setIsAddModalOpen(false);
                                 setModalError(null);
                             }}
-                            className="absolute top-4 right-4 sm:top-6 sm:right-6 w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-900 transition-colors"
+                            className="absolute top-4 right-4 sm:top-6 sm:right-6 w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-900 transition-colors cursor-pointer transition-all duration-300 ease-out active:scale-95 group"
                         >
                             <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                         </button>
@@ -836,7 +837,7 @@ const Menu = () => {
                                     <button
                                         key={ing.id}
                                         onClick={() => handleAddIngredientToSearch(ing.name)}
-                                        className="px-3.5 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-[13.5px] font-medium text-gray-700 hover:border-[#6A907B] hover:text-[#6A907B] hover:shadow-md transition-all flex items-center gap-2 shrink-0 group"
+                                        className="px-3.5 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-[13.5px] font-medium text-gray-700 hover:border-[#6A907B] hover:text-[#6A907B] hover:shadow-md transition-all flex items-center gap-2 shrink-0 cursor-pointer transition-all duration-300 ease-out active:scale-95 group"
                                     >
                                         {ing.image ? (
                                             <img src={getImageUrl(ing.image)} alt={ing.name} className="w-5 h-5 rounded-full object-cover bg-white shadow-sm group-hover:scale-110 transition-transform" />
@@ -864,14 +865,14 @@ const Menu = () => {
                                 availableRecipes.map(recipe => (
                                     <div key={recipe.id} className="bg-white border border-gray-100 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-center sm:items-stretch gap-4 sm:gap-6 hover:shadow-md transition-shadow">
 
-                                        <div className="w-full sm:w-50 md:w-60 h-40 sm:h-28 md:h-34 shrink-0 flex items-center justify-center">
+                                        <Link to={`/recipe/${recipe.id}`} className="w-full sm:w-50 md:w-60 h-40 sm:h-28 md:h-34 shrink-0 flex items-center justify-center cursor-pointer transition-all duration-300 ease-out active:scale-98">
                                             <img src={getImageUrl(recipe.image || recipe.image_url)} alt={recipe.title} className="w-full h-full rounded-xl object-cover shadow-sm" />
-                                        </div>
+                                        </Link>
 
                                         <div className="flex-grow w-full flex flex-col justify-center text-center sm:text-left py-1">
                                             <Link
                                                 to={`/recipe/${recipe.id}`}
-                                                className="font-['El_Messiri'] font-bold text-lg md:text-xl text-gray-900 line-clamp-2 hover:text-[#6A907B] transition-colors inline-block mb-1.5"
+                                                className="font-['El_Messiri'] font-bold text-lg md:text-xl text-gray-900 line-clamp-2 hover:text-[#6A907B] transition-colors inline-block mb-1.5 cursor-pointer transition-all duration-300 ease-out active:scale-98 group"
                                             >
                                                 {recipe.title}
                                             </Link>
@@ -894,7 +895,7 @@ const Menu = () => {
                                         <div className="flex items-center justify-center w-full sm:w-auto shrink-0 pb-1 sm:pb-0">
                                             <button
                                                 onClick={() => handleAddRecipeToMenu(recipe.id)}
-                                                className="w-full sm:w-auto px-8 py-3 sm:py-3 md:py-3.5 bg-[#1A1A1A] text-white rounded-xl text-sm md:text-base font-semibold hover:bg-[#6A907B] transition-colors shadow-sm"
+                                                className="w-full sm:w-auto px-8 py-3 sm:py-3 md:py-3.5 bg-[#1A1A1A] text-white rounded-xl text-sm md:text-base font-semibold hover:bg-[#6A907B] transition-colors shadow-sm cursor-pointer transition-all duration-300 ease-out active:scale-95 group"
                                             >
                                                 Додати
                                             </button>
@@ -939,7 +940,7 @@ const Menu = () => {
                                 setExportStatus(null);
                                 setExportEmail(''); // очищуємо пошту при натисканні на хрестик
                             }}
-                            className="absolute top-5 right-5 w-10 h-10 flex items-center justify-center bg-gray-50 rounded-full text-gray-400 hover:text-gray-900 hover:bg-gray-200 transition-all"
+                            className="absolute top-5 right-5 w-10 h-10 flex items-center justify-center bg-gray-50 rounded-full text-gray-400 hover:text-gray-900 hover:bg-gray-200 transition-all cursor-pointer duration-300 ease-out active:scale-95 group"
                         >
                             <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                         </button>
@@ -960,13 +961,13 @@ const Menu = () => {
                         <div className="flex bg-gray-100 p-1 rounded-[1.2rem] mb-6">
                             <button
                                 onClick={() => setExportScope('day')}
-                                className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 ${exportScope === 'day' ? 'bg-white text-[#1A1A1A] shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}
+                                className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 cursor-pointer ease-out active:scale-95 group ${exportScope === 'day' ? 'bg-white text-[#1A1A1A] shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}
                             >
                                 На день ({DAYS_ACCUSATIVE[activeDay]})
                             </button>
                             <button
                                 onClick={() => setExportScope('week')}
-                                className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 ${exportScope === 'week' ? 'bg-white text-[#1A1A1A] shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}
+                                className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 cursor-pointer ease-out active:scale-95 group ${exportScope === 'week' ? 'bg-white text-[#1A1A1A] shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}
                             >
                                 На тиждень
                             </button>
@@ -996,7 +997,7 @@ const Menu = () => {
                         <div className="overflow-y-auto custom-scrollbar flex-grow pr-1 space-y-4">
                             <button
                                 onClick={() => handleExport('download')}
-                                className="w-full bg-[#5B826B] text-white py-3.5 rounded-[1.2rem] font-bold hover:bg-gray-800 transition-all shadow-md flex justify-center items-center gap-2 shrink-0"
+                                className="w-full bg-[#5B826B] text-white py-3.5 rounded-[1.2rem] font-bold hover:bg-gray-800 transition-all shadow-md flex justify-center items-center gap-2 shrink-0 cursor-pointer duration-300 ease-out active:scale-95 group"
                             >
                                 <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                                 Завантажити
@@ -1020,7 +1021,7 @@ const Menu = () => {
 
                             <button
                                 onClick={() => handleExport('email')}
-                                className="w-full bg-white border-2 border-[#B47231] text-[#B47231] py-3.5 rounded-[1.2rem] font-bold hover:bg-[#B47231] hover:text-white transition-all flex justify-center items-center gap-2 shrink-0"
+                                className="w-full bg-white border-2 border-[#B47231] text-[#B47231] py-3.5 rounded-[1.2rem] font-bold hover:bg-[#B47231] hover:text-white transition-all flex justify-center items-center gap-2 shrink-0 cursor-pointer duration-300 ease-out active:scale-95 group"
                             >
                                 <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                                 Надіслати на пошту

@@ -140,7 +140,7 @@ const Favorites = () => {
                                                     <img
                                                         src={getImageUrl(recipe.image)}
                                                         alt={recipe.title}
-                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-100 group"
                                                     />
                                                 </Link>
 
@@ -162,7 +162,7 @@ const Favorites = () => {
                                             {/* ЗМІНЕНО: Назва тепер клікабельна (обгорнута в Link) з ефектом наведення */}
                                             <Link
                                                 to={`/recipe/${recipe.id}`}
-                                                className="text-center font-['El_Messiri'] font-bold text-[#1A1A1A] group-hover:text-[#42705D] transition-colors text-base sm:text-lg md:text-xl lg:text-2xl uppercase px-2 line-clamp-2 min-h-[48px] md:min-h-[56px] flex items-center justify-center cursor-pointer"
+                                                className="text-center font-['El_Messiri'] font-bold text-[#1A1A1A] group-hover:text-[#42705D] transition-colors text-base sm:text-lg md:text-xl lg:text-2xl uppercase px-2 line-clamp-2 min-h-[48px] md:min-h-[56px] flex items-center justify-center cursor-pointer transition-all duration-300 ease-out active:scale-95 group"
                                             >
                                                 {recipe.title}
                                             </Link>
@@ -199,7 +199,7 @@ const Favorites = () => {
                                             <div className="mt-auto">
                                                 <Link
                                                     to={`/recipe/${recipe.id}`}
-                                                    className="block w-full py-3 rounded-[20px] border border-gray-400 text-center font-['Inter'] font-medium text-[14px] md:text-[15px] text-[#1A1A1A] hover:bg-[#1A1A1A] hover:text-white hover:border-[#1A1A1A] transition-colors"
+                                                    className="block w-full py-3 rounded-[20px] border border-gray-400 text-center font-['Inter'] font-medium text-[14px] md:text-[15px] text-[#1A1A1A] hover:bg-[#1A1A1A] hover:text-white hover:border-[#1A1A1A] transition-colors cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group"
                                                 >
                                                     Переглянути
                                                 </Link>

@@ -70,7 +70,7 @@ function App() {
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/privacy/:section" element={<PrivacyDetail />} />
 
-                {/* ЗМІНЕНО: Сторінки ТІЛЬКИ ДЛЯ ГОСТЕЙ (перенаправлять в /profile, якщо юзер увійшов) */}
+                {/* Сторінки ТІЛЬКИ ДЛЯ ГОСТЕЙ (перенаправлять в /profile, якщо юзер увійшов) */}
                 <Route path="/login" element={
                   <GuestRoute>
                     <Login />
@@ -82,7 +82,7 @@ function App() {
                   </GuestRoute>
                 } />
 
-                {/* ЗМІНЕНО: Захищені сторінки (можна використовувати ProtectedRoute, якщо треба закрити доступ неавторизованим) */}
+                {/* Захищені сторінки (можна використовувати ProtectedRoute, якщо треба закрити доступ неавторизованим) */}
                 <Route path="/profile" element={
                   <ProtectedRoute>
                     <Profile />

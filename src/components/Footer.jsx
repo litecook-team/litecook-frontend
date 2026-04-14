@@ -12,13 +12,13 @@ const Footer = () => {
 
                 <div className="flex flex-col md:flex-row justify-between items-center mb-6 w-full">
                     <Link to="/" className="mb-6 md:mb-0">
-                        <img src={logo} alt="LITE cook" className="h-10 md:h-12 mix-blend-multiply object-contain" />
+                        <img src={logo} alt="LITE cook" className="h-10 md:h-12 mix-blend-multiply object-contain cursor-pointer transition-all ease-out active:scale-88 group" />
                     </Link>
 
                     <nav className="flex space-x-8 font-medium text-sm md:text-base">
-                        <Link to="/" className="hover:text-[#42705D] transition duration-300">Головна</Link>
-                        <Link to="/about" className="hover:text-[#42705D] transition duration-300">Про нас</Link>
-                        <Link to="/privacy" className="hover:text-[#42705D] transition duration-300">Політика конфіденційності</Link>
+                        <Link to="/" className="hover:text-[#42705D] transition duration-300 cursor-pointer transition-all ease-out active:scale-88 group">Головна</Link>
+                        <Link to="/about" className="hover:text-[#42705D] transition duration-300 cursor-pointer transition-all ease-out active:scale-88 group">Про нас</Link>
+                        <Link to="/privacy" className="hover:text-[#42705D] transition duration-300 cursor-pointer transition-all ease-out active:scale-88 group">Політика конфіденційності</Link>
                     </nav>
                 </div>
 
@@ -33,14 +33,14 @@ const Footer = () => {
                     <div className="flex justify-center md:justify-end space-x-5">
 
                         {/* Facebook */}
-                        <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" className="text-[#1A1A1A] hover:text-[#42705D] transition duration-300 ease-in-out">
+                        <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" className="text-[#1A1A1A] hover:text-[#42705D] transition duration-300 ease-in-out cursor-pointer transition-all ease-out active:scale-88 group">
                             <svg className="w-6 h-6 md:w-7 md:h-7" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/>
                             </svg>
                         </a>
 
                         {/* Instagram */}
-                        <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer" className="text-[#1A1A1A] hover:text-[#42705D] transition duration-300 ease-in-out">
+                        <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer" className="text-[#1A1A1A] hover:text-[#42705D] transition duration-300 ease-in-out cursor-pointer transition-all ease-out active:scale-88 group">
                             <svg className="w-6 h-6 md:w-7 md:h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
                                 <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>

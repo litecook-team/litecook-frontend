@@ -114,21 +114,21 @@ const Header = () => {
                 {/* Ліва частина: Логотип + Навігація */}
                 <div className="flex items-center space-x-8 xl:space-x-12 relative z-20 h-full">
                     <Link to="/" className="flex-shrink-0 block">
-                        <img src={logo} alt="LITE cook" className="h-8 md:h-10 lg:h-12 mix-blend-multiply object-contain" />
+                        <img src={logo} alt="LITE cook" className="h-8 md:h-10 lg:h-12 mix-blend-multiply object-contain cursor-pointer transition-all ease-out active:scale-88 group" />
                     </Link>
 
                     <nav className="hidden md:flex items-center space-x-6 lg:space-x-8 text-[#1A1A1A] font-['Inter'] font-medium text-sm lg:text-[15px] h-full">
-                        <Link to="/" className="hover:text-[#42705D] transition duration-300">Головна</Link>
-                        <Link to="/recipes" className="hover:text-[#42705D] transition duration-300">Підібрати рецепт</Link>
+                        <Link to="/" className="hover:text-[#42705D] transition duration-300 cursor-pointer transition-all ease-out active:scale-88 group">Головна</Link>
+                        <Link to="/recipes" className="hover:text-[#42705D] transition duration-300 cursor-pointer transition-all ease-out active:scale-88 group">Підібрати рецепт</Link>
 
                         {isAuthenticated && (
                             <>
-                                <Link to="/favorites" className="hover:text-[#42705D] transition duration-300">Улюблені</Link>
-                                <Link to="/menu" className="hover:text-[#42705D] transition duration-300">Тижневе меню</Link>
+                                <Link to="/favorites" className="hover:text-[#42705D] transition duration-300 cursor-pointer transition-all ease-out active:scale-88 group">Улюблені</Link>
+                                <Link to="/menu" className="hover:text-[#42705D] transition duration-300 cursor-pointer transition-all ease-out active:scale-88 group">Тижневе меню</Link>
                             </>
                         )}
 
-                        <Link to="/about" className="hover:text-[#42705D] transition duration-300">Про нас</Link>
+                        <Link to="/about" className="hover:text-[#42705D] transition duration-300 cursor-pointer transition-all ease-out active:scale-88 group">Про нас</Link>
                     </nav>
                 </div>
 
@@ -150,7 +150,7 @@ const Header = () => {
                                     <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
 
                                     <svg className="w-4 h-4 text-[#B47231] group-hover:rotate-90 transition-transform duration-500 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                    <span className="relative z-10 group-hover:text-[#B47231] transition-colors">Адмін-панель</span>
+                                    <span className="relative z-10 group-hover:text-[#B47231] transition-colors cursor-pointer transition-all ease-out active:scale-88 group">Адмін-панель</span>
                                 </a>
                             )}
 
@@ -187,12 +187,12 @@ const Header = () => {
                                                 <p className="text-sm text-gray-900 font-medium truncate">{user?.first_name || user?.email || "Користувач"}</p>
                                             </div>
 
-                                            <Link to="/profile" className="flex items-center px-5 py-2.5 text-sm text-gray-700 hover:bg-[#F6F7FB] hover:text-[#42705D] transition">
+                                            <Link to="/profile" className="flex items-center px-5 py-2.5 text-sm text-gray-700 hover:bg-[#F6F7FB] hover:text-[#42705D] transition cursor-pointer transition-all ease-out active:scale-88 group">
                                                 <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                                                 Мій профіль
                                             </Link>
 
-                                            <button onClick={handleLogout} className="w-full flex items-center px-5 py-2.5 text-sm text-red-600 hover:bg-red-50 transition mt-1">
+                                            <button onClick={handleLogout} className="w-full flex items-center px-5 py-2.5 text-sm text-red-600 hover:bg-red-50 transition mt-1 cursor-pointer transition-all ease-out active:scale-88 group">
                                                 <svg className="w-4 h-4 mr-3 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                                                 Вийти
                                             </button>
@@ -203,8 +203,8 @@ const Header = () => {
                         </div>
                     ) : (
                         <div className="flex space-x-2 sm:space-x-3 font-['Inter']">
-                            <Link to="/register" className="px-5 md:px-7 py-2.5 rounded-full bg-[#1A1A1A] text-white text-xs md:text-[14px] font-medium hover:bg-gray-800 transition shadow-sm">Реєстрація</Link>
-                            <Link to="/login" className="px-5 md:px-7 py-2.5 rounded-full bg-[#1A1A1A] text-white text-xs md:text-[14px] font-medium hover:bg-gray-800 transition shadow-sm">Увійти</Link>
+                            <Link to="/register" className="px-5 md:px-7 py-2.5 rounded-full bg-[#1A1A1A] text-white text-xs md:text-[14px] font-medium hover:bg-gray-800 transition shadow-sm cursor-pointer transition-all ease-out active:scale-88 group">Реєстрація</Link>
+                            <Link to="/login" className="px-5 md:px-7 py-2.5 rounded-full bg-[#1A1A1A] text-white text-xs md:text-[14px] font-medium hover:bg-gray-800 transition shadow-sm cursor-pointer transition-all ease-out active:scale-88 group">Увійти</Link>
                         </div>
                     )}
 
@@ -224,12 +224,12 @@ const Header = () => {
             {isMobileMenuOpen && (
                 <div ref={mobileMenuRef} className="absolute top-full left-0 w-full bg-[#F6F7FB] border-t border-gray-200 shadow-lg md:hidden font-['Inter'] font-medium transition-all duration-300 z-40">
                     <nav className="flex flex-col px-6 py-4 space-y-1">
-                        <Link to="/" className="py-3 text-gray-800 hover:text-[#42705D] border-b border-gray-100">Головна</Link>
-                        <Link to="/recipes" className="py-3 text-gray-800 hover:text-[#42705D] border-b border-gray-100">Підібрати рецепт</Link>
+                        <Link to="/" className="py-3 text-gray-800 hover:text-[#42705D] border-b border-gray-100 cursor-pointer transition-all ease-out active:scale-98 group">Головна</Link>
+                        <Link to="/recipes" className="py-3 text-gray-800 hover:text-[#42705D] border-b border-gray-100 cursor-pointer transition-all ease-out active:scale-98 group">Підібрати рецепт</Link>
                         {isAuthenticated && (
                             <>
-                                <Link to="/favorites" className="py-3 text-gray-800 hover:text-[#42705D] border-b border-gray-100">Улюблені</Link>
-                                <Link to="/menu" className="py-3 text-gray-800 hover:text-[#42705D] border-b border-gray-100">Тижневе меню</Link>
+                                <Link to="/favorites" className="py-3 text-gray-800 hover:text-[#42705D] border-b border-gray-100 cursor-pointer transition-all ease-out active:scale-98 group">Улюблені</Link>
+                                <Link to="/menu" className="py-3 text-gray-800 hover:text-[#42705D] border-b border-gray-100 cursor-pointer transition-all ease-out active:scale-98 group">Тижневе меню</Link>
                                 {/* Мобільна кнопка Адмін-панелі */}
                                 {user?.is_staff && (
                                     <a
@@ -245,7 +245,7 @@ const Header = () => {
                                 )}
                             </>
                         )}
-                        <Link to="/about" className="py-3 text-gray-800 hover:text-[#42705D]">Про нас</Link>
+                        <Link to="/about" className="py-3 text-gray-800 hover:text-[#42705D] cursor-pointer transition-all ease-out active:scale-98 group">Про нас</Link>
                     </nav>
                 </div>
             )}

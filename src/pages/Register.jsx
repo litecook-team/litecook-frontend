@@ -126,7 +126,7 @@ const Register = () => {
 
             <Link
                 to="/"
-                className="absolute top-6 left-4 sm:left-6 md:top-10 md:left-10 flex items-center px-6 sm:px-10 py-2 bg-white text-gray-800 rounded-[30px] border border-black hover:shadow-md transition font-['Inter'] font-medium text-[13px] sm:text-[14px] lg:text-[15px] shadow-lg z-20 gap-2"
+                className="absolute top-6 left-4 sm:left-6 md:top-10 md:left-10 flex items-center px-6 sm:px-10 py-2 bg-white text-gray-800 rounded-[30px] border border-black hover:bg-[#1A1A1A] hover:text-white hover:border-transparent hover:shadow-md transition font-['Inter'] font-medium text-[13px] sm:text-[14px] lg:text-[15px] shadow-lg z-20 gap-2 cursor-pointer transition-all duration-300 ease-out active:scale-95 group"
             >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
                     <circle cx="12" cy="12" r="10"></circle>
@@ -185,7 +185,7 @@ const Register = () => {
                             </div>
                         </div>
 
-                        <button type="submit" className="w-full bg-[#1A1A1A] text-white font-['El_Messiri'] font-medium rounded-full py-3 md:py-2.5 hover:bg-gray-800 transition mt-4 text-base md:text-lg shadow-md">
+                        <button type="submit" className="w-full bg-[#1A1A1A] text-white font-['El_Messiri'] font-medium rounded-full py-3 md:py-2.5 hover:bg-gray-800 transition mt-4 text-base md:text-lg shadow-md cursor-pointer transition-all duration-300 ease-out active:scale-95 group">
                             Зареєструватися
                         </button>
                     </form>
@@ -197,7 +197,7 @@ const Register = () => {
                     </div>
 
                     <div className="space-y-3">
-                        <button type="button" onClick={() => handleGoogleLogin()} className="w-full flex items-center justify-center gap-2 sm:gap-3 border border-gray-300 rounded-full py-2.5 hover:bg-gray-50 transition text-sm sm:text-base font-medium text-gray-700 hover:border-[#FBBC05] bg-white">
+                        <button type="button" onClick={() => handleGoogleLogin()} className="w-full flex items-center justify-center gap-2 sm:gap-3 border border-gray-300 rounded-full py-2.5 hover:bg-gray-50 transition text-sm sm:text-base font-medium text-gray-700 hover:border-[#FBBC05] bg-white cursor-pointer transition-all duration-300 ease-out active:scale-95 group">
                             <svg className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.79-.07-1.54-.19-2.27h-11.3v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z"/><path fill="#34A853" d="M12.255 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96h-3.98v3.09C3.515 21.3 7.565 24 12.255 24z"/><path fill="#FBBC05" d="M5.525 14.29c-.25-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.62h-3.98a11.86 11.86 0 000 10.76l3.98-3.09z"/><path fill="#EA4335" d="M12.255 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C18.205 1.19 15.495 0 12.255 0 7.565 0 3.515 2.7 1.545 6.62l3.98 3.09c.95-2.85 3.6-4.96 6.73-4.96z"/></svg>
                             <span className="truncate font-['El_Messiri']">Зареєструватися через Google</span>
                         </button>
@@ -223,7 +223,7 @@ const Register = () => {
                                 <p><strong className="text-gray-800">5. Зміни до умов</strong><br/>Ми залишаємо за собою право оновлювати ці умови. Зміни набувають чинності з моменту їх публікації в додатку.</p>
                             </div>
                             <div className="mt-6 md:mt-8 flex justify-end">
-                                <button onClick={() => { setShowTerms(false); setAgreed(true); }} className="w-full md:w-auto bg-[#1A1A1A] text-white font-medium font-['El_Messiri'] px-8 py-3 rounded-full hover:bg-gray-800 transition shadow-md text-sm md:text-base">
+                                <button onClick={() => { setShowTerms(false); setAgreed(true); }} className="w-full md:w-auto bg-[#1A1A1A] text-white font-medium font-['El_Messiri'] px-8 py-3 rounded-full hover:bg-gray-800 transition shadow-md text-sm md:text-base cursor-pointer transition-all duration-300 ease-out active:scale-95 group">
                                     Зрозуміло, погоджуюсь
                                 </button>
                             </div>

@@ -143,7 +143,7 @@ const RecipeDetail = () => {
                         {/* Кнопка Назад */}
                         <button
                             onClick={() => navigate(-1)}
-                            className="absolute top-6 left-6 lg:top-10 lg:left-10 px-8 sm:px-10 py-2 bg-white rounded-[30px] border border-black hover:shadow-md transition text-gray-800 flex items-center justify-center gap-2 font-['Inter'] font-medium text-[13px] sm:text-[14px] lg:text-[15px]"
+                            className="absolute top-6 left-6 lg:top-10 lg:left-10 px-8 sm:px-10 py-2 bg-white rounded-[30px] border border-black hover:bg-[#1A1A1A] hover:text-white hover:border-transparent hover:shadow-md text-gray-800 flex items-center justify-center gap-2 font-['Inter'] font-medium text-[13px] sm:text-[14px] lg:text-[15px] cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group"
                         >
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                                 <circle cx="12" cy="12" r="10"></circle>
@@ -157,7 +157,7 @@ const RecipeDetail = () => {
                         {isAuthenticated && (
                             <button
                                 onClick={toggleFavorite}
-                                className="absolute bottom-6 right-6 lg:bottom-12 lg:right-12 px-6 sm:px-8 py-2.5 bg-white/50 backdrop-blur-md border border-black rounded-[30px] hover:bg-white/80 transition text-gray-900 flex items-center gap-2 font-['Inter'] font-medium text-[13px] sm:text-[14px] lg:text-[15px]"
+                                className="absolute bottom-6 right-6 lg:bottom-12 lg:right-12 px-6 sm:px-8 py-2.5 bg-white/50 backdrop-blur-md border border-black rounded-[30px] hover:bg-white/80 transition text-gray-900 flex items-center gap-2 font-['Inter'] font-medium text-[13px] sm:text-[14px] lg:text-[15px] cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group"
                             >
                                 <svg
                                     width="20" height="20" viewBox="0 0 24 24"
@@ -263,7 +263,7 @@ const RecipeDetail = () => {
                             <div className="mt-8 lg:mt-12 flex justify-end">
                                 <button
                                     onClick={handleMenuButtonClick}
-                                    className={`px-6 py-2.5 sm:px-8 sm:py-3 bg-white/70 backdrop-blur-md border rounded-[30px] transition-all text-gray-900 flex items-center gap-2.5 font-medium text-[14px] sm:text-[15px] lg:text-[16px] shadow-sm ${recipe.is_added_to_menu ? 'border-[#B47231] hover:bg-white/90' : 'border-black hover:bg-white'}`}
+                                    className={`px-6 py-2.5 sm:px-8 sm:py-3 bg-white/70 backdrop-blur-md border rounded-[30px] transition-all text-gray-900 flex items-center gap-2.5 font-medium text-[14px] sm:text-[15px] lg:text-[16px] shadow-sm cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${recipe.is_added_to_menu ? 'border-[#B47231] hover:bg-white/90' : 'border-black hover:bg-white'}`}
                                 >
                                     {recipe.is_added_to_menu ? (
                                         <>

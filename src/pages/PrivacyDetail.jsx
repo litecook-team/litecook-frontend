@@ -253,7 +253,7 @@ const PrivacyDetail = () => {
             <div className="w-full max-w-[1400px] mb-8 md:mb-12">
                 <button
                     onClick={() => navigate(-1)}
-                    className="px-8 py-2.5 bg-transparent border border-gray-800 rounded-full flex items-center gap-2 hover:bg-[#1A1A1A] hover:text-white hover:border-transparent transition-all duration-300 font-medium w-max"
+                    className="px-8 py-2.5 bg-transparent border border-gray-800 rounded-full flex items-center gap-2 hover:bg-[#1A1A1A] hover:text-white hover:border-transparent transition-all duration-300 font-medium w-max cursor-pointer transition-all duration-300 ease-out active:scale-95 group"
                 >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>

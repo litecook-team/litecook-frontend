@@ -14,7 +14,7 @@ const About = () => {
             {/* Стилізована кнопка "Назад" */}
             <button
                 onClick={() => navigate('/')}
-                className="absolute top-10 left-6 lg:top-8 lg:left-17 px-8 sm:px-10 py-2 bg-white rounded-[30px] border border-black hover:shadow-md transition text-gray-800 flex items-center justify-center gap-2 font-['Inter'] font-medium text-[13px] sm:text-[14px] lg:text-[15px] z-40"
+                className="absolute top-10 left-6 lg:top-8 lg:left-17 px-8 sm:px-10 py-2 bg-white rounded-[30px] border border-black hover:bg-[#1A1A1A] hover:text-white hover:border-transparent hover:shadow-md transition text-gray-800 flex items-center justify-center gap-2 font-['Inter'] font-medium text-[13px] sm:text-[14px] lg:text-[15px] z-40 cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group"
             >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10"></circle>
@@ -71,7 +71,7 @@ const About = () => {
                               Про нас
                          </div>
 
-                         <Link to="/recipes" className="absolute bottom-8 left-6 lg:bottom-16 lg:left-16 bg-white/95 backdrop-blur-sm px-8 py-3 rounded-full font-bold text-sm md:text-base text-[#1A1A1A] border border-gray-200 hover:bg-[#1A1A1A] hover:text-white transition shadow-lg">
+                         <Link to="/recipes" className="absolute bottom-8 left-6 lg:bottom-16 lg:left-16 bg-white/95 backdrop-blur-sm px-8 py-3 rounded-full font-bold text-sm md:text-base text-[#1A1A1A] border border-gray-200 hover:bg-[#1A1A1A] hover:text-white transition shadow-lg cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group">
                                Підібрати рецепт
                          </Link>
                     </div>
@@ -143,7 +143,7 @@ const About = () => {
                             </div>
                             <Link
                                 to="/recipes"
-                                className="bg-[#1A1A1A] text-white px-8 py-3 rounded-full text-sm font-medium hover:bg-gray-800 transition whitespace-nowrap shadow-md w-full sm:w-auto text-center shrink-0"
+                                className="bg-[#1A1A1A] text-white px-8 py-3 rounded-full text-sm font-medium hover:bg-gray-800 transition whitespace-nowrap shadow-md w-full sm:w-auto text-center shrink-0 cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group"
                             >
                                 Підібрати рецепт
                             </Link>

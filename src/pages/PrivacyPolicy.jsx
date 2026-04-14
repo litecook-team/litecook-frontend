@@ -68,8 +68,7 @@ const PrivacyPolicy = () => {
                 <div className="w-full max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8 mb-16 lg:mb-20 font-['Inter']">
 
                     {/* Картка 1: Збір даних */}
-                    {/* ЗМІНЕНО: Додано легкий градієнт bg-gradient-to-br from-white/95 to-[#E8EFE6]/90 */}
-                    <Link to="/privacy/data" className="bg-gradient-to-br from-white/95 to-[#E8EFE6]/90 backdrop-blur-md border-[1.5px] border-white/50 rounded-[2.5rem] p-8 sm:p-10 flex flex-col items-center text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-md">
+                    <Link to="/privacy/data" className="bg-gradient-to-br from-white/95 to-[#E8EFE6]/90 backdrop-blur-md border-[1.5px] border-white/50 rounded-[2.5rem] p-8 sm:p-10 flex flex-col items-center text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300 shadow-md cursor-pointer ease-out active:scale-95 group">
                         <div className="mb-4 flex items-center justify-center group-hover:scale-110 transition-transform">
                             <img
                                 src={imgData}
@@ -82,7 +81,7 @@ const PrivacyPolicy = () => {
                     </Link>
 
                     {/* Картка 2: Використання */}
-                    <Link to="/privacy/usage" className="bg-gradient-to-br from-white/95 to-[#E8EFE6]/90 backdrop-blur-md border-[1.5px] border-white/50 rounded-[2.5rem] p-8 sm:p-10 flex flex-col items-center text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-md">
+                    <Link to="/privacy/usage" className="bg-gradient-to-br from-white/95 to-[#E8EFE6]/90 backdrop-blur-md border-[1.5px] border-white/50 rounded-[2.5rem] p-8 sm:p-10 flex flex-col items-center text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-md cursor-pointer ease-out active:scale-95 group">
                         <div className="mb-4 flex items-center justify-center group-hover:scale-110 transition-transform">
                             <img
                                 src={imgUsage}
@@ -95,7 +94,7 @@ const PrivacyPolicy = () => {
                     </Link>
 
                     {/* Картка 3: Куки */}
-                    <Link to="/privacy/cookies" className="bg-gradient-to-br from-white/95 to-[#E8EFE6]/90 backdrop-blur-md border-[1.5px] border-white/50 rounded-[2.5rem] p-8 sm:p-10 flex flex-col items-center text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-md">
+                    <Link to="/privacy/cookies" className="bg-gradient-to-br from-white/95 to-[#E8EFE6]/90 backdrop-blur-md border-[1.5px] border-white/50 rounded-[2.5rem] p-8 sm:p-10 flex flex-col items-center text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-md cursor-pointer ease-out active:scale-95 group">
                         <div className="mb-4 flex items-center justify-center group-hover:scale-110 transition-transform">
                             <img
                                 src={imgCookies}
@@ -108,7 +107,7 @@ const PrivacyPolicy = () => {
                     </Link>
 
                     {/* Картка 4: Контроль */}
-                    <Link to="/privacy/control" className="bg-gradient-to-br from-white/95 to-[#E8EFE6]/90 backdrop-blur-md border-[1.5px] border-white/50 rounded-[2.5rem] p-8 sm:p-10 flex flex-col items-center text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-md">
+                    <Link to="/privacy/control" className="bg-gradient-to-br from-white/95 to-[#E8EFE6]/90 backdrop-blur-md border-[1.5px] border-white/50 rounded-[2.5rem] p-8 sm:p-10 flex flex-col items-center text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group shadow-md cursor-pointer ease-out active:scale-95 group">
                         <div className="mb-4 flex items-center justify-center group-hover:scale-110 transition-transform">
                             <img
                                 src={imgControl}
@@ -127,7 +126,7 @@ const PrivacyPolicy = () => {
                     {/* Другорядна дія (Secondary) - ЗМІНЕНО на градієнт */}
                     <Link
                         to="/privacy/full"
-                        className="px-8 py-3.5 bg-gradient-to-r from-white to-[#E8EFE6] text-[#1A1A1A] border border-white/60 shadow-md rounded-full font-['El_Messiri'] text-xl text-center hover:shadow-lg hover:from-[#E8EFE6] hover:to-[#DCE8D9] transition-all w-full sm:w-auto min-w-[240px]"
+                        className="px-8 py-3.5 bg-gradient-to-r from-white to-[#E8EFE6] text-[#1A1A1A] border border-white/60 shadow-md rounded-full font-['El_Messiri'] text-xl text-center hover:shadow-lg hover:from-[#E8EFE6] hover:to-[#DCE8D9] transition-all w-full sm:w-auto min-w-[240px] cursor-pointer duration-300 ease-out active:scale-95 group"
                     >
                         Переглянути повністю
                     </Link>
@@ -136,7 +135,7 @@ const PrivacyPolicy = () => {
                     {!isAccepted ? (
                         <button
                             onClick={handleAcceptPolicy}
-                            className="px-8 py-3.5 bg-gradient-to-r from-[#42705D] to-[#5B826B] text-white rounded-full font-['El_Messiri'] text-xl text-center shadow-md hover:from-[#2B4B3C] hover:to-[#42705D] hover:shadow-lg transition-all w-full sm:w-auto min-w-[240px]"
+                            className="px-8 py-3.5 bg-gradient-to-r from-[#42705D] to-[#5B826B] text-white rounded-full font-['El_Messiri'] text-xl text-center shadow-md hover:from-[#2B4B3C] hover:to-[#42705D] hover:shadow-lg transition-all w-full sm:w-auto min-w-[240px] cursor-pointer duration-300 ease-out active:scale-95 group"
                         >
                             Прийняти політику
                         </button>

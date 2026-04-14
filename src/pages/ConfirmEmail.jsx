@@ -35,7 +35,7 @@ const ConfirmEmail = () => {
                         </div>
                         <h2 className="text-3xl font-serif text-gray-900 mb-4">Пошту підтверджено!</h2>
                         <p className="text-gray-500 mb-8">Дякуємо! Тепер ви можете увійти до свого акаунту LITE cook.</p>
-                        <Link to="/login" className="inline-block bg-black text-white px-10 py-3 rounded-full hover:bg-gray-800 transition font-medium">
+                        <Link to="/login" className="inline-block bg-black text-white px-10 py-3 rounded-full hover:bg-gray-800 transition font-medium cursor-pointer transition-all duration-300 ease-out active:scale-95 group">
                             Увійти
                         </Link>
                     </>
@@ -48,7 +48,7 @@ const ConfirmEmail = () => {
                         </div>
                         <h2 className="text-3xl font-serif text-gray-900 mb-4">Помилка</h2>
                         <p className="text-gray-500 mb-8">Можливо, посилання застаріло або вашу пошту вже було підтверджено раніше.</p>
-                        <Link to="/login" className="inline-block bg-black text-white px-10 py-3 rounded-full hover:bg-gray-800 transition font-medium">
+                        <Link to="/login" className="inline-block bg-black text-white px-10 py-3 rounded-full hover:bg-gray-800 transition font-medium cursor-pointer transition-all duration-300 ease-out active:scale-95 group">
                             Перейти до входу
                         </Link>
                     </>
