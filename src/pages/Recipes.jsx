@@ -87,6 +87,9 @@ const Recipes = () => {
     // Стан для збереження ID інгредієнтів з поточного пошуку (щоб знати, що є в наявності)
     const [matchedIngredientIds, setMatchedIngredientIds] = useState([]);
 
+    // Стан для відстеження дублікатів при вводі
+    const [duplicateError, setDuplicateError] = useState(null);
+
     useEffect(() => {
         // Завантажуємо всі інгредієнти з БД для підказок та списку
         const fetchIngredients = async () => {
@@ -124,18 +127,22 @@ const Recipes = () => {
     // Допоміжна функція для пошуку ID інгредієнтів за поточним пошуковим запитом
     const getIngredientIdsFromSearch = (query) => {
         if (!query) return [];
-        const terms = query.toLowerCase().split(/[\s,]+/).filter(t => t.trim().length > 0);
+        // Розбиваємо ТІЛЬКИ по комах, щоб фрази типу "білий рис" залишалися цілими
+        const terms = query.toLowerCase().split(',').map(t => t.trim()).filter(t => t.length > 0);
 
         const matchedIds = [];
         terms.forEach(term => {
-            const matches = allIngredients.filter(ing => ing.name.toLowerCase().includes(term));
-            matches.forEach(match => matchedIds.push(match.id));
+            // Використовуємо === для ТОЧНОГО 100% збігу, а не .includes()
+            const match = allIngredients.find(ing => ing.name.toLowerCase() === term);
+            if (match) {
+                matchedIds.push(match.id);
+            }
         });
         return [...new Set(matchedIds)]; // Унікальні ID
     };
 
     const fetchRecipes = async (isUserAction = true, overrideParams = null) => {
-        // Перевірка на те, чи обрані фільтри перед відправкою запиту (тільки для дій користувача)
+        // Перевірка на те, чи обрані фільтри перед відправкою запиту
         if (isUserAction && overrideParams !== 'clear') {
             const hasAnyFilter =
                 searchQuery.trim() !== '' ||
@@ -151,25 +158,27 @@ const Recipes = () => {
                 isSeasonal;
 
             if (!hasAnyFilter) {
-                // Виводимо повідомлення залежно від активної вкладки
                 if (activeTab === 'ingredients') {
+                    setDuplicateError(null);
                     showToast("🥗 Будь ласка, введіть або оберіть інгредієнти для пошуку рецептів");
                 } else {
                     showToast("🔍 Оберіть хоча б один фільтр, щоб звузити пошук");
                 }
-                return; // Зупиняємо виконання функції, запит до БД не йде
+                return;
             }
         }
 
         setLoading(true);
         try {
             let url = '';
+            let currentMatchedIds = [];
 
-            // Оновлюємо список ID, які ми зараз шукаємо
+            // Отримуємо 100% точні ID з бази
             if (overrideParams === 'clear') {
                 setMatchedIngredientIds([]);
             } else {
-                setMatchedIngredientIds(getIngredientIdsFromSearch(searchQuery));
+                currentMatchedIds = getIngredientIdsFromSearch(searchQuery);
+                setMatchedIngredientIds(currentMatchedIds);
             }
 
             if (overrideParams === 'clear') {
@@ -179,8 +188,21 @@ const Recipes = () => {
                 const params = new URLSearchParams();
                 const hasSearch = searchQuery.trim() !== '';
 
-                if (hasSearch) params.append('search_query', formatQueryForBackend(searchQuery));
+                // === ЛОГІКА ПЕРЕДАЧІ ПАРАМЕТРІВ ===
+                // Замість пошуку по тексту, ми відправляємо точні ID інгредієнтів.
+                // Бекенд тепер оброблятиме їх за логікою "АБО".
+                if (hasSearch && currentMatchedIds.length > 0) {
+                    params.append('ingredients', currentMatchedIds.join(','));
+                    url = `${ENDPOINTS.RECIPES}match/?${params.toString()}`;
+                } else if (hasSearch && currentMatchedIds.length === 0) {
+                    // Якщо ввели текст, який не розпізнано як інгредієнт (напр. "абракадабра")
+                    params.append('search_query', formatQueryForBackend(searchQuery));
+                    url = `${ENDPOINTS.RECIPES}match/?${params.toString()}`;
+                } else {
+                    url = `${ENDPOINTS.RECIPES}?${params.toString()}`;
+                }
 
+                // [Додавання всіх інших фільтрів]
                 if (selectedCuisines.length > 0) params.append('cuisine', selectedCuisines.join(','));
                 if (selectedDifficulties.length > 0) params.append('difficulty', selectedDifficulties.join(','));
                 if (selectedDiets.length > 0) params.append('dietary_tags', selectedDiets.join(','));
@@ -192,9 +214,14 @@ const Recipes = () => {
                 if (selectedMonths.length > 0) params.append('months', selectedMonths.join(','));
                 if (selectedIngredientCategories.length > 0) params.append('ingredient_categories', selectedIngredientCategories.join(','));
 
-                url = hasSearch
-                    ? `${ENDPOINTS.RECIPES}match/?${params.toString()}`
-                    : `${ENDPOINTS.RECIPES}?${params.toString()}`;
+                if (!url.includes('?')) {
+                     url = `${ENDPOINTS.RECIPES}?${params.toString()}`;
+                } else {
+                     const filterStr = params.toString();
+                     if (filterStr && !url.endsWith(filterStr)) {
+                         url = url.split('?')[0] + '?' + filterStr;
+                     }
+                }
 
                 if (isUserAction) {
                     const isFiltering = Array.from(params.keys()).length > 0;
@@ -229,6 +256,8 @@ const Recipes = () => {
 
         // Відразу оновлюємо список, передаючи 'clear' щоб ігнорувати старий стейт
         setTimeout(() => fetchRecipes(true, 'clear'), 0);
+
+        setDuplicateError(null); // Додаємо очищення помилки дублювання
     };
 
     const showToast = (message) => {
@@ -276,9 +305,9 @@ const Recipes = () => {
 
     const getCurrentSearchTerm = () => {
         if (!searchQuery) return '';
-        // Розбиваємо рядок по пробілах АБО комах
-        const parts = searchQuery.split(/[\s,]+/);
-        return parts[parts.length - 1].trim().toLowerCase();
+        // Розбиваємо ТІЛЬКИ по комах (зберігаючи пробіли всередині слів)
+        const parts = searchQuery.split(',').map(p => p.trim());
+        return parts[parts.length - 1].toLowerCase();
     };
 
     const currentTerm = getCurrentSearchTerm();
@@ -286,14 +315,32 @@ const Recipes = () => {
         ? allIngredients.filter(ing => ing.name.toLowerCase().includes(currentTerm))
         : [];
 
+    // Перевіряє, чи є інгредієнт вже в рядку (розділеному ТІЛЬКИ комами)
+    const isIngredientInQuery = (query, ingredientName) => {
+        if (!query) return false;
+        const queryTerms = query.toLowerCase().split(',').map(t => t.trim()).filter(t => t.length > 0);
+        return queryTerms.includes(ingredientName.toLowerCase().trim());
+    };
+
     const handleAddIngredientToSearch = (ingredientName) => {
+        // 1. ПЕРЕВІРКА НА ДУБЛЮВАННЯ
+        if (isIngredientInQuery(searchQuery, ingredientName)) {
+            setDuplicateError(ingredientName);
+            setShowSuggestions(false);
+            if (inputRef.current) inputRef.current.focus();
+            return;
+        }
+
+        // 2. Якщо не дубль, додаємо
+        setDuplicateError(null);
         const query = searchQuery;
-        const lastIndex = Math.max(query.lastIndexOf(','), query.lastIndexOf(' '));
+        const lastIndex = query.lastIndexOf(',');
 
         let newQuery = '';
         if (lastIndex === -1) {
             newQuery = ingredientName + ', ';
         } else {
+            // Зберігаємо все до останньої коми, і додаємо новий інгредієнт
             newQuery = query.substring(0, lastIndex + 1).trim() + ' ' + ingredientName + ', ';
         }
 
@@ -303,8 +350,30 @@ const Recipes = () => {
     };
 
     const handleInputChange = (e) => {
-        setSearchQuery(capitalizeSearch(e.target.value));
+        const newValue = e.target.value;
+        setSearchQuery(capitalizeSearch(newValue));
         setShowSuggestions(true);
+
+        // 1. Очищаємо помилку відразу
+        setDuplicateError(null);
+
+        // 2. Смарт-перевірка на дублікати при ручному вводі
+        // Розбиваємо ТІЛЬКИ по комах
+        const terms = newValue.toLowerCase().split(',').map(t => t.trim()).filter(Boolean);
+
+        if (terms.length < 2) return;
+
+        // Перевіряємо наявність дублікатів серед термінів
+        const uniqueTerms = new Set(terms);
+
+        if (uniqueTerms.size !== terms.length) {
+            // Знаходимо слово, яке дублюється
+            const duplicates = terms.filter((item, index) => terms.indexOf(item) !== index);
+            const duplicatedWord = duplicates[0];
+
+            const foundIng = allIngredients.find(ing => ing.name.toLowerCase() === duplicatedWord);
+            setDuplicateError(foundIng ? foundIng.name : capitalizeSearch(duplicatedWord));
+        }
     };
 
     // Підрахунок активних фільтрів для мобільного меню
@@ -416,7 +485,7 @@ const Recipes = () => {
                                     className="flex items-center gap-1.5 bg-red-50 text-red-600 hover:bg-red-100 transition-colors font-['Inter'] text-[13px] font-bold px-4 py-1.5 rounded-full border border-red-200 shadow-sm animate-fade-in"
                                 >
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                                    <span className="hidden sm:inline cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out hover:shadow-[0_12px_25px_rgba(180,114,49,0.15)] active:scale-95 group">Очистити фільтри</span>
+                                    <span className="hidden sm:inline cursor-pointer transition-all duration-300 ease-out active:scale-95 group">Очистити фільтри</span>
                                 </button>
                             ) : (
                                 <div></div>
@@ -437,6 +506,17 @@ const Recipes = () => {
 
                                 {/* БЛОК ПОШУКУ З ПІДКАЗКАМИ */}
                                 <div className="relative mb-6 shrink-0" ref={suggestionsRef}>
+
+                                    {/* Повідомлення про дублювання НАД інпутом */}
+                                    {duplicateError && (
+                                        <div className="absolute -top-10 left-0 animate-fade-in w-max px-3 py-1.5 bg-red-100 border border-red-300 rounded-lg text-red-700 text-[12px] sm:text-[13px] font-medium flex items-center gap-1.5 shadow-sm z-20">
+                                            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                            <span>Інгредієнт <b>«{duplicateError}»</b> вже додано до пошуку.</span>
+                                        </div>
+                                    )}
+                                    <p className="text-[12px] sm:text-[15px] text-gray-800 text-green-900 -mt-4 px-2">
+                                        💡 Розділяйте інгредієнти <b>комою</b> (наприклад: картопля, білий рис, морква)
+                                    </p>
                                     <div className="relative shadow-sm rounded-xl">
                                         <input
                                             ref={inputRef}
@@ -446,7 +526,12 @@ const Recipes = () => {
                                             onFocus={() => setShowSuggestions(true)}
                                             onKeyDown={(e) => e.key === 'Enter' && fetchRecipes()}
                                             placeholder="Листя салату, картопля, бринза..."
-                                            className="w-full bg-white border-2 border-gray-200 rounded-xl px-5 py-4 pl-12 outline-none focus:border-[#6A907B] transition-colors text-gray-800 font-medium font-['Inter']"
+                                            // Додані класи для червоного контуру при помилці дублювання
+                                            className={`w-full border-2 rounded-xl px-5 py-4 pl-12 outline-none transition-colors text-gray-800 font-medium font-['Inter'] ${
+                                                duplicateError 
+                                                ? 'bg-red-50/50 border-red-400 focus:border-red-500 text-red-900 placeholder-red-300' 
+                                                : 'bg-white border-gray-200 focus:border-[#6A907B]'
+                                            }`}
                                         />
                                         <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                                     </div>
@@ -483,7 +568,9 @@ const Recipes = () => {
 
                                         {allIngredients.length > 0 ? (
                                             <div className="flex flex-wrap gap-2.5 overflow-y-auto custom-scrollbar pr-2 content-start flex-grow">
-                                                {allIngredients.map(ing => (
+                                                {allIngredients
+                                                    .filter(ing => !isIngredientInQuery(searchQuery, ing.name))
+                                                    .map(ing => (
                                                     <button
                                                         key={ing.id}
                                                         onClick={() => handleAddIngredientToSearch(ing.name)}
