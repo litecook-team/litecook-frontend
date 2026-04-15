@@ -509,7 +509,7 @@ const Recipes = () => {
 
                                     {/* Повідомлення про дублювання НАД інпутом */}
                                     {duplicateError && (
-                                        <div className="absolute -top-10 left-0 animate-fade-in w-max px-3 py-1.5 bg-red-100 border border-red-300 rounded-lg text-red-700 text-[12px] sm:text-[13px] font-medium flex items-center gap-1.5 shadow-sm z-20">
+                                        <div className="absolute -top-8 left-0 animate-fade-in w-max px-3 py-1.5 bg-red-100 border border-red-300 rounded-lg text-red-700 text-[12px] sm:text-[13px] font-medium flex items-center gap-1.5 shadow-sm z-20">
                                             <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                                             <span>Інгредієнт <b>«{duplicateError}»</b> вже додано до пошуку.</span>
                                         </div>
