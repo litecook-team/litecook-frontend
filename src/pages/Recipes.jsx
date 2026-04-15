@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import api from '../api';
 import { ENDPOINTS, API_URL, TOKEN_KEY } from '../constants/api';
 import { DICTIONARIES } from '../constants/translations';
@@ -48,26 +48,41 @@ const TABS = [
 
 const Recipes = () => {
     const isAuthenticated = !!localStorage.getItem(TOKEN_KEY) || !!sessionStorage.getItem(TOKEN_KEY);
+    const location = useLocation(); // для розуміння, чи ми щойно зайшли на сторінку
 
-    const [recipes, setRecipes] = useState([]);
+    // --- КРОК 1: Ініціалізація стану з sessionStorage (якщо він є) ---
+    // Функція для безпечного читання з sessionStorage
+    const loadStateFromStorage = (key, defaultValue) => {
+        try {
+            const savedState = sessionStorage.getItem(`recipe_search_${key}`);
+            if (savedState !== null) {
+                return JSON.parse(savedState);
+            }
+        } catch (e) {
+            console.error("Помилка читання з sessionStorage", e);
+        }
+        return defaultValue;
+    };
+
+    const [recipes, setRecipes] = useState(() => loadStateFromStorage('recipes', []));
     const [loading, setLoading] = useState(true);
-    const [visibleCount, setVisibleCount] = useState(6);
+    const [visibleCount, setVisibleCount] = useState(() => loadStateFromStorage('visibleCount', 6));
     const [toastMessage, setToastMessage] = useState(null);
 
-    const [activeTab, setActiveTab] = useState('ingredients');
+    const [activeTab, setActiveTab] = useState(() => loadStateFromStorage('activeTab', 'ingredients'));
 
     // Стани для фільтрів
-    const [searchQuery, setSearchQuery] = useState('');
-    const [selectedCuisines, setSelectedCuisines] = useState([]);
-    const [selectedDifficulties, setSelectedDifficulties] = useState([]);
-    const [selectedDiets, setSelectedDiets] = useState([]);
-    const [selectedDishTypes, setSelectedDishTypes] = useState([]);
-    const [selectedMealTimes, setSelectedMealTimes] = useState([]);
-    const [selectedMonths, setSelectedMonths] = useState([]);
-    const [selectedIngredientCategories, setSelectedIngredientCategories] = useState([]);
-    const [maxTime, setMaxTime] = useState('');
-    const [maxCalories, setMaxCalories] = useState('');
-    const [isSeasonal, setIsSeasonal] = useState(false);
+    const [searchQuery, setSearchQuery] = useState(() => loadStateFromStorage('searchQuery', ''));
+    const [selectedCuisines, setSelectedCuisines] = useState(() => loadStateFromStorage('selectedCuisines', []));
+    const [selectedDifficulties, setSelectedDifficulties] = useState(() => loadStateFromStorage('selectedDifficulties', []));
+    const [selectedDiets, setSelectedDiets] = useState(() => loadStateFromStorage('selectedDiets', []));
+    const [selectedDishTypes, setSelectedDishTypes] = useState(() => loadStateFromStorage('selectedDishTypes', []));
+    const [selectedMealTimes, setSelectedMealTimes] = useState(() => loadStateFromStorage('selectedMealTimes', []));
+    const [selectedMonths, setSelectedMonths] = useState(() => loadStateFromStorage('selectedMonths', []));
+    const [selectedIngredientCategories, setSelectedIngredientCategories] = useState(() => loadStateFromStorage('selectedIngredientCategories', []));
+    const [maxTime, setMaxTime] = useState(() => loadStateFromStorage('maxTime', ''));
+    const [maxCalories, setMaxCalories] = useState(() => loadStateFromStorage('maxCalories', ''));
+    const [isSeasonal, setIsSeasonal] = useState(() => loadStateFromStorage('isSeasonal', false));
 
     // Нові стани для бази інгредієнтів та підказок
     const [allIngredients, setAllIngredients] = useState([]);
@@ -76,7 +91,7 @@ const Recipes = () => {
     const suggestionsRef = useRef(null);
 
     // Стан, який фіксує, чи БУЛО натиснуто кнопку пошуку з якимось фільтром
-    const [hasActiveFilters, setHasActiveFilters] = useState(false);
+    const [hasActiveFilters, setHasActiveFilters] = useState(() => loadStateFromStorage('hasActiveFilters', false));
 
     // Стан для відображення меню фільтрів на мобільному
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -85,10 +100,27 @@ const Recipes = () => {
     const [selectedRecipeForModal, setSelectedRecipeForModal] = useState(null);
 
     // Стан для збереження ID інгредієнтів з поточного пошуку (щоб знати, що є в наявності)
-    const [matchedIngredientIds, setMatchedIngredientIds] = useState([]);
+    const [matchedIngredientIds, setMatchedIngredientIds] = useState(() => loadStateFromStorage('matchedIngredientIds', []));
 
     // Стан для відстеження дублікатів при вводі
     const [duplicateError, setDuplicateError] = useState(null);
+
+    // --- КРОК 2: Збереження стану в sessionStorage при зміні ---
+    // Створюємо масив всіх фільтрів, щоб було зручно стежити
+    useEffect(() => {
+        const stateToSave = {
+            recipes, visibleCount, activeTab, searchQuery,
+            selectedCuisines, selectedDifficulties, selectedDiets,
+            selectedDishTypes, selectedMealTimes, selectedMonths,
+            selectedIngredientCategories, maxTime, maxCalories,
+            isSeasonal, hasActiveFilters, matchedIngredientIds
+        };
+
+        // Зберігаємо кожен стан окремо для зручності
+        Object.entries(stateToSave).forEach(([key, value]) => {
+             sessionStorage.setItem(`recipe_search_${key}`, JSON.stringify(value));
+        });
+    }, [recipes, visibleCount, activeTab, searchQuery, selectedCuisines, selectedDifficulties, selectedDiets, selectedDishTypes, selectedMealTimes, selectedMonths, selectedIngredientCategories, maxTime, maxCalories, isSeasonal, hasActiveFilters, matchedIngredientIds]);
 
     useEffect(() => {
         // Завантажуємо всі інгредієнти з БД для підказок та списку
@@ -101,7 +133,18 @@ const Recipes = () => {
             }
         };
         fetchIngredients();
-        fetchRecipes(false); // передаємо false, щоб не міняти заголовок при першому завантаженні
+
+        // --- КРОК 3: Вирішуємо, чи робити початковий запит ---
+        // Якщо у нас ВЖЕ є збережені рецепти (ми повернулися з іншої сторінки),
+        // нам НЕ ПОТРІБНО робити порожній запит і затирати їх.
+        // Ми робимо запит тільки якщо збережених рецептів немає.
+        const savedRecipes = loadStateFromStorage('recipes', []);
+        if (savedRecipes.length === 0) {
+             fetchRecipes(false);
+        } else {
+             setLoading(false); // Якщо рецепти вже є, просто вимикаємо лоадер
+        }
+
         window.scrollTo(0, 0);
     }, []);
 
@@ -189,13 +232,10 @@ const Recipes = () => {
                 const hasSearch = searchQuery.trim() !== '';
 
                 // === ЛОГІКА ПЕРЕДАЧІ ПАРАМЕТРІВ ===
-                // Замість пошуку по тексту, ми відправляємо точні ID інгредієнтів.
-                // Бекенд тепер оброблятиме їх за логікою "АБО".
                 if (hasSearch && currentMatchedIds.length > 0) {
                     params.append('ingredients', currentMatchedIds.join(','));
                     url = `${ENDPOINTS.RECIPES}match/?${params.toString()}`;
                 } else if (hasSearch && currentMatchedIds.length === 0) {
-                    // Якщо ввели текст, який не розпізнано як інгредієнт (напр. "абракадабра")
                     params.append('search_query', formatQueryForBackend(searchQuery));
                     url = `${ENDPOINTS.RECIPES}match/?${params.toString()}`;
                 } else {
@@ -253,11 +293,20 @@ const Recipes = () => {
         setMaxTime('');
         setMaxCalories('');
         setIsSeasonal(false);
+        setDuplicateError(null);
 
-        // Відразу оновлюємо список, передаючи 'clear' щоб ігнорувати старий стейт
+        // --- КРОК 4: Очищення sessionStorage при скиданні фільтрів ---
+        const keysToRemove = [
+            'recipes', 'visibleCount', 'activeTab', 'searchQuery',
+            'selectedCuisines', 'selectedDifficulties', 'selectedDiets',
+            'selectedDishTypes', 'selectedMealTimes', 'selectedMonths',
+            'selectedIngredientCategories', 'maxTime', 'maxCalories',
+            'isSeasonal', 'hasActiveFilters', 'matchedIngredientIds'
+        ];
+        keysToRemove.forEach(key => sessionStorage.removeItem(`recipe_search_${key}`));
+
+        // Відразу оновлюємо список
         setTimeout(() => fetchRecipes(true, 'clear'), 0);
-
-        setDuplicateError(null); // Додаємо очищення помилки дублювання
     };
 
     const showToast = (message) => {
