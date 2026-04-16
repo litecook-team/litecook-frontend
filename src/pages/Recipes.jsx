@@ -99,6 +99,9 @@ const Recipes = () => {
     // Стан, який фіксує, чи БУЛО натиснуто кнопку пошуку з якимось фільтром
     const [hasActiveFilters, setHasActiveFilters] = useState(() => loadStateFromStorage('hasActiveFilters', false));
 
+    // Стан для збереження останнього URL запиту (щоб уникати дублювання запитів на бекенд)
+    const [lastQueryUrl, setLastQueryUrl] = useState(() => loadStateFromStorage('lastQueryUrl', ''));
+
     // Стан для відображення меню фільтрів на мобільному
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -125,16 +128,18 @@ const Recipes = () => {
         }
 
         // Встановлюємо нову помилку
-        if (type === 'duplicate') setDuplicateError(value);
-        if (type === 'emptyIngredients') setEmptyIngredientsError(value);
-        if (type === 'emptyFilter') setEmptyFilterError(value);
+        if (type === 'duplicate') {
+            setDuplicateError(value);
+        } else {
+            if (type === 'emptyIngredients') setEmptyIngredientsError(value);
+            if (type === 'emptyFilter') setEmptyFilterError(value);
 
-        // Встановлюємо таймер на 4 секунди для зникнення
-        errorTimeoutRef.current = setTimeout(() => {
-            setDuplicateError(null);
-            setEmptyIngredientsError(false);
-            setEmptyFilterError(false);
-        }, 3000);
+            // Встановлюємо таймер на зникнення тільки для повідомлень про порожній пошук
+            errorTimeoutRef.current = setTimeout(() => {
+                setEmptyIngredientsError(false);
+                setEmptyFilterError(false);
+            }, 3000);
+        }
     };
 
     // Створюємо масив всіх фільтрів, щоб було зручно стежити
@@ -144,14 +149,14 @@ const Recipes = () => {
             selectedCuisines, selectedDifficulties, selectedDiets,
             selectedDishTypes, selectedMealTimes, selectedMonths,
             selectedIngredientCategories, maxTime, maxCalories,
-            isSeasonal, hasActiveFilters, matchedIngredientIds
+            isSeasonal, hasActiveFilters, matchedIngredientIds, lastQueryUrl
         };
 
         // Зберігаємо кожен стан окремо для зручності
         Object.entries(stateToSave).forEach(([key, value]) => {
              sessionStorage.setItem(`recipe_search_${key}`, JSON.stringify(value));
         });
-    }, [recipes, visibleCount, activeTab, searchQuery, selectedCuisines, selectedDifficulties, selectedDiets, selectedDishTypes, selectedMealTimes, selectedMonths, selectedIngredientCategories, maxTime, maxCalories, isSeasonal, hasActiveFilters, matchedIngredientIds]);
+    }, [recipes, visibleCount, activeTab, searchQuery, selectedCuisines, selectedDifficulties, selectedDiets, selectedDishTypes, selectedMealTimes, selectedMonths, selectedIngredientCategories, maxTime, maxCalories, isSeasonal, hasActiveFilters, matchedIngredientIds, lastQueryUrl]);
 
     useEffect(() => {
         // Завантажуємо всі інгредієнти з БД для підказок та списку
@@ -235,7 +240,7 @@ const Recipes = () => {
             if (activeTab === 'ingredients' && !hasSearchQuery) {
                 showError('emptyIngredients');
                 setEmptyFilterError(false); // Скидаємо помилку іншого табу
-                setDuplicateError(null);
+                setDuplicateError(null); // Очищаємо помилку дублікату, якщо вона є
                 return;
             } else if (activeTab !== 'ingredients' && !hasFilters && !hasSearchQuery) {
                 // Якщо ми на табі фільтрів, і не вибрано фільтрів, І немає тексту в пошуку
@@ -307,10 +312,21 @@ const Recipes = () => {
                 }
             }
 
+            // Запобігання дублюванню запитів до сервера
+            // Якщо це не очищення фільтрів і новий URL збігається зі старим, нічого не робимо
+            if (isUserAction && overrideParams !== 'clear' && url === lastQueryUrl) {
+                return;
+            }
+
+            setLoading(true);
             const response = await api.get(url);
             setRecipes(response.data.results || response.data);
             setVisibleCount(6);
             setShowSuggestions(false);
+
+            // Зберігаємо цей URL як останній успішний запит
+            setLastQueryUrl(url);
+
         } catch (error) {
             console.error("Помилка завантаження рецептів:", error);
             showToast("❌ Помилка завантаження рецептів");
@@ -332,14 +348,15 @@ const Recipes = () => {
         setMaxCalories('');
         setIsSeasonal(false);
         setDuplicateError(null);
+        setLastQueryUrl(''); // Очищаємо кеш останнього запиту
 
-        // --- КРОК 4: Очищення sessionStorage при скиданні фільтрів ---
+        // Очищення sessionStorage при скиданні фільтрів
         const keysToRemove = [
             'recipes', 'visibleCount', 'activeTab', 'searchQuery',
             'selectedCuisines', 'selectedDifficulties', 'selectedDiets',
             'selectedDishTypes', 'selectedMealTimes', 'selectedMonths',
             'selectedIngredientCategories', 'maxTime', 'maxCalories',
-            'isSeasonal', 'hasActiveFilters', 'matchedIngredientIds'
+            'isSeasonal', 'hasActiveFilters', 'matchedIngredientIds', 'lastQueryUrl'
         ];
         keysToRemove.forEach(key => sessionStorage.removeItem(`recipe_search_${key}`));
 
@@ -364,10 +381,7 @@ const Recipes = () => {
 
     const toggleFavorite = async (e, recipe) => {
         e.preventDefault();
-        if (!isAuthenticated) {
-            showToast("🔒 Увійдіть, щоб додавати в улюблені");
-            return;
-        }
+
         try {
             if (recipe.is_favorited) {
                 await api.delete(`${ENDPOINTS.FAVORITES}${recipe.id}/`);
