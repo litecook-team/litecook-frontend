@@ -99,6 +99,11 @@ const Menu = () => {
     const [isShoppingListLoading, setIsShoppingListLoading] = useState(false); // Завантаження списку
     const [activeListScope, setActiveListScope] = useState(null); // 'day' або 'week'
 
+    // Стан для дублювання (без таймера, як просили)
+    const [duplicateError, setDuplicateError] = useState(null);
+
+    const exportErrorTimeoutRef = useRef(null);
+
     // 1. Завантаження поточного меню та інгредієнтів
     useEffect(() => {
         fetchMenu();
@@ -152,7 +157,23 @@ const Menu = () => {
         return terms.join(', ');
     };
 
-    // Живий пошук та рандомізація
+    // Допоміжна функція для пошуку ID інгредієнтів
+    const getIngredientIdsFromSearch = (query) => {
+        if (!query) return [];
+        // Розбиваємо ТІЛЬКИ по комах
+        const terms = query.toLowerCase().split(',').map(t => t.trim()).filter(t => t.length > 0);
+
+        const matchedIds = [];
+        terms.forEach(term => {
+            const match = allIngredients.find(ing => ing.name.toLowerCase() === term);
+            if (match) {
+                matchedIds.push(match.id);
+            }
+        });
+        return [...new Set(matchedIds)];
+    };
+
+    // Живий пошук та рандомізація (АВТОМАТИЧНИЙ)
     useEffect(() => {
         if (!isAddModalOpen) return;
 
@@ -160,16 +181,22 @@ const Menu = () => {
             setIsSearching(true);
             setModalError(null);
             try {
-                // використовуємо форматований запит
-                const formattedSearch = formatQueryForBackend(searchQuery);
-                const url = formattedSearch
-                    ? `${ENDPOINTS.RECIPES}match/?search_query=${formattedSearch}`
-                    : `${ENDPOINTS.RECIPES}`;
+                let url = '';
+                const hasSearchQuery = searchQuery.trim() !== '';
+                const currentMatchedIds = getIngredientIdsFromSearch(searchQuery);
+
+                if (hasSearchQuery && currentMatchedIds.length > 0) {
+                    url = `${ENDPOINTS.RECIPES}match/?ingredients=${currentMatchedIds.join(',')}`;
+                } else if (hasSearchQuery && currentMatchedIds.length === 0) {
+                    url = `${ENDPOINTS.RECIPES}match/?search_query=${formatQueryForBackend(searchQuery)}`;
+                } else {
+                    url = `${ENDPOINTS.RECIPES}`;
+                }
 
                 const response = await api.get(url);
                 let recipesData = response.data.results ? response.data.results : response.data;
 
-                if (!formattedSearch && recipesData.length > 0) {
+                if (!hasSearchQuery && recipesData.length > 0) {
                     // Якщо пошук порожній, перемішуємо і беремо 10 випадкових
                     recipesData = recipesData.sort(() => 0.5 - Math.random()).slice(0, 10);
                 }
@@ -178,11 +205,13 @@ const Menu = () => {
                 setVisibleRecipeCount(10); // Скидаємо відображення до 10 при новому запиті
             } catch (error) {
                 console.error("Помилка пошуку рецептів:", error);
+                setModalError("Виникла помилка при пошуку рецептів.");
             } finally {
                 setIsSearching(false);
             }
         };
 
+        // Затримка (debounce) 400мс, щоб не спамити бекенд при кожній літері
         const timeoutId = setTimeout(fetchSearchedRecipes, 400);
         return () => clearTimeout(timeoutId);
     }, [searchQuery, isAddModalOpen]);
@@ -315,11 +344,35 @@ const Menu = () => {
 
     // Функція експорту керує локальним станом exportStatus
     const handleExport = async (actionType) => {
+        // Очищаємо попередній таймер помилки, якщо він був
+        if (exportErrorTimeoutRef.current) {
+            clearTimeout(exportErrorTimeoutRef.current);
+        }
+
         setExportStatus(null); // Очищаємо помилку перед новою спробою
 
-        if (actionType === 'email' && !exportEmail) {
-            setExportStatus({ type: 'error', text: 'Будь ласка, введіть email для відправки.' });
-            return;
+        // Проста перевірка формату email за допомогою регулярного виразу
+        const isValidEmail = (email) => {
+            const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            return re.test(email);
+        };
+
+        if (actionType === 'email') {
+            if (!exportEmail) {
+                setExportStatus({ type: 'error', text: 'Будь ласка, введіть email для відправки.' });
+                // Встановлюємо таймер на зникнення помилки через 4 секунди
+                exportErrorTimeoutRef.current = setTimeout(() => {
+                    setExportStatus(null);
+                }, 4000);
+                return;
+            } else if (!isValidEmail(exportEmail)) {
+                // Перевірка на валідність email
+                setExportStatus({ type: 'error', text: 'Будь ласка, введіть коректний email (наприклад: name@gmail.com).' });
+                exportErrorTimeoutRef.current = setTimeout(() => {
+                    setExportStatus(null);
+                }, 4000);
+                return;
+            }
         }
 
         try {
@@ -343,6 +396,10 @@ const Menu = () => {
             // Якщо список порожній — показуємо помилку В МОДАЛЦІ і не закриваємо її
             if (listToExport.length === 0) {
                 setExportStatus({ type: 'error', text: 'Список продуктів порожній. Немає чого завантажувати/надсилати.' });
+                // Таймер на зникнення
+                exportErrorTimeoutRef.current = setTimeout(() => {
+                    setExportStatus(null);
+                }, 4000);
                 return;
             }
 
@@ -407,6 +464,10 @@ const Menu = () => {
         } catch (error) {
             console.error(error);
             setExportStatus({ type: 'error', text: 'Виникла помилка при генерації або відправці PDF. Спробуйте ще раз.' });
+            // Таймер на зникнення
+            exportErrorTimeoutRef.current = setTimeout(() => {
+                setExportStatus(null);
+            }, 4000);
         }
     };
 
@@ -434,11 +495,17 @@ const Menu = () => {
         return `${numAmount} ${unitData || unitKey}`;
     };
 
+    // Логіка інтелектуального пошуку з Recipes.jsx
+    const capitalizeSearch = (str) => {
+        if (!str) return '';
+        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    };
+
     // Логіка визначення поточного слова для підказок
     const getCurrentSearchTerm = () => {
         if (!searchQuery) return '';
-        const parts = searchQuery.split(/[\s,]+/);
-        return parts[parts.length - 1].trim().toLowerCase();
+        const parts = searchQuery.split(',').map(p => p.trim());
+        return parts[parts.length - 1].toLowerCase();
     };
 
     const currentTerm = getCurrentSearchTerm();
@@ -446,7 +513,21 @@ const Menu = () => {
         ? allIngredients.filter(ing => ing.name.toLowerCase().includes(currentTerm))
         : [];
 
+    const isIngredientInQuery = (query, ingredientName) => {
+        if (!query) return false;
+        const queryTerms = query.toLowerCase().split(',').map(t => t.trim()).filter(t => t.length > 0);
+        return queryTerms.includes(ingredientName.toLowerCase().trim());
+    };
+
     const handleAddIngredientToSearch = (ingredientName) => {
+        if (isIngredientInQuery(searchQuery, ingredientName)) {
+            setDuplicateError(ingredientName);
+            setShowSuggestions(false);
+            if (inputRef.current) inputRef.current.focus();
+            return;
+        }
+
+        setDuplicateError(null);
         const query = searchQuery;
         const lastIndex = Math.max(query.lastIndexOf(','), query.lastIndexOf(' '));
 
@@ -454,10 +535,10 @@ const Menu = () => {
         if (lastIndex === -1) {
             newQuery = ingredientName + ', ';
         } else {
-            newQuery = query.substring(0, lastIndex + 1).trim() + ' ' + ingredientName.toLowerCase() + ', ';
+            newQuery = query.substring(0, lastIndex + 1).trim() + ' ' + ingredientName + ', ';
         }
 
-        setSearchQuery(formatCapitalization(newQuery));
+        setSearchQuery(capitalizeSearch(newQuery));
         setShowSuggestions(false);
         if (inputRef.current) inputRef.current.focus();
     };
@@ -465,6 +546,22 @@ const Menu = () => {
     const handleInputChange = (e) => {
         setSearchQuery(formatCapitalization(e.target.value));
         setShowSuggestions(true);
+
+        setDuplicateError(null); // Очищаємо помилку, коли користувач починає вводити чи видаляти текст
+
+        const terms = e.target.value.toLowerCase().split(',').map(t => t.trim()).filter(Boolean);
+
+        if (terms.length < 2) return;
+
+        const uniqueTerms = new Set(terms);
+
+        if (uniqueTerms.size !== terms.length) {
+            const duplicates = terms.filter((item, index) => terms.indexOf(item) !== index);
+            const duplicatedWord = duplicates[0];
+
+            const foundIng = allIngredients.find(ing => ing.name.toLowerCase() === duplicatedWord);
+            setDuplicateError(foundIng ? foundIng.name : capitalizeFirstLetter(duplicatedWord));
+        }
     };
 
     if (loading) {
@@ -751,10 +848,14 @@ const Menu = () => {
                                             setExportStatus(null);
                                             setExportEmail('');
                                         }}
-                                        className="w-full border-2 border-dashed border-[#6A907B]/40 text-[#6A907B] py-3.5 rounded-xl hover:bg-[#6A907B]/5 hover:border-[#6A907B] transition-colors flex items-center justify-center gap-2 font-bold cursor-pointer transition-all duration-300 ease-out active:scale-95 group"
+                                        // ЗМІНЕНО: Додано px-3 sm:px-4, lg:text-[15px] xl:text-[16px]
+                                        className="w-full px-3 sm:px-4 flex flex-col min-[350px]:flex-row items-center justify-center border-2 border-dashed border-[#6A907B]/40 text-[#6A907B] py-3 sm:py-3.5 rounded-xl hover:bg-[#6A907B]/5 hover:border-[#6A907B] transition-colors gap-2 cursor-pointer transition-all duration-300 ease-out active:scale-95 group"
                                     >
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                                        Завантажити / Надіслати на пошту
+                                        <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                        {/* ЗМІНЕНО: Додано класи для розміру тексту */}
+                                        <span className="text-center font-bold text-[13px] sm:text-[14px] lg:text-[15px] xl:text-[16px] leading-tight">
+                                            Завантажити / Надіслати на пошту
+                                        </span>
                                     </button>
                                 </div>
                             </div>
@@ -767,7 +868,7 @@ const Menu = () => {
             {isAddModalOpen && (
                 <div
                     className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm transform-gpu w-full h-full"
-                    onClick={() => { setIsAddModalOpen(false); setModalError(null); }}
+                    onClick={() => { setIsAddModalOpen(false); setModalError(null); setDuplicateError(null); }}
                 >
                     <div
                         className="bg-white rounded-[2.5rem] p-5 sm:p-8 w-full max-w-4xl h-[90vh] sm:h-[85vh] flex flex-col shadow-2xl relative font-['Inter']"
@@ -777,6 +878,7 @@ const Menu = () => {
                             onClick={() => {
                                 setIsAddModalOpen(false);
                                 setModalError(null);
+                                setDuplicateError(null);
                             }}
                             className="absolute top-4 right-4 sm:top-6 sm:right-6 w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-900 transition-colors cursor-pointer transition-all duration-300 ease-out active:scale-95 group"
                         >
@@ -796,17 +898,54 @@ const Menu = () => {
 
                         {/* Блок пошуку з підказками */}
                         <div className="mb-4 shrink-0 relative" ref={suggestionsRef}>
-                            <div className="relative shadow-sm rounded-xl">
-                                <input
-                                    ref={inputRef}
-                                    type="text"
-                                    placeholder="Листя салату, Картопля, Бринза..."
-                                    value={searchQuery}
-                                    onChange={handleInputChange}
-                                    onFocus={() => setShowSuggestions(true)}
-                                    className={`w-full bg-white border-2 rounded-xl px-5 py-3.5 sm:py-4 pl-12 outline-none transition-colors text-gray-800 font-medium font-['Inter'] ${modalError ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-[#6A907B]'}`}
-                                />
-                                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+
+                            {/* Повідомлення про дублювання */}
+                            {duplicateError && (
+                                <div className="absolute -top-3 left-0 animate-fade-in w-max max-w-[100%] px-3 py-1.5 bg-red-100 border border-red-300 rounded-lg text-red-700 text-[11px] sm:text-[13px] font-medium flex items-center gap-1.5 shadow-sm z-20">
+                                    <svg className="shrink-0" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                    <span className="truncate">Інгредієнт <b>«{duplicateError}»</b> вже додано до пошуку.</span>
+                                </div>
+                            )}
+
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2">
+                                <p className="text-[11px] sm:text-[13px] md:text-[15px] text-gray-800 text-green-900 px-1 mt-1 sm:mt-0 order-2 sm:order-1 leading-tight">
+                                    💡 Розділяйте інгредієнти <b>комою</b> (наприклад: картопля, білий рис)
+                                </p>
+                            </div>
+
+                            <div className="relative shadow-sm rounded-xl flex">
+                                <div className="relative flex-grow">
+                                    <input
+                                        ref={inputRef}
+                                        type="text"
+                                        placeholder="Листя салату, Картопля, Бринза..."
+                                        value={searchQuery}
+                                        onChange={handleInputChange}
+                                        onFocus={() => setShowSuggestions(true)}
+                                        className={`w-full bg-white border-2 rounded-xl px-5 py-3.5 sm:py-4 pl-12 pr-10 outline-none transition-colors text-gray-800 font-medium font-['Inter'] ${
+                                            (modalError || duplicateError) 
+                                            ? 'border-red-300 focus:border-red-500 bg-red-50/50 text-red-900 placeholder-red-300' 
+                                            : 'border-gray-200 focus:border-[#6A907B]'
+                                        }`}
+                                    />
+                                    {/* Іконка лупи зліва */}
+                                    <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+
+                                    {/* Кнопка очищення вводу справа (показується тільки якщо є текст) */}
+                                    {searchQuery && (
+                                        <button
+                                            onClick={() => {
+                                                setSearchQuery('');
+                                                setDuplicateError(null);
+                                                if (inputRef.current) inputRef.current.focus();
+                                            }}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+                                            title="Очистити поле"
+                                        >
+                                            <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                        </button>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Випадаючий список підказок */}
@@ -831,9 +970,11 @@ const Menu = () => {
                         </div>
 
                         {/* Швидкий скролячий список інгредієнтів (горизонтальна стрічка) */}
-                        <div className="mb-6 shrink-0 w-full">
+                        <div className="mb-4 sm:mb-6 shrink-0 w-full">
                             <div className="flex gap-2.5 overflow-x-auto custom-scrollbar pb-2 pt-1 px-1">
-                                {allIngredients.map(ing => (
+                                {allIngredients
+                                    .filter(ing => !isIngredientInQuery(searchQuery, ing.name))
+                                    .map(ing => (
                                     <button
                                         key={ing.id}
                                         onClick={() => handleAddIngredientToSearch(ing.name)}
@@ -856,9 +997,11 @@ const Menu = () => {
                             onScroll={handleScroll}
                         >
                             {isSearching ? (
-                                <div className="text-center text-gray-400 py-10 font-medium">Шукаємо рецепти...</div>
+                                <div className="flex justify-center items-center py-10">
+                                    <svg className="animate-spin h-8 w-8 text-[#5B826B]" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                </div>
                             ) : availableRecipes.length === 0 ? (
-                                <div className="text-center text-gray-400 py-10 font-medium">
+                                <div className="text-center text-gray-500 font-['Inter'] py-10">
                                     {searchQuery ? "За вашим запитом нічого не знайдено." : "Тут з'являться рецепти."}
                                 </div>
                             ) : (
@@ -877,13 +1020,15 @@ const Menu = () => {
                                                 {recipe.title}
                                             </Link>
 
-                                            {/* бейджик з кількістю збігів, якщо вони є */}
+                                            {/* ЗМІНЕНО: бейджик з кількістю збігів */}
                                             {recipe.match_count > 0 && recipe.total_count > 0 && (
-                                                <div className="inline-flex items-center justify-center sm:justify-start gap-1.5 text-sm font-semibold text-[#6A907B] mb-2">
-                                                    <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                <div className="inline-flex items-start sm:items-center justify-center sm:justify-start gap-1.5 text-[13px] sm:text-sm font-semibold text-[#6A907B] mb-2 text-left">
+                                                    {/* shrink-0 забороняє іконці стискатися */}
+                                                    <svg className="shrink-0 mt-[2px] sm:mt-0" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                                                         <path d="M4 12.5C4 12.5 7.5 17 8.5 18C10 14 15 7.5 20 5"></path>
                                                     </svg>
-                                                    Знайдено {recipe.match_count} з {recipe.total_count} інгредієнтів
+                                                    {/* leading-tight допомагає при переносі тексту на кілька рядків */}
+                                                    <span className="leading-tight">Знайдено {recipe.match_count} з {recipe.total_count} інгредієнтів</span>
                                                 </div>
                                             )}
 
@@ -975,21 +1120,21 @@ const Menu = () => {
 
                         {/* Повідомлення про помилку ЕКСПОРТУ В МОДАЛЦІ - НАД КНОПКОЮ */}
                         {exportStatus && (
-                            <div className={`mb-4 p-3 border rounded-xl text-sm font-medium flex items-center justify-center gap-2 shrink-0 text-center transition-colors ${
-                                exportStatus.type === 'error' ? 'bg-red-50 border-red-200 text-red-600 animate-pulse' :
+                            <div className={`mb-4 p-3 border rounded-xl text-sm font-medium flex items-center justify-center gap-2 shrink-0 transition-colors w-max max-w-[100%] mx-auto ${
+                                exportStatus.type === 'error' ? 'bg-red-100 border-red-300 text-red-700 animate-fade-in' :
                                 exportStatus.type === 'loading' ? 'bg-blue-50 border-blue-200 text-blue-600' :
                                 'bg-green-50 border-green-200 text-green-700'
                             }`}>
                                 {exportStatus.type === 'error' && (
-                                    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                    <svg className="shrink-0" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
                                 )}
                                 {exportStatus.type === 'loading' && (
-                                    <svg className="animate-spin h-5 w-5 shrink-0 text-blue-500" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    <svg className="animate-spin shrink-0 text-blue-500" width="16" height="16" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                 )}
                                 {exportStatus.type === 'success' && (
-                                    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                                    <svg className="shrink-0" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
                                 )}
-                                <span>{exportStatus.text}</span>
+                                <span className="flex-1 break-words leading-tight text-center sm:text-left">{exportStatus.text}</span>
                             </div>
                         )}
 

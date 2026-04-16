@@ -183,7 +183,7 @@ const RecipeDetail = () => {
                 </div>
 
                 {/* БЛОК 2 та 3: НАЗВА, СТАТИСТИКА, ІНГРЕДІЄНТИ */}
-                <div className="order-2 lg:col-span-4 lg:row-span-2 flex flex-col relative px-6 sm:px-8 lg:px-8 xl:px-12 2xl:px-16 pt-10 lg:pt-20 min-w-0">
+                <div className="order-2 lg:col-span-4 lg:row-span-2 flex flex-col relative px-6 sm:px-8 lg:px-5 xl:px-20 pt-10 lg:pt-20 min-w-0">
 
                     {/* РЕЦЕПТ */}
                     <div className="flex justify-end mb-4 sm:mb-6 lg:mb-12">
@@ -297,7 +297,7 @@ const RecipeDetail = () => {
                     <div className="flex flex-col-reverse lg:flex-row items-start w-full gap-12 sm:gap-16 lg:gap-8 xl:gap-12">
 
                         {/* Блок 5: Деталі рецепту (Праворуч на ПК, знизу на мобільних) */}
-                        <div className="w-full lg:w-[45%] xl:w-[40%] flex items-center justify-center lg:justify-start pt-6 lg:pt-0">
+                        <div className="w-full lg:w-[35%] xl:w-[35%] flex items-center justify-center lg:justify-start pt-6 lg:pt-0 shrink-0">
                             <div className="relative w-full max-w-md lg:max-w-none rounded-[2rem] p-[6px] bg-gradient-to-br from-[#DCE8D9] via-[#6A907B]/20 to-[#DCE8D9] shadow-sm mx-auto lg:mx-0">
 
                                 {/* ІКОНКА СКРІПКИ */}
@@ -308,42 +308,42 @@ const RecipeDetail = () => {
                                 />
 
                                 {/* Внутрішній блок Деталей (ПРОЗОРИЙ) */}
-                                <div className="w-full h-full bg-transparent min-[1500px]:backdrop-blur-none backdrop-blur-md rounded-[calc(2rem-6px)] p-6 sm:p-8 lg:p-8 xl:p-8 font-['Inter']">
+                                <div className="w-full h-full bg-transparent min-[1500px]:backdrop-blur-none backdrop-blur-md rounded-[calc(2rem-6px)] p-6 sm:p-8 lg:p-6 xl:p-8 font-['Inter']">
 
                                     <h3 className="text-[18px] sm:text-[20px] font-bold font-['Inter'] text-[#B47231] mb-2 sm:mb-0 uppercase text-center tracking-widest mt-2 sm:mt-0">
                                         ДЕТАЛІ
                                     </h3>
 
-                                    <div className="space-y-2 sm:space-y-3 text-[14px] sm:text-[15px] lg:text-[15px] xl:text-[16px] rounded-2xl p-0 sm:p-4 lg:p-6 mt-4 sm:mt-0">
+                                    <div className="space-y-2 sm:space-y-3 text-[14px] sm:text-[15px] lg:text-[14px] xl:text-[15px] rounded-2xl p-0 sm:p-4 lg:p-0 xl:p-4 mt-4 sm:mt-0">
 
-                                        <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row justify-between items-start gap-1 sm:gap-4 lg:gap-1 xl:gap-4 border-b border-gray-200/60 pb-2 sm:pb-1 lg:pb-2 xl:pb-1">
+                                        <div className="flex flex-col sm:flex-row lg:flex-col justify-between items-start sm:items-center lg:items-start gap-1 sm:gap-4 lg:gap-1 border-b border-gray-200/60 pb-2 sm:pb-1 lg:pb-2">
                                             <span className="text-gray-900 font-semibold shrink-0">Кухня:</span>
-                                            <span className="text-gray-900 text-left sm:text-right lg:text-left xl:text-right break-words w-full sm:flex-1 min-w-0">{formatArray(recipe.cuisine, DICTIONARIES.cuisine)}</span>
+                                            <span className="text-gray-900 text-left sm:text-right lg:text-left break-words w-full">{formatArray(recipe.cuisine, DICTIONARIES.cuisine)}</span>
                                         </div>
 
-                                        <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row justify-between items-start gap-1 sm:gap-4 lg:gap-1 xl:gap-4 border-b border-gray-200/60 pb-2 sm:pb-1 lg:pb-2 xl:pb-1">
+                                        <div className="flex flex-col sm:flex-row lg:flex-col justify-between items-start sm:items-center lg:items-start gap-1 sm:gap-4 lg:gap-1 border-b border-gray-200/60 pb-2 sm:pb-1 lg:pb-2">
                                             <span className="font-semibold text-gray-900 shrink-0">Прийом їжі:</span>
-                                            <span className="text-gray-900 text-left sm:text-right lg:text-left xl:text-right break-words w-full sm:flex-1 min-w-0">{formatArray(recipe.meal_times, DICTIONARIES.meal_times)}</span>
+                                            <span className="text-gray-900 text-left sm:text-right lg:text-left break-words w-full">{formatArray(recipe.meal_times, DICTIONARIES.meal_times)}</span>
                                         </div>
 
-                                        <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row justify-between items-start gap-1 sm:gap-4 lg:gap-1 xl:gap-4 border-b border-gray-200/60 pb-2 sm:pb-1 lg:pb-2 xl:pb-1">
+                                        <div className="flex flex-col sm:flex-row lg:flex-col justify-between items-start sm:items-center lg:items-start gap-1 sm:gap-4 lg:gap-1 border-b border-gray-200/60 pb-2 sm:pb-1 lg:pb-2">
                                             <span className="font-semibold text-gray-900 shrink-0">Тип страви:</span>
-                                            <span className="text-gray-900 text-left sm:text-right lg:text-left xl:text-right break-words w-full sm:flex-1 min-w-0">{formatArray(recipe.dish_types, DICTIONARIES.dish_types)}</span>
+                                            <span className="text-gray-900 text-left sm:text-right lg:text-left break-words w-full">{formatArray(recipe.dish_types, DICTIONARIES.dish_types)}</span>
                                         </div>
 
-                                        <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row justify-between items-start gap-1 sm:gap-4 lg:gap-1 xl:gap-4 border-b border-gray-200/60 pb-2 sm:pb-1 lg:pb-2 xl:pb-1">
+                                        <div className="flex flex-col sm:flex-row lg:flex-col justify-between items-start sm:items-center lg:items-start gap-1 sm:gap-4 lg:gap-1 border-b border-gray-200/60 pb-2 sm:pb-1 lg:pb-2">
                                             <span className="font-semibold text-gray-900 shrink-0">Тип харчування:</span>
-                                            <span className="text-gray-900 text-left sm:text-right lg:text-left xl:text-right break-words w-full sm:flex-1 min-w-0">{formatArray(recipe.dietary_tags, DICTIONARIES.dietary_tags)}</span>
+                                            <span className="text-gray-900 text-left sm:text-right lg:text-left break-words w-full">{formatArray(recipe.dietary_tags, DICTIONARIES.dietary_tags)}</span>
                                         </div>
 
-                                        <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row justify-between items-start gap-1 sm:gap-4 lg:gap-1 xl:gap-4 border-b border-gray-200/60 pb-2 sm:pb-1 lg:pb-2 xl:pb-1">
+                                        <div className="flex flex-col sm:flex-row lg:flex-col justify-between items-start sm:items-center lg:items-start gap-1 sm:gap-4 lg:gap-1 border-b border-gray-200/60 pb-2 sm:pb-1 lg:pb-2">
                                             <span className="font-semibold text-gray-900 shrink-0">Автор:</span>
-                                            <span className="text-gray-900 text-left sm:text-right lg:text-left xl:text-right break-words w-full sm:flex-1 min-w-0">{recipe.source || 'Невідомо'}</span>
+                                            <span className="text-gray-900 text-left sm:text-right lg:text-left break-words w-full">{recipe.source || 'Невідомо'}</span>
                                         </div>
 
-                                        <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row justify-between items-start gap-1 sm:gap-4 lg:gap-1 xl:gap-4 border-b border-gray-200/60 pb-2 sm:pb-1 lg:pb-2 xl:pb-1 last:border-0">
+                                        <div className="flex flex-col sm:flex-row lg:flex-col justify-between items-start sm:items-center lg:items-start gap-1 sm:gap-4 lg:gap-1 border-b border-gray-200/60 pb-2 sm:pb-1 lg:pb-2 last:border-0">
                                             <span className="font-semibold text-gray-900 shrink-0">Додано:</span>
-                                            <span className="text-gray-900 text-left sm:text-right lg:text-left xl:text-right break-words w-full sm:flex-1 min-w-0">
+                                            <span className="text-gray-900 text-left sm:text-right lg:text-left break-words w-full">
                                                 {recipe.created_at ? new Date(recipe.created_at).toLocaleDateString('uk-UA') : '—'}
                                             </span>
                                         </div>
@@ -353,7 +353,7 @@ const RecipeDetail = () => {
                         </div>
 
                         {/* Блок 4: Приготування (Ліворуч на ПК, зверху на мобільних) */}
-                        <div className="w-full lg:w-[55%] xl:w-[60%] flex items-center justify-center lg:justify-start mx-auto lg:mx-0 pt-6 lg:pt-0">
+                        <div className="w-full lg:w-[65%] xl:w-[65%] flex items-center justify-center lg:justify-start mx-auto lg:mx-0 pt-6 lg:pt-0">
 
                             {/* Яскравий градієнтний бордер для ПРИГОТУВАННЯ */}
                             <div className="relative w-full max-w-2xl lg:max-w-none rounded-[2rem] p-[4px] bg-gradient-to-br from-[#B47231]/20 via-[#6A907B]/30 to-[#B47231]/40 shadow-lg">
@@ -382,7 +382,7 @@ const RecipeDetail = () => {
                                                 <div className="flex-shrink-0 w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 border-2 border-[#6A907B]/40 text-[#B47231] rounded-full flex items-center justify-center text-[13px] sm:text-[15px] lg:text-[15px] font-['Inter'] font-bold mt-0 mr-3 sm:mr-4 group-hover:border-[#B47231] transition-colors bg-transparent">
                                                     {step.step_number}
                                                 </div>
-                                                <p className="text-gray-800 font-['Inter'] font-medium text-[15px] sm:text-[16px] lg:text-[17px] xl:text-[18px] leading-relaxed break-words max-w-prose pt-1 sm:pt-0.5">
+                                                <p className="text-gray-800 font-['Inter'] font-medium text-[15px] sm:text-[16px] lg:text-[16px] xl:text-[18px] leading-relaxed break-words max-w-prose pt-1 sm:pt-0.5">
                                                     {step.text}
                                                 </p>
                                             </div>

@@ -666,23 +666,40 @@ const Recipes = () => {
                                     <p className="text-[12px] sm:text-[13px] md:text-[15px] text-gray-800 text-green-900 -mt-4 px-2">
                                         💡 Розділяйте інгредієнти <b>комою</b> (наприклад: картопля, білий рис, морква)
                                     </p>
-                                    <div className="relative shadow-sm rounded-xl">
-                                        <input
-                                            ref={inputRef}
-                                            type="text"
-                                            value={searchQuery}
-                                            onChange={handleInputChange}
-                                            onFocus={() => setShowSuggestions(true)}
-                                            onKeyDown={(e) => e.key === 'Enter' && fetchRecipes()}
-                                            placeholder="Листя салату, картопля, бринза..."
-                                            // Додані класи для червоного контуру при помилці дублювання
-                                            className={`w-full border-2 rounded-xl px-5 py-4 pl-12 outline-none transition-colors text-gray-800 font-medium font-['Inter'] ${
-                                                (duplicateError || emptyIngredientsError)
-                                                ? 'bg-red-50/50 border-red-400 focus:border-red-500 text-red-900 placeholder-red-300' 
-                                                : 'bg-white border-gray-200 focus:border-[#6A907B]'
-                                            }`}
-                                        />
-                                        <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                    <div className="relative shadow-sm rounded-xl flex">
+                                        <div className="relative flex-grow">
+                                            <input
+                                                ref={inputRef}
+                                                type="text"
+                                                value={searchQuery}
+                                                onChange={handleInputChange}
+                                                onFocus={() => setShowSuggestions(true)}
+                                                onKeyDown={(e) => e.key === 'Enter' && fetchRecipes()}
+                                                placeholder="Листя салату, картопля, бринза..."
+                                                className={`w-full bg-white border-2 rounded-xl px-5 py-4 pl-12 pr-10 outline-none transition-colors text-gray-800 font-medium font-['Inter'] ${
+                                                    (duplicateError || emptyIngredientsError)
+                                                    ? 'border-red-300 focus:border-red-500 bg-red-50/50 text-red-900 placeholder-red-300' 
+                                                    : 'border-gray-200 focus:border-[#6A907B]'
+                                                }`}
+                                            />
+                                            <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+
+                                            {/* Кнопка очищення (хрестик), якщо є текст */}
+                                            {searchQuery && (
+                                                <button
+                                                    onClick={() => {
+                                                        setSearchQuery('');
+                                                        setDuplicateError(null);
+                                                        setEmptyIngredientsError(false);
+                                                        if (inputRef.current) inputRef.current.focus();
+                                                    }}
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+                                                    title="Очистити поле"
+                                                >
+                                                    <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
 
                                     {/* Випадаючий список підказок */}
@@ -1132,8 +1149,41 @@ const Recipes = () => {
                             <svg className="animate-spin h-10 w-10 text-[#5B826B]" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                         </div>
                     ) : recipes.length === 0 ? (
-                        <div className="text-center text-gray-500 font-['Inter'] mt-10 text-lg bg-white rounded-3xl py-20 shadow-sm border border-gray-100">
-                            За вашими критеріями нічого не знайдено. <br/> Спробуйте змінити фільтри.
+                        <div className="flex flex-col items-center justify-center text-center mt-10 bg-white rounded-[2.5rem] py-16 px-6 shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-gray-100 overflow-hidden relative group">
+
+                            {/* Анімований феєричний градієнтний фон */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-[#DCE8D9] via-[#6A907B]/10 to-[#B47231]/10 opacity-70 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
+
+                            {/* Додаткові розмиті кольорові плями для об'єму */}
+                            <div className="absolute -top-20 -left-20 w-64 h-64 bg-[#6A907B]/20 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob pointer-events-none"></div>
+                            <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-[#B47231]/20 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob animation-delay-2000 pointer-events-none"></div>
+
+                            {/* Іконка з легким світінням */}
+                            <div className="relative z-10 w-24 h-24 mb-6 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-[0_4px_20px_rgba(180,114,49,0.15)] border border-white/50 transform group-hover:scale-105 transition-transform duration-500">
+                                <svg className="w-12 h-12 text-[#B47231]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    <path d="M11 8v2"></path>
+                                    <path d="M11 14h.01"></path>
+                                </svg>
+                            </div>
+
+                            {/* Текст */}
+                            <h3 className="relative z-10 font-['El_Messiri'] text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 uppercase tracking-wide drop-shadow-sm">
+                                Рецептів не знайдено
+                            </h3>
+                            <p className="relative z-10 text-gray-600 font-['Inter'] text-sm sm:text-base lg:text-lg max-w-md mb-8">
+                                Схоже, ми не маємо рецептів, які відповідають усім обраним критеріям. Спробуйте змінити фільтри або набір інгредієнтів.
+                            </p>
+
+                            {/* Кнопка "Очистити фільтри" */}
+                            <button
+                                onClick={clearAllFilters}
+                                className="relative z-10 px-8 py-3.5 bg-[#1A1A1A] text-white rounded-[20px] font-bold font-['Inter'] hover:bg-[#6A907B] transition-colors shadow-[0_8px_20px_rgba(0,0,0,0.15)] flex items-center gap-2 cursor-pointer duration-300 ease-out active:scale-95 group/btn"
+                            >
+                                <svg className="group-hover/btn:-rotate-180 transition-transform duration-500" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                Очистити фільтри та спробувати знову
+                            </button>
                         </div>
                     ) : (
                         <>
