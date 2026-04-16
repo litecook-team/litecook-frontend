@@ -170,19 +170,36 @@ const Recipes = () => {
         };
         fetchIngredients();
 
-        // --- КРОК 3: Вирішуємо, чи робити початковий запит ---
-        // Якщо у нас ВЖЕ є збережені рецепти (ми повернулися з іншої сторінки),
-        // нам НЕ ПОТРІБНО робити порожній запит і затирати їх.
-        // Ми робимо запит тільки якщо збережених рецептів немає.
-        const savedRecipes = loadStateFromStorage('recipes', []);
-        if (savedRecipes.length === 0) {
-             fetchRecipes(false);
+        // ЛОГІКА ОЧИЩЕННЯ/ВІДНОВЛЕННЯ:
+        // Перевіряємо, чи перехід був зі сторінки детального рецепту
+        const isFromRecipeDetail = location.state?.fromRecipe === true;
+
+        // Перевіряємо, чи перехід був з головної сторінки з наміром відкрити певний таб
+        const hasInitialTab = location.state?.initialTab !== undefined;
+
+        if (isFromRecipeDetail) {
+            // МИ ПОВЕРНУЛИСЯ З РЕЦЕПТУ: Завантажуємо кеш
+            const savedRecipes = loadStateFromStorage('recipes', []);
+            if (savedRecipes.length === 0) {
+                 fetchRecipes(false);
+            } else {
+                 setLoading(false);
+            }
+        } else if (hasInitialTab) {
+            // МИ ПРИЙШЛИ З ГОЛОВНОЇ ЧЕРЕЗ КАРТКУ: Очищаємо кеш, встановлюємо таб і робимо свіжий запит
+            clearAllFiltersStorageOnly();
+            setActiveTab(location.state.initialTab);
+            setTimeout(() => fetchRecipes(false, 'clear'), 0);
         } else {
-             setLoading(false); // Якщо рецепти вже є, просто вимикаємо лоадер
+            // МИ ПРИЙШЛИ ЗВІДКИСЬ ІНШОГО (Меню, Логін, Клік по лінку в шапці):
+            // Очищаємо весь кеш і робимо свіжий запит
+            clearAllFiltersStorageOnly();
+            setActiveTab('ingredients');
+            setTimeout(() => fetchRecipes(false, 'clear'), 0);
         }
 
         window.scrollTo(0, 0);
-    }, []);
+    }, [location.state]); // Залежність від location.state важлива!
 
     // Закриття підказок при кліку поза ними
     useEffect(() => {
@@ -335,7 +352,8 @@ const Recipes = () => {
         }
     };
 
-    const clearAllFilters = () => {
+    // Допоміжна функція: Тільки очищення стейтів і сторіджу
+    const clearAllFiltersStorageOnly = () => {
         setSearchQuery('');
         setSelectedCuisines([]);
         setSelectedDifficulties([]);
@@ -348,9 +366,9 @@ const Recipes = () => {
         setMaxCalories('');
         setIsSeasonal(false);
         setDuplicateError(null);
-        setLastQueryUrl(''); // Очищаємо кеш останнього запиту
+        setLastQueryUrl('');
+        setMatchedIngredientIds([]);
 
-        // Очищення sessionStorage при скиданні фільтрів
         const keysToRemove = [
             'recipes', 'visibleCount', 'activeTab', 'searchQuery',
             'selectedCuisines', 'selectedDifficulties', 'selectedDiets',
@@ -359,10 +377,18 @@ const Recipes = () => {
             'isSeasonal', 'hasActiveFilters', 'matchedIngredientIds', 'lastQueryUrl'
         ];
         keysToRemove.forEach(key => sessionStorage.removeItem(`recipe_search_${key}`));
+    };
 
-        // Відразу оновлюємо список
+    // Ця функція прив'язана до кнопки "Очистити фільтри".
+    // Вона викликає попередню функцію, а потім оновлює UI.
+    const clearAllFilters = () => {
+        // 1. Чистимо всі стани і sessionStorage
+        clearAllFiltersStorageOnly();
+
+        // 2. Робимо запит за всіма рецептами, щоб оновити картки на екрані
         setTimeout(() => fetchRecipes(true, 'clear'), 0);
 
+        // 3. Прибираємо будь-які червоні попередження, якщо вони були
         setEmptyIngredientsError(false);
         setEmptyFilterError(false);
     };
@@ -1113,7 +1139,12 @@ const Recipes = () => {
                         <>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-12 md:gap-x-10 lg:gap-x-14 md:gap-y-16">
                                 {recipes.slice(0, visibleCount).map((recipe) => (
-                                    <Link to={`/recipe/${recipe.id}`} key={recipe.id} className="flex flex-col relative group block w-full h-full cursor-pointer transition-all duration-300 ease-out active:scale-99 group">
+                                    <Link
+                                        to={`/recipe/${recipe.id}`}
+                                        state={{ fromRecipesPage: true }}
+                                        key={recipe.id}
+                                        className="flex flex-col relative group block w-full h-full cursor-pointer transition-all duration-300 ease-out active:scale-99 group"
+                                    >
 
                                         <div className="relative w-full h-64 sm:h-60 md:h-72 rounded-[2rem] overflow-hidden mb-5 shadow-sm">
                                             <img
@@ -1390,6 +1421,7 @@ const Recipes = () => {
                         <div className="mt-8 shrink-0 flex justify-center border-t border-gray-100 pt-6">
                             <Link
                                 to={`/recipe/${selectedRecipeForModal.id}`}
+                                state={{ fromRecipesPage: true }}
                                 className="px-10 py-3.5 bg-[#1A1A1A] text-white rounded-[20px] font-bold text-[15px] hover:bg-[#6A907B] transition-colors shadow-lg shadow-black/10 flex items-center gap-2 group w-full sm:w-auto justify-center cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group"
                             >
                                 Переглянути спосіб приготування

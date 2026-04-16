@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 
 import api from '../api';
 import { ENDPOINTS, TOKEN_KEY, API_URL } from '../constants/api';
@@ -21,6 +21,7 @@ const getPluralForm = (number, titles) => {
 const RecipeDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const [recipe, setRecipe] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -142,7 +143,16 @@ const RecipeDetail = () => {
 
                         {/* Кнопка Назад */}
                         <button
-                            onClick={() => navigate(-1)}
+                            onClick={() => {
+                                // Перевіряємо, чи ми прийшли зі сторінки пошуку рецептів
+                                if (location.state && location.state.fromRecipesPage) {
+                                    // Якщо так, повертаємося туди і кажемо, щоб кеш НЕ очищався
+                                    navigate('/recipes', { state: { fromRecipe: true } });
+                                } else {
+                                    // Якщо ні (з Головної, Улюблених тощо), просто йдемо на 1 крок назад в історії
+                                    navigate(-1);
+                                }
+                            }}
                             className="absolute top-6 left-6 lg:top-10 lg:left-10 px-8 sm:px-10 py-2 bg-white rounded-[30px] border border-black hover:bg-[#1A1A1A] hover:text-white hover:border-transparent hover:shadow-md text-gray-800 flex items-center justify-center gap-2 font-['Inter'] font-medium text-[13px] sm:text-[14px] lg:text-[15px] cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group"
                         >
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
