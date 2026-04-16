@@ -711,7 +711,18 @@ const Recipes = () => {
                                         ) : (
                                             <div className="text-sm text-gray-500 italic py-4">Завантаження бази інгредієнтів...</div>
                                         )}
+
+                                        {/* ПУНКТ 2/7: Кнопка пошуку для мобільних екранів ТІЛЬКИ на табі інгредієнтів (всередині лівої колонки) */}
+                                        <div className="block lg:hidden mt-4 pt-2 border-t border-gray-100 font-['Inter'] shrink-0 flex flex-col sm:flex-row items-center gap-4">
+                                            <button
+                                                onClick={() => fetchRecipes(true)}
+                                                className="w-full py-3 bg-[#6A907B] text-white rounded-xl font-bold text-[17px] hover:bg-[#5B826B] transition-colors shadow-lg text-center tracking-wide block cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out hover:shadow-[0_12px_25px_rgba(180,114,49,0.15)] active:scale-95 group"
+                                            >
+                                                Знайти рецепт
+                                            </button>
+                                        </div>
                                     </div>
+
 
                                     {/* Права колонка: ІНФОРМАЦІЯ ТА ПРОМО */}
                                     <div className="w-full lg:w-[40%] flex flex-col">
@@ -1050,10 +1061,10 @@ const Recipes = () => {
                             </div>
                         )}
 
-                        {/* КНОПКА ПОШУКУ */}
-                        <div className="mt-8 lg:mt-auto pt-4 lg:pt-6 font-['Inter'] shrink-0 flex flex-col sm:flex-row items-center gap-4 relative">
-                            {/* Повідомлення про порожні фільтри над кнопкою (тільки якщо ми не на табі інгредієнтів) */}
-                            {emptyFilterError && activeTab !== 'ingredients' && (
+                        {/* КНОПКА ПОШУКУ (Для ПК - завжди внизу. Для мобільних - тільки на табах фільтрів) */}
+                        <div className={`mt-8 lg:mt-auto pt-4 lg:pt-6 font-['Inter'] shrink-0 flex-col sm:flex-row items-center gap-4 relative ${activeTab === 'ingredients' ? 'hidden lg:flex' : 'flex'}`}>
+                             {/* Повідомлення про порожні фільтри над кнопкою */}
+                             {emptyFilterError && activeTab !== 'ingredients' && (
                                 <div className="absolute -top-5 sm:-top-5 md:-top-5 left-1/2 transform -translate-x-1/2 animate-fade-in w-max px-3 py-1.5 bg-red-100 border border-red-300 rounded-lg text-red-700 text-[11px] sm:text-[13px] font-medium flex items-center gap-1.5 shadow-sm z-20">
                                     <svg className="shrink-0" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                                     <span>Оберіть хоча б один фільтр</span>
@@ -1264,7 +1275,7 @@ const Recipes = () => {
                                 {selectedRecipeForModal.title}
                             </h2>
 
-                            {/* Додано блок статистики рецепту з іконками */}
+                            {/* блок статистики рецепту з іконками */}
                             <div className="flex flex-wrap justify-center gap-4 sm:gap-6 mb-4 font-['El_Messiri']">
                                 <div className="flex items-center gap-1.5">
                                     <svg className="w-5 h-5 sm:w-6 sm:h-6 text-[#B47231]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
