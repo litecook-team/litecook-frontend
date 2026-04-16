@@ -157,7 +157,7 @@ const Home = () => {
                         </Link>
 
                         {/* Картка 2: Веде на сторінку "Підбір рецепта" (/recipes) */}
-                        <Link to="/recipes" className="bg-[#F6F3F4] backdrop-blur-md rounded-2xl p-6 sm:p-8 flex flex-col items-center text-center shadow-[0_8px_30px_rgb(0,0,0,0.08)] transform hover:-translate-y-1 transition-transform cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group">
+                        <Link to="/recipes" state={{ initialTab: 'season' }} className="bg-[#F6F3F4] backdrop-blur-md rounded-2xl p-6 sm:p-8 flex flex-col items-center text-center shadow-[0_8px_30px_rgb(0,0,0,0.08)] transform hover:-translate-y-1 transition-transform cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group">
                             <div className="w-12 h-12 mb-4 flex items-center justify-center">
                                 <img src={iconSun} alt="Прості інгредієнти" className="w-14 h-14 object-contain drop-shadow-sm" />
                             </div>

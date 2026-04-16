@@ -50,7 +50,6 @@ const Recipes = () => {
     const isAuthenticated = !!localStorage.getItem(TOKEN_KEY) || !!sessionStorage.getItem(TOKEN_KEY);
     const location = useLocation(); // для розуміння, чи ми щойно зайшли на сторінку
 
-    // --- КРОК 1: Ініціалізація стану з sessionStorage (якщо він є) ---
     // Функція для безпечного читання з sessionStorage
     const loadStateFromStorage = (key, defaultValue) => {
         try {
@@ -69,7 +68,14 @@ const Recipes = () => {
     const [visibleCount, setVisibleCount] = useState(() => loadStateFromStorage('visibleCount', 6));
     const [toastMessage, setToastMessage] = useState(null);
 
-    const [activeTab, setActiveTab] = useState(() => loadStateFromStorage('activeTab', 'ingredients'));
+    // Ініціалізуємо activeTab, перевіряючи спочатку location.state, потім sessionStorage
+    const [activeTab, setActiveTab] = useState(() => {
+        // Якщо ми перейшли з головної і передали initialTab, пріоритет йому
+        if (location.state && location.state.initialTab) {
+            return location.state.initialTab;
+        }
+        return loadStateFromStorage('activeTab', 'ingredients');
+    });
 
     // Стани для фільтрів
     const [searchQuery, setSearchQuery] = useState(() => loadStateFromStorage('searchQuery', ''));
@@ -105,7 +111,32 @@ const Recipes = () => {
     // Стан для відстеження дублікатів при вводі
     const [duplicateError, setDuplicateError] = useState(null);
 
-    // --- КРОК 2: Збереження стану в sessionStorage при зміні ---
+    // --- СТАНИ ДЛЯ ПОМИЛОК ПОРОЖНЬОГО ПОШУКУ ---
+    const [emptyIngredientsError, setEmptyIngredientsError] = useState(false);
+    const [emptyFilterError, setEmptyFilterError] = useState(false);
+
+    // Таймери для авто-зникнення помилок
+    const errorTimeoutRef = useRef(null);
+
+    const showError = (type, value = true) => {
+        // Очищаємо попередній таймер, якщо він був
+        if (errorTimeoutRef.current) {
+            clearTimeout(errorTimeoutRef.current);
+        }
+
+        // Встановлюємо нову помилку
+        if (type === 'duplicate') setDuplicateError(value);
+        if (type === 'emptyIngredients') setEmptyIngredientsError(value);
+        if (type === 'emptyFilter') setEmptyFilterError(value);
+
+        // Встановлюємо таймер на 4 секунди для зникнення
+        errorTimeoutRef.current = setTimeout(() => {
+            setDuplicateError(null);
+            setEmptyIngredientsError(false);
+            setEmptyFilterError(false);
+        }, 3000);
+    };
+
     // Створюємо масив всіх фільтрів, щоб було зручно стежити
     useEffect(() => {
         const stateToSave = {
@@ -187,8 +218,8 @@ const Recipes = () => {
     const fetchRecipes = async (isUserAction = true, overrideParams = null) => {
         // Перевірка на те, чи обрані фільтри перед відправкою запиту
         if (isUserAction && overrideParams !== 'clear') {
-            const hasAnyFilter =
-                searchQuery.trim() !== '' ||
+            const hasSearchQuery = searchQuery.trim() !== '';
+            const hasFilters =
                 selectedCuisines.length > 0 ||
                 selectedDifficulties.length > 0 ||
                 selectedDiets.length > 0 ||
@@ -200,15 +231,22 @@ const Recipes = () => {
                 maxCalories !== '' ||
                 isSeasonal;
 
-            if (!hasAnyFilter) {
-                if (activeTab === 'ingredients') {
-                    setDuplicateError(null);
-                    showToast("🥗 Будь ласка, введіть або оберіть інгредієнти для пошуку рецептів");
-                } else {
-                    showToast("🔍 Оберіть хоча б один фільтр, щоб звузити пошук");
-                }
+            // Логіка перевірки порожнього пошуку залежно від табу
+            if (activeTab === 'ingredients' && !hasSearchQuery) {
+                showError('emptyIngredients');
+                setEmptyFilterError(false); // Скидаємо помилку іншого табу
+                setDuplicateError(null);
+                return;
+            } else if (activeTab !== 'ingredients' && !hasFilters && !hasSearchQuery) {
+                // Якщо ми на табі фільтрів, і не вибрано фільтрів, І немає тексту в пошуку
+                showError('emptyFilter');
+                setEmptyIngredientsError(false);
                 return;
             }
+
+            // Якщо перевірки пройдені, скидаємо помилки
+            setEmptyIngredientsError(false);
+            setEmptyFilterError(false);
         }
 
         setLoading(true);
@@ -307,6 +345,16 @@ const Recipes = () => {
 
         // Відразу оновлюємо список
         setTimeout(() => fetchRecipes(true, 'clear'), 0);
+
+        setEmptyIngredientsError(false);
+        setEmptyFilterError(false);
+    };
+
+    // Скидаємо помилки при перемиканні табів
+    const handleTabChange = (tabId) => {
+        setActiveTab(tabId);
+        setEmptyIngredientsError(false);
+        setEmptyFilterError(false);
     };
 
     const showToast = (message) => {
@@ -337,6 +385,7 @@ const Recipes = () => {
 
     const toggleArrayFilter = (state, setState, value) => {
         setState(prev => prev.includes(value) ? prev.filter(i => i !== value) : [...prev, value]);
+        setEmptyFilterError(false); // Прибираємо помилку при виборі фільтра
     };
 
     const getImageUrl = (path) => {
@@ -374,7 +423,7 @@ const Recipes = () => {
     const handleAddIngredientToSearch = (ingredientName) => {
         // 1. ПЕРЕВІРКА НА ДУБЛЮВАННЯ
         if (isIngredientInQuery(searchQuery, ingredientName)) {
-            setDuplicateError(ingredientName);
+            showError('duplicate', ingredientName);
             setShowSuggestions(false);
             if (inputRef.current) inputRef.current.focus();
             return;
@@ -382,6 +431,7 @@ const Recipes = () => {
 
         // 2. Якщо не дубль, додаємо
         setDuplicateError(null);
+        setEmptyIngredientsError(false); // Скидаємо помилку пустого вводу
         const query = searchQuery;
         const lastIndex = query.lastIndexOf(',');
 
@@ -405,6 +455,7 @@ const Recipes = () => {
 
         // 1. Очищаємо помилку відразу
         setDuplicateError(null);
+        setEmptyIngredientsError(false); // Скидаємо помилку пустого вводу при ручному вводі
 
         // 2. Смарт-перевірка на дублікати при ручному вводі
         // Розбиваємо ТІЛЬКИ по комах
@@ -421,7 +472,7 @@ const Recipes = () => {
             const duplicatedWord = duplicates[0];
 
             const foundIng = allIngredients.find(ing => ing.name.toLowerCase() === duplicatedWord);
-            setDuplicateError(foundIng ? foundIng.name : capitalizeSearch(duplicatedWord));
+            showError('duplicate', foundIng ? foundIng.name : capitalizeSearch(duplicatedWord));
         }
     };
 
@@ -493,7 +544,7 @@ const Recipes = () => {
                                 {TABS.map(tab => (
                                     <button
                                         key={tab.id}
-                                        onClick={() => setActiveTab(tab.id)}
+                                        onClick={() => handleTabChange(tab.id)}
                                         className={`py-2.5 px-3 rounded-lg font-['Inter'] font-semibold text-[13px] transition-all text-center border whitespace-nowrap cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${
                                             activeTab === tab.id
                                             ? 'bg-[#5B826B] text-white border-[#5B826B] shadow-md'
@@ -511,7 +562,7 @@ const Recipes = () => {
                             {TABS.map(tab => (
                                 <button
                                     key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
+                                    onClick={() => handleTabChange(tab.id)}
                                     className={`px-5 py-3.5 rounded-xl font-['Inter'] font-semibold text-[15px] transition-all text-left shrink-0 border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${
                                         activeTab === tab.id
                                         ? 'bg-[#5B826B] text-white border-[#5B826B] shadow-md'
@@ -563,7 +614,16 @@ const Recipes = () => {
                                             <span>Інгредієнт <b>«{duplicateError}»</b> вже додано до пошуку.</span>
                                         </div>
                                     )}
-                                    <p className="text-[12px] sm:text-[15px] text-gray-800 text-green-900 -mt-4 px-2">
+
+                                    {/* Повідомлення про порожній ввід */}
+                                    {emptyIngredientsError && !duplicateError && (
+                                        <div className="absolute -top-8 left-0 animate-fade-in w-max px-3 py-1.5 bg-red-100 border border-red-300 rounded-lg text-red-700 text-[12px] sm:text-[13px] md:text-[15px] font-medium flex items-center gap-1.5 shadow-sm z-20">
+                                            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                            <span>Введіть або оберіть інгредієнти для пошуку рецептів</span>
+                                        </div>
+                                    )}
+
+                                    <p className="text-[12px] sm:text-[13px] md:text-[15px] text-gray-800 text-green-900 -mt-4 px-2">
                                         💡 Розділяйте інгредієнти <b>комою</b> (наприклад: картопля, білий рис, морква)
                                     </p>
                                     <div className="relative shadow-sm rounded-xl">
@@ -577,7 +637,7 @@ const Recipes = () => {
                                             placeholder="Листя салату, картопля, бринза..."
                                             // Додані класи для червоного контуру при помилці дублювання
                                             className={`w-full border-2 rounded-xl px-5 py-4 pl-12 outline-none transition-colors text-gray-800 font-medium font-['Inter'] ${
-                                                duplicateError 
+                                                (duplicateError || emptyIngredientsError)
                                                 ? 'bg-red-50/50 border-red-400 focus:border-red-500 text-red-900 placeholder-red-300' 
                                                 : 'bg-white border-gray-200 focus:border-[#6A907B]'
                                             }`}
@@ -699,15 +759,28 @@ const Recipes = () => {
                                 <h3 className="text-lg font-bold text-gray-900 mb-3 uppercase tracking-wider">Групи продуктів</h3>
                                 <p className="text-gray-500 text-sm mb-5">Шукати рецепти, що містять продукти з обраних категорій:</p>
                                 <div className="flex flex-wrap gap-3 overflow-y-auto max-h-[300px] custom-scrollbar pr-2">
-                                    {Object.entries(INGREDIENT_CATEGORIES_DICT).map(([key, value]) => (
-                                        <button
-                                            key={key}
-                                            onClick={() => toggleArrayFilter(selectedIngredientCategories, setSelectedIngredientCategories, key)}
-                                            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${selectedIngredientCategories.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
-                                        >
-                                            {value}
-                                        </button>
-                                    ))}
+                                    {Object.entries(INGREDIENT_CATEGORIES_DICT).map(([key, value]) => {
+                                        // Логіка для визначення базових класів
+                                        const isSelected = selectedIngredientCategories.includes(key);
+                                        const baseClasses = isSelected
+                                            ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md'
+                                            : emptyFilterError // Якщо помилка - робимо рамку і фон червоними
+                                                ? 'bg-red-50 text-red-900 border-red-400'
+                                                : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]';
+
+                                        return (
+                                            <button
+                                                key={key}
+                                                onClick={() => {
+                                                    toggleArrayFilter(selectedIngredientCategories, setSelectedIngredientCategories, key);
+                                                    setEmptyFilterError(false); // Прибираємо помилку при кліку
+                                                }}
+                                                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${baseClasses}`}
+                                            >
+                                                {value}
+                                            </button>
+                                        )
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -717,15 +790,26 @@ const Recipes = () => {
                             <div className="animate-fade-in flex flex-col h-full font-['Inter']">
                                 <h3 className="text-lg font-bold text-gray-900 mb-4 uppercase tracking-wider">Прийом їжі</h3>
                                 <div className="flex flex-wrap gap-3">
-                                    {Object.entries(DICTIONARIES.meal_times).map(([key, value]) => (
-                                        <button
-                                            key={key}
-                                            onClick={() => toggleArrayFilter(selectedMealTimes, setSelectedMealTimes, key)}
-                                            className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${selectedMealTimes.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
-                                        >
-                                            {value}
-                                        </button>
-                                    ))}
+                                    {Object.entries(DICTIONARIES.meal_times).map(([key, value]) => {
+                                        const isSelected = selectedMealTimes.includes(key);
+                                        const baseClasses = isSelected
+                                            ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md'
+                                            : emptyFilterError
+                                                ? 'bg-red-50 text-red-900 border-red-400'
+                                                : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]';
+                                        return (
+                                            <button
+                                                key={key}
+                                                onClick={() => {
+                                                    toggleArrayFilter(selectedMealTimes, setSelectedMealTimes, key);
+                                                    setEmptyFilterError(false);
+                                                }}
+                                                className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${baseClasses}`}
+                                            >
+                                                {value}
+                                            </button>
+                                        )
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -735,15 +819,26 @@ const Recipes = () => {
                             <div className="animate-fade-in flex flex-col h-full font-['Inter']">
                                 <h3 className="text-lg font-bold text-gray-900 mb-4 uppercase tracking-wider">Тип страви</h3>
                                 <div className="flex flex-wrap gap-3 overflow-y-auto max-h-[300px] custom-scrollbar pr-2">
-                                    {Object.entries(DICTIONARIES.dish_types).map(([key, value]) => (
-                                        <button
-                                            key={key}
-                                            onClick={() => toggleArrayFilter(selectedDishTypes, setSelectedDishTypes, key)}
-                                            className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${selectedDishTypes.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
-                                        >
-                                            {value}
-                                        </button>
-                                    ))}
+                                    {Object.entries(DICTIONARIES.dish_types).map(([key, value]) => {
+                                        const isSelected = selectedDishTypes.includes(key);
+                                        const baseClasses = isSelected
+                                            ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md'
+                                            : emptyFilterError
+                                                ? 'bg-red-50 text-red-900 border-red-400'
+                                                : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]';
+                                        return (
+                                            <button
+                                                key={key}
+                                                onClick={() => {
+                                                    toggleArrayFilter(selectedDishTypes, setSelectedDishTypes, key);
+                                                    setEmptyFilterError(false);
+                                                }}
+                                                className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${baseClasses}`}
+                                            >
+                                                {value}
+                                            </button>
+                                        )
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -753,15 +848,26 @@ const Recipes = () => {
                             <div className="animate-fade-in flex flex-col h-full font-['Inter']">
                                 <h3 className="text-lg font-bold text-gray-900 mb-4 uppercase tracking-wider">Кухня світу</h3>
                                 <div className="flex flex-wrap gap-3 overflow-y-auto max-h-[300px] custom-scrollbar pr-2">
-                                    {Object.entries(DICTIONARIES.cuisine).map(([key, value]) => (
-                                        <button
-                                            key={key}
-                                            onClick={() => toggleArrayFilter(selectedCuisines, setSelectedCuisines, key)}
-                                            className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${selectedCuisines.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
-                                        >
-                                            {value}
-                                        </button>
-                                    ))}
+                                    {Object.entries(DICTIONARIES.cuisine).map(([key, value]) => {
+                                        const isSelected = selectedCuisines.includes(key);
+                                        const baseClasses = isSelected
+                                            ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md'
+                                            : emptyFilterError
+                                                ? 'bg-red-50 text-red-900 border-red-400'
+                                                : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]';
+                                        return (
+                                            <button
+                                                key={key}
+                                                onClick={() => {
+                                                    toggleArrayFilter(selectedCuisines, setSelectedCuisines, key);
+                                                    setEmptyFilterError(false);
+                                                }}
+                                                className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${baseClasses}`}
+                                            >
+                                                {value}
+                                            </button>
+                                        )
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -771,15 +877,26 @@ const Recipes = () => {
                             <div className="animate-fade-in flex flex-col h-full font-['Inter']">
                                 <h3 className="text-lg font-bold text-gray-900 mb-4 uppercase tracking-wider">Складність приготування</h3>
                                 <div className="flex flex-wrap gap-4">
-                                    {Object.entries(DICTIONARIES.difficulty).map(([key, value]) => (
-                                        <button
-                                            key={key}
-                                            onClick={() => toggleArrayFilter(selectedDifficulties, setSelectedDifficulties, key)}
-                                            className={`px-6 py-3 rounded-xl text-base font-bold transition-all border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${selectedDifficulties.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
-                                        >
-                                            {value}
-                                        </button>
-                                    ))}
+                                    {Object.entries(DICTIONARIES.difficulty).map(([key, value]) => {
+                                        const isSelected = selectedDifficulties.includes(key);
+                                        const baseClasses = isSelected
+                                            ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md'
+                                            : emptyFilterError
+                                                ? 'bg-red-50 text-red-900 border-red-400'
+                                                : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]';
+                                        return (
+                                            <button
+                                                key={key}
+                                                onClick={() => {
+                                                    toggleArrayFilter(selectedDifficulties, setSelectedDifficulties, key);
+                                                    setEmptyFilterError(false);
+                                                }}
+                                                className={`px-6 py-3 rounded-xl text-base font-bold transition-all border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${baseClasses}`}
+                                            >
+                                                {value}
+                                            </button>
+                                        )
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -789,15 +906,26 @@ const Recipes = () => {
                             <div className="animate-fade-in flex flex-col h-full font-['Inter']">
                                 <h3 className="text-lg font-bold text-gray-900 mb-4 uppercase tracking-wider">Максимальний час (хвилин)</h3>
                                 <div className="flex flex-wrap gap-4">
-                                    {['15', '30', '45', '60', '120'].map(time => (
-                                        <button
-                                            key={time}
-                                            onClick={() => setMaxTime(maxTime === time ? '' : time)}
-                                            className={`px-6 py-3 rounded-xl text-base font-bold transition-all border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${maxTime === time ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
-                                        >
-                                            До {time} хв
-                                        </button>
-                                    ))}
+                                    {['15', '30', '45', '60', '120'].map(time => {
+                                        const isSelected = maxTime === time;
+                                        const baseClasses = isSelected
+                                            ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md'
+                                            : emptyFilterError
+                                                ? 'bg-red-50 text-red-900 border-red-400'
+                                                : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]';
+                                        return (
+                                            <button
+                                                key={time}
+                                                onClick={() => {
+                                                    setMaxTime(maxTime === time ? '' : time);
+                                                    setEmptyFilterError(false);
+                                                }}
+                                                className={`px-6 py-3 rounded-xl text-base font-bold transition-all border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${baseClasses}`}
+                                            >
+                                                До {time} хв
+                                            </button>
+                                        )
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -808,15 +936,26 @@ const Recipes = () => {
                                 <h3 className="text-lg font-bold text-gray-900 mb-4 uppercase tracking-wider">Калорійність (на 1 порцію)</h3>
                                 <p className="text-gray-500 text-sm mb-5">Оберіть максимальну кількість калорій:</p>
                                 <div className="flex flex-wrap gap-4">
-                                    {['200', '300', '400', '500', '800'].map(cal => (
-                                        <button
-                                            key={cal}
-                                            onClick={() => setMaxCalories(maxCalories === cal ? '' : cal)}
-                                            className={`px-6 py-3 rounded-xl text-base font-bold transition-all border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${maxCalories === cal ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
-                                        >
-                                            До {cal} ккал
-                                        </button>
-                                    ))}
+                                    {['200', '300', '400', '500', '800'].map(cal => {
+                                        const isSelected = maxCalories === cal;
+                                        const baseClasses = isSelected
+                                            ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md'
+                                            : emptyFilterError
+                                                ? 'bg-red-50 text-red-900 border-red-400'
+                                                : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]';
+                                        return (
+                                            <button
+                                                key={cal}
+                                                onClick={() => {
+                                                    setMaxCalories(maxCalories === cal ? '' : cal);
+                                                    setEmptyFilterError(false);
+                                                }}
+                                                className={`px-6 py-3 rounded-xl text-base font-bold transition-all border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${baseClasses}`}
+                                            >
+                                                До {cal} ккал
+                                            </button>
+                                        )
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -826,15 +965,26 @@ const Recipes = () => {
                             <div className="animate-fade-in flex flex-col h-full font-['Inter']">
                                 <h3 className="text-lg font-bold text-gray-900 mb-4 uppercase tracking-wider">Дієтичні обмеження</h3>
                                 <div className="flex flex-wrap gap-3 overflow-y-auto max-h-[300px] custom-scrollbar pr-2">
-                                    {Object.entries(DICTIONARIES.dietary_tags).map(([key, value]) => (
-                                        <button
-                                            key={key}
-                                            onClick={() => toggleArrayFilter(selectedDiets, setSelectedDiets, key)}
-                                            className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${selectedDiets.includes(key) ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
-                                        >
-                                            {value}
-                                        </button>
-                                    ))}
+                                    {Object.entries(DICTIONARIES.dietary_tags).map(([key, value]) => {
+                                        const isSelected = selectedDiets.includes(key);
+                                        const baseClasses = isSelected
+                                            ? 'bg-[#6A907B] text-white border-[#6A907B] shadow-md'
+                                            : emptyFilterError
+                                                ? 'bg-red-50 text-red-900 border-red-400'
+                                                : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]';
+                                        return (
+                                            <button
+                                                key={key}
+                                                onClick={() => {
+                                                    toggleArrayFilter(selectedDiets, setSelectedDiets, key);
+                                                    setEmptyFilterError(false);
+                                                }}
+                                                className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${baseClasses}`}
+                                            >
+                                                {value}
+                                            </button>
+                                        )
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -845,29 +995,56 @@ const Recipes = () => {
                                 <h3 className="text-lg font-bold text-gray-900 mb-4 uppercase tracking-wider">Сезонні продукти</h3>
 
                                 <button
-                                    onClick={() => setIsSeasonal(!isSeasonal)}
-                                    className={`px-8 py-3.5 rounded-xl text-base font-bold transition-all border w-max shadow-sm mb-8 cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${isSeasonal ? 'bg-[#6A907B] text-white border-[#6A907B]' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'}`}
+                                    onClick={() => {
+                                        setIsSeasonal(!isSeasonal);
+                                        setEmptyFilterError(false);
+                                    }}
+                                    className={`px-8 py-3.5 rounded-xl text-base font-bold transition-all border w-max shadow-sm mb-8 cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${
+                                        isSeasonal 
+                                        ? 'bg-[#6A907B] text-white border-[#6A907B]' 
+                                        : emptyFilterError 
+                                            ? 'bg-red-50 text-red-900 border-red-400'
+                                            : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'
+                                    }`}
                                 >
                                     {isSeasonal ? '✅ Увімкнено (Всі сезонні)' : 'Вимкнено (Показувати все)'}
                                 </button>
 
                                 <h3 className="text-sm font-bold text-gray-500 mb-4 uppercase tracking-wider">Або оберіть конкретні місяці:</h3>
                                 <div className="flex flex-wrap gap-2">
-                                    {Object.entries(MONTHS_DICT).map(([key, value]) => (
-                                        <button
-                                            key={key}
-                                            onClick={() => toggleArrayFilter(selectedMonths, setSelectedMonths, key)}
-                                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${selectedMonths.includes(key) ? 'bg-[#B47231] text-white border-[#B47231] shadow-md' : 'bg-white text-gray-600 border-gray-300 hover:border-[#B47231]'}`}
-                                        >
-                                            {value}
-                                        </button>
-                                    ))}
+                                    {Object.entries(MONTHS_DICT).map(([key, value]) => {
+                                        const isSelected = selectedMonths.includes(key);
+                                        const baseClasses = isSelected
+                                            ? 'bg-[#B47231] text-white border-[#B47231] shadow-md'
+                                            : emptyFilterError
+                                                ? 'bg-red-50 text-red-900 border-red-400'
+                                                : 'bg-white text-gray-600 border-gray-300 hover:border-[#B47231]';
+                                        return (
+                                            <button
+                                                key={key}
+                                                onClick={() => {
+                                                    toggleArrayFilter(selectedMonths, setSelectedMonths, key);
+                                                    setEmptyFilterError(false);
+                                                }}
+                                                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${baseClasses}`}
+                                            >
+                                                {value}
+                                            </button>
+                                        )
+                                    })}
                                 </div>
                             </div>
                         )}
 
                         {/* КНОПКА ПОШУКУ */}
-                        <div className="mt-8 lg:mt-auto pt-4 lg:pt-6 font-['Inter'] shrink-0 flex flex-col sm:flex-row items-center gap-4">
+                        <div className="mt-8 lg:mt-auto pt-4 lg:pt-6 font-['Inter'] shrink-0 flex flex-col sm:flex-row items-center gap-4 relative">
+                            {/* Повідомлення про порожні фільтри над кнопкою (тільки якщо ми не на табі інгредієнтів) */}
+                            {emptyFilterError && activeTab !== 'ingredients' && (
+                                <div className="absolute -top-5 sm:-top-5 md:-top-5 left-1/2 transform -translate-x-1/2 animate-fade-in w-max px-3 py-1.5 bg-red-100 border border-red-300 rounded-lg text-red-700 text-[11px] sm:text-[13px] font-medium flex items-center gap-1.5 shadow-sm z-20">
+                                    <svg className="shrink-0" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                    <span>Оберіть хоча б один фільтр</span>
+                                </div>
+                            )}
                             <button
                                 onClick={() => fetchRecipes(true)}
                                 className="w-full sm:flex-1 md:w-max md:px-16 py-3 bg-[#6A907B] text-white rounded-xl font-bold text-[17px] hover:bg-[#5B826B] transition-colors shadow-lg text-center tracking-wide block cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out hover:shadow-[0_12px_25px_rgba(180,114,49,0.15)] active:scale-95 group"
