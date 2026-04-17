@@ -117,7 +117,7 @@ const Header = () => {
                         <img src={logo} alt="LITE cook" className="h-8 md:h-10 lg:h-12 mix-blend-multiply object-contain cursor-pointer transition-all ease-out active:scale-88 group" />
                     </Link>
 
-                    <nav className="hidden md:flex items-center space-x-6 lg:space-x-8 text-[#1A1A1A] font-['Inter'] font-medium text-sm lg:text-[15px] h-full">
+                    <nav className="hidden md:flex max-[900px]:space-x-5 items-center space-x-6 lg:space-x-8 text-[#1A1A1A] font-['Inter'] font-medium text-sm lg:text-[15px] h-full">
                         <Link to="/" className="hover:text-[#42705D] transition duration-300 cursor-pointer transition-all ease-out active:scale-88 group">Головна</Link>
                         <Link to="/recipes" className="hover:text-[#42705D] transition duration-300 cursor-pointer transition-all ease-out active:scale-88 group">Підібрати рецепт</Link>
 
@@ -138,19 +138,22 @@ const Header = () => {
                     {isAuthenticated ? (
                         <div className="flex items-center space-x-4 h-full">
 
-                            {/* Кнопка Адмін-панелі (ЗМІНЕНО ДИЗАЙН) */}
+                            {/* Кнопка Адмін-панелі */}
                             {user?.is_staff && (
                                 <a
                                     href={`${import.meta.env.VITE_API_URL}/${import.meta.env.VITE_ADMIN_URL}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="hidden md:flex items-center space-x-2.5 px-5 py-2.5 bg-gradient-to-tr from-white via-[#fcfbf9] to-[#f4f7f5] border border-[#B47231]/30 text-gray-800 text-[11px] uppercase tracking-widest font-bold rounded-full transition-all duration-300 font-['Inter'] shadow-[0_2px_10px_-2px_rgba(180,114,49,0.15)] hover:shadow-[0_4px_15px_-2px_rgba(180,114,49,0.3)] hover:border-[#B47231]/60 transform hover:-translate-y-0.5 group relative overflow-hidden"
+                                    className="hidden md:flex items-center justify-center space-x-2.5 px-5 py-2.5 max-[920px]:px-3 max-[920px]:py-1.5 max-[920px]:space-x-1.5 max-[900px]:w-10 max-[900px]:h-10 max-[900px]:p-0 max-[900px]:space-x-0 bg-gradient-to-tr from-white via-[#fcfbf9] to-[#f4f7f5] border border-[#B47231]/30 text-gray-800 text-[11px] uppercase tracking-widest font-bold rounded-full transition-all duration-300 font-['Inter'] shadow-[0_2px_10px_-2px_rgba(180,114,49,0.15)] hover:shadow-[0_4px_15px_-2px_rgba(180,114,49,0.3)] hover:border-[#B47231]/60 transform hover:-translate-y-0.5 group relative overflow-hidden"
                                 >
                                     {/* Блік при наведенні */}
                                     <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
 
-                                    <svg className="w-4 h-4 text-[#B47231] group-hover:rotate-90 transition-transform duration-500 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                    <span className="relative z-10 group-hover:text-[#B47231] transition-colors cursor-pointer transition-all ease-out active:scale-88 group">Адмін-панель</span>
+                                    <svg className="w-6 h-6 max-[920px]:w-5 max-[920px]:h-5 text-[#B47231] group-hover:scale-110 transition-transform duration-500 relative z-10 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                        <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="m9 12 2 2 4-4"></path>
+                                    </svg>
+                                    <span className="max-[900px]:hidden max-[900px]:text-[10px] relative z-10 group-hover:text-[#B47231] transition-colors cursor-pointer transition-all ease-out active:scale-88 group">Адмін-панель</span>
                                 </a>
                             )}
 
@@ -230,22 +233,26 @@ const Header = () => {
                             <>
                                 <Link to="/favorites" className="py-3 text-gray-800 hover:text-[#42705D] border-b border-gray-100 cursor-pointer transition-all ease-out active:scale-98 group">Улюблені</Link>
                                 <Link to="/menu" className="py-3 text-gray-800 hover:text-[#42705D] border-b border-gray-100 cursor-pointer transition-all ease-out active:scale-98 group">Тижневе меню</Link>
-                                {/* Мобільна кнопка Адмін-панелі */}
-                                {user?.is_staff && (
-                                    <a
-                                        href={`${import.meta.env.VITE_API_URL}/${import.meta.env.VITE_ADMIN_URL}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="mt-4 mb-2 py-3 px-4 bg-gradient-to-tr from-white via-[#fcfbf9] to-[#f4f7f5] text-gray-800 rounded-xl flex items-center justify-center shadow-[0_2px_10px_-2px_rgba(180,114,49,0.15)] font-bold tracking-wide transition-transform active:scale-95 group border border-[#B47231]/30 relative overflow-hidden"
-                                    >
-                                        <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-active:animate-[shimmer_1s_infinite]"></div>
-                                        <svg className="w-5 h-5 mr-2.5 text-[#B47231] group-hover:rotate-90 transition-transform duration-500 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                        <span className="relative z-10">Адмін-панель</span>
-                                    </a>
-                                )}
                             </>
                         )}
-                        <Link to="/about" className="py-3 text-gray-800 hover:text-[#42705D] cursor-pointer transition-all ease-out active:scale-98 group">Про нас</Link>
+                        <Link to="/about" className="py-3 text-gray-800 hover:text-[#42705D] border-b border-gray-100 cursor-pointer transition-all ease-out active:scale-98 group">Про нас</Link>
+
+                        {/* Мобільна кнопка Адмін-панелі */}
+                        {user?.is_staff && (
+                            <a
+                                href={`${import.meta.env.VITE_API_URL}/${import.meta.env.VITE_ADMIN_URL}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="mt-4 mb-2 py-3 px-4 bg-gradient-to-tr from-white via-[#fcfbf9] to-[#f4f7f5] text-gray-800 rounded-xl flex items-center justify-center shadow-[0_2px_10px_-2px_rgba(180,114,49,0.15)] font-bold tracking-wide transition-transform active:scale-95 group border border-[#B47231]/30 relative overflow-hidden"
+                            >
+                                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-active:animate-[shimmer_1s_infinite]"></div>
+                                <svg className="w-5 h-5 mr-2.5 text-[#B47231] group-hover:scale-110 transition-transform duration-500 relative z-10 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                    <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="m9 12 2 2 4-4"></path>
+                                </svg>
+                                <span className="relative z-10">Адмін-панель</span>
+                            </a>
+                        )}
                     </nav>
                 </div>
             )}
