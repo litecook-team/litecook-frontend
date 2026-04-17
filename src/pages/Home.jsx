@@ -12,6 +12,14 @@ import iconLocation from '../assets/home/icon-location.png';
 import iconSun from '../assets/home/icon-sun.png';
 import iconLeaf from '../assets/home/icon-leaf.png';
 
+// ІМПОРТИ ДЛЯ МОДАЛЬНОГО ВІКНА
+import FonImage from '../assets/home/modal_fon.jpg';
+import IdeaIcon from '../assets/home/idea.png';
+import RestaurantMenuIcon from '../assets/home/restaurant_menu.png';
+import UserMenuMaleIcon from '../assets/home/user_menu_male.png';
+import AvatarAvokadoRight from '../assets/home/avatar_avokado_right.png';
+
+
 // Допоміжна функція для відмінювання (хвилина/хвилини)
 const getPluralForm = (number, titles) => {
     const n = Math.abs(number) % 100;
@@ -26,6 +34,8 @@ const Home = () => {
     const navigate = useNavigate();
     const [recipeOfDay, setRecipeOfDay] = useState(null);
     const [loading, setLoading] = useState(true);
+    // Додаємо стейт для керування модальним вікном
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     // Перевірка чи користувач авторизований
     const isAuthenticated = !!localStorage.getItem(TOKEN_KEY) || !!sessionStorage.getItem(TOKEN_KEY);
@@ -48,34 +58,8 @@ const Home = () => {
         }
     };
 
-// функція з кешуванням і отриманням з локалсторідж
-//     const fetchRecipeOfTheDay = async () => {
-//         // Отримуємо поточну дату у форматі YYYY-MM-DD
-//         const today = new Date().toLocaleDateString('en-CA');
-//         const cachedDate = localStorage.getItem('recipe_of_day_date');
-//         const cachedRecipe = localStorage.getItem('recipe_of_day_data');
-//
-//         // Якщо сьогоднішній рецепт вже є в кеші — використовуємо його
-//         if (cachedDate === today && cachedRecipe) {
-//             setRecipeOfDay(JSON.parse(cachedRecipe));
-//             setLoading(false);
-//             return;
-//         }
-//
-//         // Якщо новий день або кеш порожній — йдемо на бекенд за новим рандомним
-//         try {
-//             const response = await api.get(`${ENDPOINTS.RECIPES}random_recipe/`);
-//             setRecipeOfDay(response.data);
-//
-//             // Зберігаємо новий рецепт та сьогоднішню дату в пам'ять
-//             localStorage.setItem('recipe_of_day_date', today);
-//             localStorage.setItem('recipe_of_day_data', JSON.stringify(response.data));
-//         } catch (error) {
-//             console.error("Помилка завантаження рецепту дня:", error);
-//         } finally {
-//             setLoading(false);
-//         }
-//     };
+    // Функція для перемикання стану модального вікна (відкрити/закрити)
+    const toggleModal = () => setIsModalOpen(!isModalOpen);
 
     const getImageUrl = (path) => {
         if (!path) return null;
@@ -165,9 +149,12 @@ const Home = () => {
                             <p className="text-lg text-gray-800 ">Страви з сезонних продуктів</p>
                         </Link>
 
-                        {/* Картка 3: Веде на сторінку "Вхід" (/login) */}
-                        <Link
-                            to={isAuthenticated ? "/menu" : "/login"}
+                        {/* Картка 3: ЗМІНЕНО trigger для відкриття модального вікна */}
+                        <div
+                            onClick={toggleModal} // Викликаємо функцію toggleModal при кліку
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => e.key === 'Enter' && toggleModal()} // Для доступності
                             className="bg-[#F6F3F4] backdrop-blur-md rounded-2xl p-6 sm:p-8 flex flex-col items-center text-center shadow-[0_8px_30px_rgb(0,0,0,0.08)] transform hover:-translate-y-1 transition-transform cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group"
                         >
                             <div className="w-12 h-12 mb-4 flex items-center justify-center">
@@ -175,7 +162,7 @@ const Home = () => {
                             </div>
                             <h3 className="font-bold text-[#1A1A1A] text-xl">Швидко та легко</h3>
                             <p className="text-lg text-gray-800 ">Смачне та корисне меню</p>
-                        </Link>
+                        </div>
 
                     </div>
                 </div>
@@ -317,6 +304,128 @@ const Home = () => {
 
                 </div>
             </div>
+
+            {/* ДОДАЄМО МОДАЛЬНЕ ВІКНО В КІНЕЦЬ КОМПОНЕНТА */}
+            {isModalOpen && (
+                <div
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 sm:p-6 transition-opacity duration-300 overflow-y-auto"
+                    onClick={toggleModal}
+                >
+                    <div
+                        // 4. Адаптація: на мобільних h-auto, на ПК min-h-[70vh]
+                        className="relative w-full max-w-5xl h-auto md:min-h-[70vh] my-auto rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row md:items-center md:justify-end p-6 md:p-8 lg:p-12"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            backgroundImage: `url(${FonImage})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            backgroundRepeat: 'no-repeat',
+                        }}
+                    >
+                        {/* Кнопка закриття */}
+                        <button
+                            onClick={toggleModal}
+                            className="absolute top-4 right-4 w-8 h-8 border border-gray-400 rounded-full flex items-center justify-center font-bold text-gray-500 hover:text-black hover:border-black transition-colors z-50 bg-white/50 backdrop-blur-sm"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+
+                        {/* ГОЛОВНИЙ ЗАГОЛОВОК */}
+                        <div className="md:absolute top-8 md:top-12 lg:top-12 md:-right-18 lg:right-2 z-20 w-full md:max-w-lg text-center md:text-left mb-6 md:mb-0 bg-white/60 md:bg-transparent backdrop-blur-md md:backdrop-blur-none p-4 md:p-0 rounded-2xl md:rounded-none">
+                             <h2 className="text-3xl sm:text-4xl md:text-4xl lg:text-[50px] font-['El_Messiri'] text-[#D34122] leading-tight tracking-wide mb-1 md:mb-2 drop-shadow-[0_2px_2px_rgba(255,255,255,0.8)]">
+                                Відкрий більше
+                            </h2>
+                            <h2 className="text-3xl sm:text-4xl md:text-4xl lg:text-[50px] font-['El_Messiri'] text-[#D34122] leading-tight tracking-wide drop-shadow-[0_2px_2px_rgba(255,255,255,0.8)]">
+                                разом з LITE cook!
+                            </h2>
+                        </div>
+
+                        {/* БІЛИЙ БЛОК З КОНТЕНТОМ */}
+                        <div className="relative w-full md:max-w-[500px] lg:max-w-lg bg-[#F6F7FB]/95 backdrop-blur-md rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-8 md:p-10 lg:p-12 lg:pt-8 lg:pb-8 flex flex-col md:mt-32 lg:mt-40 shadow-xl z-10 mx-auto md:mx-0">
+
+                            {/* Підзаголовок */}
+                            <h3 className="text-[12px] sm:text-[13px] lg:text-[15px] font-bold font-['Inter'] text-[#1A1A1A] text-center mb-6 lg:mb-8 leading-relaxed italic">
+                                А ви знали, що зареєстровані користувачі<br className="hidden sm:block"/>
+                                отримують доступ до унікальних<br className="hidden sm:block"/>
+                                можливостей сайту? <br className="hidden sm:block"/>
+                                Так, так і ось вони:
+                            </h3>
+
+                            {/* Список переваг (Колонки) */}
+                            <div className="flex flex-col gap-5 lg:gap-6 w-full mb-8 lg:mb-10">
+
+                                {/* Пункт 1 */}
+                                <div className="flex items-start gap-3 lg:gap-4">
+                                    <div className="shrink-0 pt-1">
+                                        <img src={RestaurantMenuIcon} alt="Тижневе меню" className="w-6 h-6 lg:w-7 lg:h-7 object-contain" />
+                                    </div>
+                                    <p className="text-[13px] lg:text-[15px] text-black font-['Inter'] leading-snug break-words max-w-[290px] sm:max-w-[340px] md:max-w-[290px] lg:max-w-[257px]">
+                                        <span className="font-bold">Тижневе меню</span> — обирай <br className="hidden sm:hidden md:hidden lg:hidden"/>
+                                        рецепти на кожен день та <br className="hidden sm:hidden md:hidden lg:hidden"/>
+                                        отримуй автоматичний <br className="hidden sm:hidden md:hidden lg:hidden"/>
+                                        список продуктів на день <br className="hidden sm:hidden md:hidden lg:hidden"/>
+                                        або тиждень
+                                    </p>
+                                </div>
+
+                                {/* Пункт 2 */}
+                                <div className="flex items-start gap-3 lg:gap-4">
+                                    <div className="shrink-0 pt-1">
+                                        <img src={UserMenuMaleIcon} alt="Особистий кабінет" className="w-6 h-6 lg:w-7 lg:h-7 object-contain" />
+                                    </div>
+                                    <p className="text-[13px] lg:text-[15px] text-black font-['Inter'] leading-snug break-words max-w-[290px] sm:max-w-[340px] md:max-w-[270px] lg:max-w-[258px]">
+                                        <span className="font-bold">Особистий кабінет</span> — <br className="hidden sm:hidden md:hidden lg:hidden"/>
+                                        налаштовуй кухню та <br className="hidden sm:hidden md:hidden lg:hidden"/>
+                                        рецепти, які хочеш бачити, <br className="hidden sm:hidden md:hidden lg:hidden"/>
+                                        вказуй алергії чи харчові <br className="hidden sm:hidden md:hidden lg:hidden"/>
+                                        обмеження
+                                    </p>
+                                </div>
+
+                                {/* Пункт 3 */}
+                                <div className="flex items-start gap-3 lg:gap-4">
+                                    <div className="shrink-0 pt-1">
+                                        <img src={IdeaIcon} alt="Корисні поради" className="w-6 h-6 lg:w-7 lg:h-7 object-contain" />
+                                    </div>
+                                    <p className="text-[13px] lg:text-[15px] text-black font-['Inter'] leading-snug break-words max-w-[290px] sm:max-w-[340px] md:max-w-[290px] lg:max-w-[265px]">
+                                        <span className="font-bold">Корисні поради</span> — <br className="hidden sm:hidden md:hidden lg:hidden"/>
+                                        отримуй рекомендації та <br className="hidden sm:hidden md:hidden lg:hidden"/>
+                                        лайфхаки від команди LITE <br className="hidden sm:hidden md:hidden lg:hidden"/>
+                                        cook, щоб готувати ще <br className="hidden sm:hidden md:hidden lg:hidden"/>
+                                        простіше й цікавіше
+                                    </p>
+                                </div>
+
+                            </div>
+
+                            {/* Головна кнопка */}
+                            <div className="flex justify-center w-full relative z-20">
+                                <Link
+                                    to={isAuthenticated ? "/menu" : "/register"}
+                                    className="px-6 lg:px-8 py-3 bg-transparent border-[1.5px] border-black rounded-[30px] font-['Inter'] text-[13px] lg:text-[15px] text-black hover:bg-black hover:text-white transition-colors w-max font-medium"
+                                    onClick={toggleModal}
+                                >
+                                    СПРОБУВАТИ БЕЗКОШТОВНО
+                                </Link>
+                            </div>
+
+                            {/* 5. Додатковий текст (в самому низу білого блоку) */}
+                            <p className="mt-8 text-center text-[#1A1A1A] font-['El_Messiri'] text-[14px] lg:text-[16px] leading-tight font-semibold opacity-80 border-t border-gray-300/50 pt-4">
+                                ЗДОРОВЕ ХАРЧУВАННЯ НЕ МАЄ БУТИ ДОРОГИМ, СКЛАДНИМ ТА ЧАСОЄМНИМ
+                            </p>
+
+
+                            {/* АВОКАДО */}
+                            <div className="absolute top-1/2 -translate-y-1/2 -right-0 sm:-right-0 md:-right-0 lg:-right-0 top-48 sm:top-60 md:top-60 lg:top-78 w-42 sm:w-52 md:w-55 lg:w-72 z-10 pointer-events-none">
+                                <img src={AvatarAvokadoRight} alt="Avocado Chef" className="w-full h-auto object-contain drop-shadow-xl" />
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 };
