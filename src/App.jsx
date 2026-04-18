@@ -21,6 +21,7 @@ import PrivacyDetail from './pages/PrivacyDetail';
 import { TOKEN_KEY } from './constants/api'; // Імпорт ключа токена
 
 import NotFound from './pages/NotFound';
+import Banned from './pages/Banned';
 
 // =========================================================================
 // HOC (High Order Component) для захисту сторінок, доступних ТІЛЬКИ ГОСТЯМ
@@ -64,6 +65,7 @@ function App() {
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/reset-password-confirm/:uid/:token" element={<ResetPasswordConfirm />} />
                 <Route path="/confirm-email/:key" element={<ConfirmEmail />} />
+                <Route path="/banned" element={<Banned />} />
                 <Route path="/recipe/:id" element={<RecipeDetail />} />
                 <Route path="/recipes" element={<Recipes />} />
                 <Route path="/about" element={<About />} />
