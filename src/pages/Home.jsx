@@ -359,7 +359,7 @@ const Home = () => {
                                     <div className="shrink-0 pt-1">
                                         <img src={RestaurantMenuIcon} alt="Тижневе меню" className="w-6 h-6 lg:w-7 lg:h-7 object-contain" />
                                     </div>
-                                    <p className="text-[13px] lg:text-[15px] text-black font-['Inter'] leading-snug break-words max-w-[290px] sm:max-w-[340px] md:max-w-[290px] lg:max-w-[257px]">
+                                    <p className="text-[13px] lg:text-[15px] text-black font-['Inter'] leading-snug break-words max-w-[180px] sm:max-w-[340px] md:max-w-[290px] lg:max-w-[257px]">
                                         <span className="font-bold">Тижневе меню</span> — обирай <br className="hidden sm:hidden md:hidden lg:hidden"/>
                                         рецепти на кожен день та <br className="hidden sm:hidden md:hidden lg:hidden"/>
                                         отримуй автоматичний <br className="hidden sm:hidden md:hidden lg:hidden"/>
@@ -373,7 +373,7 @@ const Home = () => {
                                     <div className="shrink-0 pt-1">
                                         <img src={UserMenuMaleIcon} alt="Особистий кабінет" className="w-6 h-6 lg:w-7 lg:h-7 object-contain" />
                                     </div>
-                                    <p className="text-[13px] lg:text-[15px] text-black font-['Inter'] leading-snug break-words max-w-[290px] sm:max-w-[340px] md:max-w-[270px] lg:max-w-[258px]">
+                                    <p className="text-[13px] lg:text-[15px] text-black font-['Inter'] leading-snug break-words max-w-[190px] sm:max-w-[340px] md:max-w-[270px] lg:max-w-[258px]">
                                         <span className="font-bold">Особистий кабінет</span> — <br className="hidden sm:hidden md:hidden lg:hidden"/>
                                         налаштовуй кухню та <br className="hidden sm:hidden md:hidden lg:hidden"/>
                                         рецепти, які хочеш бачити, <br className="hidden sm:hidden md:hidden lg:hidden"/>
@@ -387,7 +387,7 @@ const Home = () => {
                                     <div className="shrink-0 pt-1">
                                         <img src={IdeaIcon} alt="Корисні поради" className="w-6 h-6 lg:w-7 lg:h-7 object-contain" />
                                     </div>
-                                    <p className="text-[13px] lg:text-[15px] text-black font-['Inter'] leading-snug break-words max-w-[290px] sm:max-w-[340px] md:max-w-[290px] lg:max-w-[265px]">
+                                    <p className="text-[13px] lg:text-[15px] text-black font-['Inter'] leading-snug break-words max-w-[240px] sm:max-w-[340px] md:max-w-[290px] lg:max-w-[265px]">
                                         <span className="font-bold">Корисні поради</span> — <br className="hidden sm:hidden md:hidden lg:hidden"/>
                                         отримуй рекомендації та <br className="hidden sm:hidden md:hidden lg:hidden"/>
                                         лайфхаки від команди LITE <br className="hidden sm:hidden md:hidden lg:hidden"/>
@@ -416,7 +416,7 @@ const Home = () => {
 
 
                             {/* АВОКАДО */}
-                            <div className="absolute top-1/2 -translate-y-1/2 -right-0 sm:-right-0 md:-right-0 lg:-right-0 top-48 sm:top-60 md:top-60 lg:top-78 w-42 sm:w-52 md:w-55 lg:w-72 z-10 pointer-events-none">
+                            <div className="absolute top-1/2 -translate-y-1/2 -right-0 sm:-right-0 md:-right-0 lg:-right-0 top-58 sm:top-60 md:top-60 lg:top-78 w-40 sm:w-52 md:w-55 lg:w-72 z-10 pointer-events-none">
                                 <img src={AvatarAvokadoRight} alt="Avocado Chef" className="w-full h-auto object-contain drop-shadow-xl" />
                             </div>
 
