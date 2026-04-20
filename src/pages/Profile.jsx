@@ -476,15 +476,20 @@ const Profile = () => {
 
     // Функція вміє створювати (POST) і оновлювати (PATCH)
     const addFridgeItem = async () => {
-        setInventoryMessage(null); // Очищаємо попередні повідомлення миттєво при натисканні
+        setInventoryMessage(null);
 
-        // 1. Базові перевірки
         if (!newFridgeItem.ingredient) {
             showInventoryMessage('error', "Спочатку оберіть продукт зі списку!", 3000);
             return;
         }
 
-        const parsedAmount = newFridgeItem.amount ? parseFloat(newFridgeItem.amount) : null;
+        // Округлюємо до 2 знаків після коми, щоб не було помилки бази даних (400 Bad Request)
+        let parsedAmount = null;
+        if (newFridgeItem.amount) {
+            parsedAmount = parseFloat(newFridgeItem.amount);
+            // Округлюємо до 2 знаків і знову перетворюємо на число, щоб прибрати зайві нулі (напр. 1.50 -> 1.5)
+            parsedAmount = Math.round(parsedAmount * 10) / 10;
+        }
 
         if (newFridgeItem.unit !== 'taste' && (parsedAmount === null || parsedAmount <= 0 || isNaN(parsedAmount))) {
             showInventoryMessage('error', "Введіть коректну кількість продукту!", 3000);
@@ -681,6 +686,22 @@ const Profile = () => {
         if (lastDigit === 1) return 'Улюблений';
         if (lastDigit >= 2 && lastDigit <= 4) return 'Улюблені';
         return 'Улюблених';
+    };
+
+    // РОЗУМНЕ ФОРМАТУВАННЯ КІЛЬКОСТІ
+    const formatDisplayAmount = (amount, unit) => {
+        if (!amount) return '';
+        const num = parseFloat(amount);
+
+        // Ці одиниці завжди відображаємо як цілі числа
+        const integerUnits = ['g', 'ml', 'pcs', 'clove', 'sprig', 'bunch', 'drop', 'pinch'];
+
+        if (integerUnits.includes(unit)) {
+            return Math.round(num).toString();
+        }
+
+        // Для ложок, кілограмів, літрів залишаємо 1 знак після коми (якщо він є)
+        return num.toFixed(1).replace(/\.0$/, '');
     };
 
     if (loading) return <div className="min-h-screen flex items-center justify-center text-2xl font-['El_Messiri'] text-gray-800">Завантаження профілю...</div>;
@@ -1710,15 +1731,14 @@ const Profile = () => {
                                         <div className="flex items-center gap-2 w-full md:w-auto shrink-0 border-t border-gray-200 md:border-t-0 pt-2 md:pt-0">
                                             <input
                                                 type="number"
-                                                min="0" // Запобігає введенню від'ємних чисел через стрілочки
-                                                step="any" // Дозволяє вводити десяткові числа (наприклад, 0.5)
+                                                min="0"
+                                                step="0.1" // Дозволяємо крок 0.1 для стрілочок
                                                 placeholder="К-ть"
                                                 value={newFridgeItem.amount}
                                                 onChange={(e) => {
-                                                    const val = e.target.value;
-                                                    // Регулярний вираз: дозволяє тільки цифри та ОДНУ крапку/кому. Забороняє мінус.
-                                                    if (val === '' || /^[0-9]*[.,]?[0-9]*$/.test(val)) {
-                                                        // Замінюємо кому на крапку для коректної відправки на бекенд
+                                                    let val = e.target.value;
+                                                    // Регулярний вираз: дозволяє цифри і максимум ДВІ цифри після крапки
+                                                    if (val === '' || /^[0-9]*[.,]?[0-9]{0,1}$/.test(val)) {
                                                         setNewFridgeItem({...newFridgeItem, amount: val.replace(',', '.')});
                                                     }
                                                 }}
@@ -1855,7 +1875,8 @@ const Profile = () => {
                                                 <div className="flex-1 min-w-0">
                                                     <h4 className="font-bold text-gray-900 text-[14px] sm:text-base truncate" title={item.ingredient_name}>{item.ingredient_name}</h4>
                                                     <span className="inline-block mt-1 text-cyan-800 font-bold text-xs sm:text-sm bg-cyan-100/50 px-2 py-0.5 rounded-lg border border-cyan-100/50">
-                                                        {item.amount ? `${parseFloat(item.amount).toFixed(1).replace(/\.0$/, '')} ` : ''}
+                                                        {/* ВИКОРИСТОВУЄМО РОЗУМНЕ ФОРМАТУВАННЯ */}
+                                                        {item.amount ? `${formatDisplayAmount(item.amount, item.unit)} ` : ''}
                                                         {DICTIONARIES.units[item.unit] ? (Array.isArray(DICTIONARIES.units[item.unit]) ? DICTIONARIES.units[item.unit][0] : DICTIONARIES.units[item.unit]) : item.unit}
                                                     </span>
                                                 </div>
