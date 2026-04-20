@@ -1612,14 +1612,14 @@ const Profile = () => {
                 {/* ================= МОДАЛКА МОЇ ПРОДУКТИ (ІНВЕНТАР) ================= */}
                 {isInventoryModalOpen && (
                     <div
-                        className="fixed inset-0 z-[9999] flex flex-col justify-start items-center p-4 pt-32 sm:p-4 sm:pt-32 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+                        className="fixed inset-0 z-[9999] flex flex-col justify-start items-center p-4 pt-24 sm:p-4 sm:pt-32 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
                         onClick={() => {
                             setIsInventoryModalOpen(false)
                             resetInventoryForm(); // АВТООЧИЩЕННЯ ПРИ ЗАКРИТТІ
                         }}
                     >
                         <div
-                            className="bg-[#F6F3F4] w-full sm:max-w-4xl max-h-[80vh] sm:max-h-[85vh] flex flex-col rounded-3xl sm:rounded-[2.5rem] shadow-2xl relative overflow-hidden animate-[slideUp_0.4s_ease-out] sm:animate-scaleIn shrink-0 mb-2 sm:mb-0 sm:mt-0"
+                            className="bg-[#F6F3F4] w-full sm:max-w-4xl max-h-[85vh] flex flex-col rounded-3xl sm:rounded-[2.5rem] shadow-2xl relative overflow-hidden animate-[slideDown_0.4s_ease-out] sm:animate-scaleIn shrink-0"
                             onClick={(e) => e.stopPropagation()}
                         >
                             {/* Шапка модалки */}
