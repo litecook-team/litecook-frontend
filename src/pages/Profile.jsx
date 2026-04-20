@@ -194,16 +194,16 @@ const Profile = () => {
         'meat_pork': ['g', 'kg'],
         'meat_bird': ['g', 'kg'],
         'meat_products': ['g', 'kg', 'slice'],
-        'grains': ['g', 'kg', 'tbsp', 'glass'],
+        'grains': ['g', 'kg'],
         'cheese': ['g', 'kg', 'slice'],
         'seafood': ['g', 'kg'],
         'fish_red': ['g', 'kg'],
         'fish_white': ['g', 'kg'],
-        'sweets': ['g', 'tsp', 'tbsp'],
+        'sweets': ['g', 'kg'],
         'greens': ['bunch', 'g', 'sprig'],
         'mushrooms': ['g', 'kg'],
         'nuts': ['g', 'kg'],
-        'flour': ['g', 'kg', 'tbsp', 'glass'],
+        'flour': ['g', 'kg'],
         'alt_protein': ['g', 'kg'],
     };
 
@@ -1855,7 +1855,7 @@ const Profile = () => {
                                                 <div className="flex-1 min-w-0">
                                                     <h4 className="font-bold text-gray-900 text-[14px] sm:text-base truncate" title={item.ingredient_name}>{item.ingredient_name}</h4>
                                                     <span className="inline-block mt-1 text-cyan-800 font-bold text-xs sm:text-sm bg-cyan-100/50 px-2 py-0.5 rounded-lg border border-cyan-100/50">
-                                                        {item.amount ? `${parseFloat(item.amount)} ` : ''}
+                                                        {item.amount ? `${parseFloat(item.amount).toFixed(1).replace(/\.0$/, '')} ` : ''}
                                                         {DICTIONARIES.units[item.unit] ? (Array.isArray(DICTIONARIES.units[item.unit]) ? DICTIONARIES.units[item.unit][0] : DICTIONARIES.units[item.unit]) : item.unit}
                                                     </span>
                                                 </div>
