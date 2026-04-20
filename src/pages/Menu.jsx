@@ -329,8 +329,11 @@ const Menu = () => {
             // Оскільки бекенд вже все порахував, нам залишається лише відфільтрувати те,
             // що потрібно купувати (або продукти без чіткої кількості)
             const listToDisplay = response.data.filter(item => {
-                if (item.required_amount === null || parseFloat(item.required_amount) === 0) return true;
-                return item.to_buy > 0;
+                // Якщо продукт повністю є в холодильнику (навіть якщо це "за смаком") — приховуємо
+                if (item.is_fully_stocked) return false;
+
+                // В усіх інших випадках (треба докупити або взагалі немає) — показуємо
+                return true;
             });
 
             setShoppingList(listToDisplay);
@@ -389,8 +392,9 @@ const Menu = () => {
 
             // Відфільтровуємо те, що потрібно
             const listToExport = response.data.filter(item => {
-                if (item.required_amount === null || parseFloat(item.required_amount) === 0) return true;
-                return item.to_buy > 0;
+                // Якщо продукт повністю є в холодильнику — приховуємо
+                if (item.is_fully_stocked) return false;
+                return true;
             });
 
             // Якщо список порожній — показуємо помилку В МОДАЛЦІ і не закриваємо її
@@ -404,11 +408,31 @@ const Menu = () => {
             }
 
             // 2. Форматуємо отримані дані для передачі в PDF-компонент
-            const formattedList = listToExport.map(item => ({
-                name: capitalizeFirstLetter(item.ingredient_name),
-                amount: formatIngredientAmount(item.to_buy !== undefined ? item.to_buy : item.required_amount, item.unit),
-                image: getImageUrl(item.ingredient_image)
-            }));
+            const formattedList = listToExport.map(item => {
+                // Отримуємо базовий текст (наприклад, "за смаком" або "2 шт")
+                let amountStr = formatIngredientAmount(item.to_buy !== undefined ? item.to_buy : item.required_amount, item.unit);
+
+                // Якщо рецепт "за смаком", АЛЕ в холодильнику є якийсь дрібний залишок (>0)
+                if (item.required_amount === null && item.already_have > 0) {
+                    const safeHave = Math.round(item.already_have);
+
+                    // РОЗУМНЕ ВИЗНАЧЕННЯ ОДИНИЦІ (беремо з inventory_unit, а якщо раптом його немає - то 'g')
+                    const actualUnit = item.inventory_unit || 'g';
+                    let unitTranslation = DICTIONARIES.units[actualUnit] || actualUnit;
+
+                    if (Array.isArray(unitTranslation)) {
+                        unitTranslation = unitTranslation[0];
+                    }
+
+                    amountStr += ` (є ${safeHave} ${unitTranslation})`;
+                }
+
+                return {
+                    name: capitalizeFirstLetter(item.ingredient_name),
+                    amount: amountStr,
+                    image: getImageUrl(item.ingredient_image)
+                };
+            });
 
             const scopeText = exportScope === 'day'
                 ? `На день (${DAYS_ACCUSATIVE[activeDay]})`
@@ -760,7 +784,7 @@ const Menu = () => {
                                                 : `${ENDPOINTS.WEEKLY_MENU}shopping_list/?use_fridge=${newFridgeState}`;
 
                                             api.get(url).then(res => {
-                                                const listToDisplay = res.data.filter(item => item.to_buy > 0 || item.required_amount === null || parseFloat(item.required_amount) === 0);
+                                                const listToDisplay = res.data.filter(item => !item.is_fully_stocked);
                                                 setShoppingList(listToDisplay);
                                                 setIsShoppingListLoading(false);
                                             });
@@ -832,7 +856,21 @@ const Menu = () => {
                                                             {capitalizeFirstLetter(item.ingredient_name)}
                                                         </span>
                                                         <span className="text-[#B47231] font-bold whitespace-nowrap ml-3">
-                                                            {formatIngredientAmount(item.to_buy !== undefined ? item.to_buy : item.required_amount, item.unit)}
+                                                            {(() => {
+                                                                let amountStr = formatIngredientAmount(item.to_buy !== undefined ? item.to_buy : item.required_amount, item.unit);
+
+                                                                if (item.required_amount === null && item.already_have > 0) {
+                                                                    const safeHave = Math.round(item.already_have);
+
+                                                                    // Використовуємо реальну одиницю з холодильника
+                                                                    const actualUnit = item.inventory_unit || 'g';
+                                                                    let unitTranslation = DICTIONARIES.units[actualUnit] || actualUnit;
+                                                                    if (Array.isArray(unitTranslation)) unitTranslation = unitTranslation[0];
+
+                                                                    amountStr += ` (є ${safeHave} ${unitTranslation})`;
+                                                                }
+                                                                return amountStr;
+                                                            })()}
                                                         </span>
                                                     </li>
                                                 ))}

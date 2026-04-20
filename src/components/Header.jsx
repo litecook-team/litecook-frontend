@@ -172,7 +172,7 @@ const Header = () => {
                                         key={user?.avatar || 'default'}
                                         src={user?.avatar || avokado_avatar}
                                         alt="User"
-                                        className={`rounded-full ${user?.avatar ? 'w-full h-full object-cover' : 'w-[80%] h-[80%] object-contain'}`}
+                                        className={`rounded-full ${user?.avatar ? 'object-cover' : 'w-[80%] h-[80%] object-contain'}`}
                                         onError={(e) => {
                                             e.target.onerror = null;
                                             e.target.src = avokado_avatar;
