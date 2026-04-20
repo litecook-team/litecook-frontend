@@ -305,7 +305,7 @@ const Home = () => {
                 </div>
             </div>
 
-            {/* ДОДАЄМО МОДАЛЬНЕ ВІКНО В КІНЕЦЬ КОМПОНЕНТА */}
+            {/* МОДАЛЬНЕ ВІКНО*/}
             {isModalOpen && (
                 <div
                     className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 sm:p-6 transition-opacity duration-300 overflow-y-auto"
@@ -345,8 +345,8 @@ const Home = () => {
 
                             {/* Підзаголовок */}
                             <h3 className="text-[12px] sm:text-[13px] lg:text-[15px] font-bold font-['Inter'] text-[#1A1A1A] text-center mb-6 lg:mb-8 leading-relaxed italic">
-                                А ви знали, що зареєстровані користувачі<br className="hidden sm:block"/>
-                                отримують доступ до унікальних<br className="hidden sm:block"/>
+                                А ви знали, що зареєстровані користувачі <br className="hidden sm:block"/>
+                                отримують доступ до унікальних <br className="hidden sm:block"/>
                                 можливостей сайту? <br className="hidden sm:block"/>
                                 Так, так і ось вони:
                             </h3>
