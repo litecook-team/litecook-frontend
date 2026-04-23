@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useGoogleLogin } from '@react-oauth/google';
@@ -11,94 +11,146 @@ const Register = () => {
         first_name: '', email: '', password1: '', password2: ''
     });
     const [agreed, setAgreed] = useState(false);
-    const [message, setMessage] = useState({ text: '', type: '' });
+
+    // 1. РОЗДІЛИЛИ СТАНИ ПОМИЛОК
+    const [message, setMessage] = useState({ text: '', type: '' }); // Для глобальних помилок (сервер, пошта)
+    const [passwordError, setPasswordError] = useState(''); // Тільки для паролів
+
     const [showTerms, setShowTerms] = useState(false);
+    const [showPassword1, setShowPassword1] = useState(false);
+    const [showPassword2, setShowPassword2] = useState(false);
+
+    // Зберігаємо таймери, щоб їх можна було скасувати
+    const errorTimerRef = useRef(null);
+    const pwdErrorTimerRef = useRef(null);
+
+    // Допоміжна функція для показу глобальної помилки на 5 секунд
+    const showGlobalMessage = (text, type) => {
+        setMessage({ text, type });
+        if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+        errorTimerRef.current = setTimeout(() => setMessage({ text: '', type: '' }), 5000);
+    };
+
+    // Допоміжна функція для показу помилки пароля на 5 секунд
+    const showPasswordErrorMessage = (text) => {
+        setPasswordError(text);
+        if (pwdErrorTimerRef.current) clearTimeout(pwdErrorTimerRef.current);
+        pwdErrorTimerRef.current = setTimeout(() => setPasswordError(''), 5000);
+    };
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+
+        // СУЧАСНИЙ UX: Якщо користувач почав виправляти пароль - миттєво прибираємо червону помилку
+        if (name === 'password1' || name === 'password2') {
+            setPasswordError('');
+            if (pwdErrorTimerRef.current) clearTimeout(pwdErrorTimerRef.current);
+        }
     };
 
     // Функція для валідації формату email
     const validateEmail = (email) => {
-        // 1. Базова перевірка на наявність @ та крапки
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            return 'Будь ласка, введіть коректну електронну адресу (наприклад, name@example.com).';
-        }
-
+        if (!emailRegex.test(email)) return 'Будь ласка, введіть коректну електронну адресу.';
         const domain = email.split('@')[1].toLowerCase();
-
-        // 2. Блокування пошт країни-агресора
         const ruDomains = ['.ru', '.su', '.рф', 'yandex', 'mail.ru', 'bk.ru', 'inbox.ru', 'list.ru'];
-        const isRuDomain = ruDomains.some(ru => domain.endsWith(ru) || domain.includes(ru));
-        if (isRuDomain) {
-            return 'Реєстрація з поштових скриньок країни-терориста заборонена! Використовуйте українські або міжнародні поштові сервіси.';
+        if (ruDomains.some(ru => domain.endsWith(ru) || domain.includes(ru))) {
+            return 'Реєстрація з поштових скриньок країни-терориста заборонена!';
         }
-
-        // 3. Блокування типових одруківок
         const blockedTypos = ['gmail.co', 'gmail.c', 'gmai.com', 'gmal.com', 'ukr.ne', 'yahoo.c', 'yaho.com'];
-        if (blockedTypos.includes(domain)) {
-            return "Схоже, ви зробили помилку в домені пошти. Будь ласка, перевірте правильність.";
-        }
-
-        // Якщо все добре, повертаємо порожній рядок (помилок немає)
+        if (blockedTypos.includes(domain)) return "Схоже, ви зробили помилку в домені пошти.";
         return '';
     };
 
+    // ФУНКЦІЯ АНАЛІЗУ НАДІЙНОСТІ ПАРОЛЯ (від 0 до 5)
+    const calculateStrength = (password) => {
+        let score = 0;
+        if (!password) return 0;
+        if (password.length >= 8) score += 1; // Довжина
+        if (/[A-Z]/.test(password) || /[А-ЯІЇЄҐ]/.test(password)) score += 1; // Велика літера
+        if (/[a-z]/.test(password) || /[а-яіїєґ]/.test(password)) score += 1; // Мала літера
+        if (/[0-9]/.test(password)) score += 1; // Цифра
+        if (/[^A-Za-z0-9А-Яа-яІіЇїЄєҐґ]/.test(password)) score += 1; // Спецсимвол (!@#$% тощо)
+        return score;
+    };
+
+    const pwdStrength = calculateStrength(formData.password1);
+    const strengthColors = ['bg-gray-200', 'bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-lime-500', 'bg-green-500'];
+    const strengthLabels = ['', 'Дуже слабкий', 'Слабкий', 'Нормальний', 'Надійний', 'Дуже надійний'];
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setMessage({ text: '', type: '' });
 
-        // Валідація: Умови використання
-        if (!agreed) {
-            setMessage({ text: 'Будь ласка, погодьтеся з умовами використання.', type: 'error' });
+        // Очищаємо всі старі помилки перед новою перевіркою
+        setMessage({ text: '', type: '' });
+        setPasswordError('');
+
+        // ==========================================
+        // БЛОК 1: ПАРОЛІ (всі помилки будуть біля поля пароля)
+        // ==========================================
+        if (formData.password1.length < 8) {
+            showPasswordErrorMessage('Пароль повинен містити щонайменше 8 символів.');
             return;
         }
 
-        // Валідація формату email
+        if (pwdStrength < 3) {
+            showPasswordErrorMessage('Пароль занадто слабкий. Виконайте умови безпеки нижче.');
+            return;
+        }
+
+        if (formData.password1 !== formData.password2) {
+            showPasswordErrorMessage('Паролі не співпадають. Перевірте правильність вводу.');
+            return;
+        }
+
+        // ==========================================
+        // БЛОК 2: ІНШІ ДАНІ (всі помилки будуть зверху форми)
+        // ==========================================
+        if (!agreed) {
+            showGlobalMessage('Будь ласка, погодьтеся з умовами використання.', 'error');
+            return;
+        }
+
         const emailError = validateEmail(formData.email);
         if (emailError) {
-            setMessage({ text: emailError, type: 'error' });
-            return; // Зупиняємо відправку на сервер
-        }
-
-        // Валідація довжини пароля
-        if (formData.password1.length < 8) {
-            setMessage({ text: 'Пароль повинен містити щонайменше 8 символів.', type: 'error' });
+            showGlobalMessage(emailError, 'error');
             return;
         }
 
-        // Валідація: Співпадіння паролів
-        if (formData.password1 !== formData.password2) {
-            setMessage({ text: 'Паролі не співпадають.', type: 'error' });
-            return;
-        }
-
+        // ==========================================
+        // БЛОК 3: ВІДПРАВКА НА СЕРВЕР
+        // ==========================================
         try {
             const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/registration/`, formData);
-            setMessage({
-                text: 'Реєстрація успішна! Ми надіслали лист на вашу пошту.',
-                type: 'success'
-            });
+            // Успіх залишаємо глобальним (зверху), щоб користувач точно його побачив
+            setMessage({ text: 'Реєстрація успішна! Ми надіслали лист на вашу пошту.', type: 'success' });
             setFormData({ first_name: '', email: '', password1: '', password2: '' });
         } catch (err) {
-            // Спроба отримати конкретну помилку від бекенда, якщо є
-            let errorMsg = 'Помилка реєстрації. Перевірте введені дані.';
-
-            if (err.response && err.response.data) {
-                // Якщо бекенд повертає об'єкт з помилками для конкретних полів (наприклад, Django Rest Auth)
-                if (err.response.data.email) {
-                    errorMsg = 'Користувач з такою поштою вже існує.';
-                } else if (err.response.data.password1 || err.response.data.password) {
-                    errorMsg = 'Пароль надто простий або поширений.';
-                } else if (err.response.data.detail) {
-                    errorMsg = err.response.data.detail;
-                } else if (typeof err.response.data === 'string') {
-                     errorMsg = err.response.data;
+            if (err.response) {
+                // Обробка помилки 429 (Забагато запитів / Захист від ботів)
+                if (err.response.status === 429) {
+                    showGlobalMessage('Ви зробили занадто багато спроб реєстрації. Будь ласка, зачекайте трохи і спробуйте пізніше.', 'error');
+                    return;
                 }
-            }
 
-            setMessage({ text: errorMsg, type: 'error' });
+                // Стандартна обробка інших помилок
+                if (err.response.data) {
+                    if (err.response.data.email) {
+                        showGlobalMessage('Користувач з такою поштою вже існує.', 'error');
+                    } else if (err.response.data.password1) {
+                    showPasswordErrorMessage(err.response.data.password1[0]);
+                    } else if (err.response.data.password) {
+                    showPasswordErrorMessage(err.response.data.password[0]);
+                    } else if (err.response.data.detail) {
+                        showGlobalMessage(err.response.data.detail, 'error');
+                    } else if (typeof err.response.data === 'string') {
+                        showGlobalMessage(err.response.data, 'error');
+                    }
+                }
+            } else {
+                 showGlobalMessage('Помилка реєстрації. Перевірте інтернет-з\'єднання.', 'error');
+            }
         }
     };
 
@@ -112,13 +164,13 @@ const Register = () => {
         }
     });
 
-    const handleFacebookSuccess = async (response) => {
-        try {
-            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/social/facebook/`, { access_token: response.accessToken });
-            localStorage.setItem('access_token', res.data.access);
-            navigate('/');
-        } catch (err) { setMessage({ text: 'Не вдалося зареєструватися через Facebook', type: 'error' }); }
-    };
+    // const handleFacebookSuccess = async (response) => {
+    //     try {
+    //         const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/social/facebook/`, { access_token: response.accessToken });
+    //         localStorage.setItem('access_token', res.data.access);
+    //         navigate('/');
+    //     } catch (err) { setMessage({ text: 'Не вдалося зареєструватися через Facebook', type: 'error' }); }
+    // };
 
     return (
         <div className="flex-grow w-full flex justify-center md:justify-end items-center p-4 py-16 sm:p-6 md:py-24 md:pr-10 lg:pr-24 xl:pr-32 relative bg-white bg-cover bg-no-repeat bg-center md:bg-left"
@@ -148,11 +200,11 @@ const Register = () => {
                         Реєстрація
                     </h1>
 
-                    {message.text && (
-                        <div className={`text-xs md:text-[13px] mb-4 p-3 rounded-lg font-medium border bg-white/80 backdrop-blur-sm inline-block ${message.type === 'error' ? 'text-red-500 border-red-200' : 'text-green-600 border-green-200'}`}>
+                    <div className={`transition-all duration-500 overflow-hidden ${message.text ? 'max-h-24 opacity-100 mb-4' : 'max-h-0 opacity-0 mb-0'}`}>
+                        <div className={`text-xs md:text-[13px] p-3 rounded-lg font-medium border bg-white/80 backdrop-blur-sm inline-block ${message.type === 'error' ? 'text-red-500 border-red-200' : 'text-green-600 border-green-200'}`}>
                             {message.text}
                         </div>
-                    )}
+                    </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
@@ -163,13 +215,67 @@ const Register = () => {
                             <label className="inline-block text-sm md:text-base font-semibold font-['El_Messiri'] text-gray-800 mb-1 ml-4">Електронна пошта</label>
                             <input type="email" name="email" value={formData.email} onChange={handleChange} required placeholder="Введіть електронну пошту" className="w-full px-5 font-['El_Messiri'] py-3 md:py-2.5 rounded-full border border-gray-300 focus:outline-none focus:border-[#42705D] transition text-base md:text-lg text-gray-700 bg-white" />
                         </div>
-                        <div>
-                            <label className="inline-block text-sm md:text-base font-semibold font-['El_Messiri'] text-gray-800 mb-1 ml-4">Пароль</label>
-                            <input type="password" name="password1" value={formData.password1} onChange={handleChange} required placeholder="Введіть пароль" className="w-full px-5 py-3 md:py-2.5 font-['El_Messiri'] rounded-full border border-gray-300 focus:outline-none focus:border-[#42705D] transition text-base md:text-lg text-gray-700 bg-white" />
-                        </div>
-                        <div>
-                            <label className="inline-block text-sm md:text-base font-semibold font-['El_Messiri'] text-gray-800 mb-1 ml-4">Підтвердження пароля</label>
-                            <input type="password" name="password2" value={formData.password2} onChange={handleChange} required placeholder="Повторіть пароль" className="w-full px-5 py-3 md:py-2.5 font-['El_Messiri'] rounded-full border border-gray-300 focus:outline-none focus:border-[#42705D] transition text-base md:text-lg text-gray-700 bg-white" />
+                        {/* === БЛОК ПАРОЛІВ === */}
+                        <div className="bg-gray-50/50 p-3 -mx-3 rounded-2xl border border-transparent transition-colors duration-300">
+
+                            {/* ЛОКАЛЬНА ПОМИЛКА ПАРОЛЯ */}
+                            <div className={`transition-all duration-500 overflow-hidden ${passwordError ? 'max-h-20 opacity-100 mb-3' : 'max-h-0 opacity-0 -mb-3'}`}>
+                                <div className="text-red-500 text-[12px] md:text-[13px] font-medium bg-red-50 border border-red-200 px-4 py-2 rounded-xl flex items-center gap-2">
+                                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    {passwordError}
+                                </div>
+                            </div>
+
+                            <div className="mb-3">
+                                <label className="inline-block text-sm md:text-base font-semibold font-['El_Messiri'] text-gray-800 mb-1 ml-4">Пароль</label>
+                                <div className="relative">
+                                    <input type={showPassword1 ? "text" : "password"} name="password1" value={formData.password1} onChange={handleChange} required placeholder="Введіть пароль" className={`w-full px-5 py-3 md:py-2.5 font-['El_Messiri'] rounded-full border focus:outline-none transition text-base md:text-lg text-gray-700 bg-white pr-12 ${passwordError ? 'border-red-400 focus:border-red-500' : 'border-gray-300 focus:border-[#42705D]'}`} />
+                                    {formData.password1.length > 0 && (
+                                        <button type="button" onClick={() => setShowPassword1(!showPassword1)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#42705D] transition-colors focus:outline-none">
+                                            {showPassword1 ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>}
+                                        </button>
+                                    )}
+                                </div>
+
+                                {formData.password1 && (
+                                    <div className="mt-2 px-2">
+                                        <div className="flex gap-1 h-1.5">
+                                            {[1, 2, 3, 4, 5].map(level => (
+                                                <div key={level} className={`w-full rounded-full transition-colors duration-300 ${pwdStrength >= level ? strengthColors[pwdStrength] : 'bg-gray-200'}`} />
+                                            ))}
+                                        </div>
+                                        <div className="flex justify-between items-center mt-1">
+                                            <span className={`text-[11px] ${strengthColors[pwdStrength].replace('bg-', 'text-')}`}>{strengthLabels[pwdStrength]}</span>
+                                        </div>
+                                        <ul className="text-[11px] text-gray-500 mt-1 grid grid-cols-2 gap-1 font-['Inter']">
+                                            {formData.password1.length < 8 && (
+                                                <li><span className="text-gray-400 mr-1">○</span>8+ символів</li>
+                                            )}
+                                            {!/[A-ZА-ЯІЇЄҐ]/.test(formData.password1) && (
+                                                <li><span className="text-gray-400 mr-1">○</span>Велика літера</li>
+                                            )}
+                                            {!/[0-9]/.test(formData.password1) && (
+                                                <li><span className="text-gray-400 mr-1">○</span>Цифра</li>
+                                            )}
+                                            {!/[^A-Za-z0-9А-Яа-яІіЇїЄєҐґ]/.test(formData.password1) && (
+                                                <li><span className="text-gray-400 mr-1">○</span>Спецсимвол</li>
+                                            )}
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="inline-block text-sm md:text-base font-semibold font-['El_Messiri'] text-gray-800 mb-1 ml-4">Підтвердження пароля</label>
+                                <div className="relative">
+                                    <input type={showPassword2 ? "text" : "password"} name="password2" value={formData.password2} onChange={handleChange} required placeholder="Повторіть пароль" className={`w-full px-5 py-3 md:py-2.5 font-['El_Messiri'] rounded-full border focus:outline-none transition text-base md:text-lg text-gray-700 bg-white pr-12 ${passwordError ? 'border-red-400 focus:border-red-500' : 'border-gray-300 focus:border-[#42705D]'}`} />
+                                    {formData.password2.length > 0 && (
+                                        <button type="button" onClick={() => setShowPassword2(!showPassword2)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#42705D] transition-colors focus:outline-none">
+                                            {showPassword2 ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>}
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
                         </div>
 
                         {/* Перероблена структура checkbox + label для ідеального вирівнювання */}

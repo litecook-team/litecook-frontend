@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useGoogleLogin } from '@react-oauth/google';
@@ -7,10 +7,19 @@ import authBg from '../assets/auth/exit.jpg';
 
 const Login = () => {
     const [formData, setFormData] = useState({ email: '', password: '' });
-    const [error, setError] = useState('');
+    // --- НОВА ЛОГІКА ДЛЯ ПЛАВНОЇ АНІМАЦІЇ ПОМИЛОК ---
+    const [errorText, setErrorText] = useState(''); // Зберігає сам текст
+    const [isErrorVisible, setIsErrorVisible] = useState(false); // Керує анімацією (відкрито/закрито)
+
+    // (показати/сховати пароль)
+    const [showPassword, setShowPassword] = useState(false);
 
     // Стан для галочки (за замовчуванням увімкнена)
     const [rememberMe, setRememberMe] = useState(true);
+
+    // Зберігаємо таймери
+    const errorTimerRef = useRef(null);
+    const hideAnimRef = useRef(null);
 
     // При завантаженні сторінки перевіряємо, чи є збережена пошта
     useEffect(() => {
@@ -21,7 +30,33 @@ const Login = () => {
         }
     }, []);
 
-    const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+    // Допоміжна функція для показу помилки на 5 секунд
+    const showErrorMessage = (text) => {
+        setErrorText(text); // Спочатку ставимо текст
+        setIsErrorVisible(true); // Потім плавно відкриваємо блок
+
+        if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+        errorTimerRef.current = setTimeout(() => hideError(), 5000);
+    };
+
+    // Функція плавного приховування
+    const hideError = () => {
+        setIsErrorVisible(false); // Запускаємо плавну анімацію зникнення
+
+        // Чекаємо 500мс (поки відпрацює CSS transition), і тільки потім видаляємо текст
+        if (hideAnimRef.current) clearTimeout(hideAnimRef.current);
+        hideAnimRef.current = setTimeout(() => setErrorText(''), 500);
+    };
+
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+
+        // СУЧАСНИЙ UX: Якщо блок видимий, плавно ховаємо його при вводі
+        if (isErrorVisible) {
+            hideError();
+            if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+        }
+    };
 
     // Допоміжна функція для збереження даних сеансу
     const saveAuthData = (data) => {
@@ -46,7 +81,8 @@ const Login = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
+        hideError(); // Ховаємо старі помилки при новій спробі
+
         try {
             const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login/`, formData);
             saveAuthData(response.data);
@@ -63,12 +99,12 @@ const Login = () => {
             if (err.response && err.response.data && err.response.data.non_field_errors) {
                 const serverMsg = err.response.data.non_field_errors[0].toLowerCase();
                 if (serverMsg.includes('verif') || serverMsg.includes('підтверджен')) {
-                    setError('Ваша електронна пошта не підтверджена. Перевірте свою скриньку.');
+                    showErrorMessage('Ваша електронна пошта не підтверджена. Перевірте свою скриньку.');
                 } else {
-                    setError('Невірна пошта або пароль.');
+                    showErrorMessage('Невірна пошта або пароль.');
                 }
             } else {
-                setError('Помилка з\'єднання з сервером. Спробуйте пізніше.');
+                showErrorMessage('Помилка з\'єднання з сервером. Спробуйте пізніше.');
             }
         }
     };
@@ -79,7 +115,7 @@ const Login = () => {
                 const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/social/google/`, { access_token: tokenResponse.access_token });
                 saveAuthData(res.data);
                 window.location.href = '/';
-            } catch (err) { setError('Помилка авторизації Google'); }
+            } catch (err) { showErrorMessage('Помилка авторизації Google'); }
         }
     });
 
@@ -88,7 +124,7 @@ const Login = () => {
             const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/social/facebook/`, { access_token: response.accessToken });
             saveAuthData(res.data);
             window.location.href = '/';
-        } catch (err) { setError('Помилка авторизації Facebook'); }
+        } catch (err) { showErrorMessage('Помилка авторизації Facebook'); }
     };
 
     return (
@@ -117,7 +153,12 @@ const Login = () => {
 
                     <h1 className="text-2xl md:text-4xl font-['El_Messiri'] font-bold mb-6 text-[#1A1A1A] text-center md:text-left">Увійти</h1>
 
-                    {error && <div className="text-red-500 text-sm mb-4 text-center md:text-left bg-white/80 p-2 rounded-lg inline-block">{error}</div>}
+                    {/* АНІМОВАНИЙ БЛОК ПОМИЛКИ (як у Register) */}
+                    <div className={`transition-all duration-500 overflow-hidden ${isErrorVisible ? 'max-h-24 opacity-100 mb-4' : 'max-h-0 opacity-0 mb-0'}`}>
+                        <div className="text-xs md:text-[13px] p-3 rounded-lg font-medium border bg-white/80 backdrop-blur-sm inline-block text-red-500 border-red-200">
+                            {errorText}
+                        </div>
+                    </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
@@ -130,24 +171,31 @@ const Login = () => {
                                 required
                                 autoComplete="username"
                                 placeholder="Введіть електронну пошту"
-                                className="w-full px-5 font-['El_Messiri'] py-3 md:py-2.5 rounded-full border border-gray-300 focus:outline-none focus:border-[#42705D] transition text-base md:text-lg text-gray-700 bg-white"
+                                className={`w-full px-5 font-['El_Messiri'] py-3 md:py-2.5 rounded-full border focus:outline-none transition text-base md:text-lg text-gray-700 bg-white ${isErrorVisible ? 'border-red-400 focus:border-red-500' : 'border-gray-300 focus:border-[#42705D]'}`}
                             />
                         </div>
+                        {/* === ОНОВЛЕНИЙ БЛОК ПАРОЛЯ З ОКОМ === */}
                         <div>
                             <label className="inline-block text-sm md:text-base font-semibold font-['El_Messiri'] text-gray-800 mb-1 ml-4">Пароль</label>
-                            <input
-                                type="password"
-                                name="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                required
-                                autoComplete="current-password"
-                                placeholder="Введіть пароль"
-                                className="w-full px-5 py-3 md:py-2.5 font-['El_Messiri'] rounded-full border border-gray-300 focus:outline-none focus:border-[#42705D] transition text-base md:text-lg text-gray-700 bg-white"
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    required
+                                    autoComplete="current-password"
+                                    placeholder="Введіть пароль"
+                                    className={`w-full px-5 py-3 md:py-2.5 font-['El_Messiri'] rounded-full border focus:outline-none transition text-base md:text-lg text-gray-700 bg-white pr-12 ${isErrorVisible ? 'border-red-400 focus:border-red-500' : 'border-gray-300 focus:border-[#42705D]'}`}
+                                />
+                                {formData.password.length > 0 && (
+                                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#42705D] transition-colors focus:outline-none">
+                                        {showPassword ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>}
+                                    </button>
+                                )}
+                            </div>
 
                             <div className="flex justify-between items-center mt-3 px-2 sm:px-4">
-                                {/* Галочка Запам'ятати мене */}
                                 <label className="flex items-center gap-2 cursor-pointer group">
                                     <div className="relative flex items-center justify-center w-5 h-5 rounded-md border-2 border-gray-400 group-hover:border-[#42705D] transition-colors">
                                         <input

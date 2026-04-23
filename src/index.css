@@ -61,3 +61,17 @@
     opacity: 1;
   }
 }
+
+/* Вимикаємо стандартне браузерне око для полів пароля */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+    display: none;
+}
+
+/* Додатково для деяких версій WebKit (Chrome/Safari) */
+input::-webkit-credentials-auto-fill-button {
+    visibility: hidden;
+    pointer-events: none;
+    position: absolute;
+    right: 0;
+}

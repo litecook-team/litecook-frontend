@@ -119,6 +119,33 @@ const Profile = () => {
     // Ref для закриття списку пошуку продуктів користувача
     const addFridgeWrapperRef = useRef(null);
 
+    // === НОВІ СТАНИ ДЛЯ ПАРОЛЯ В ПРОФІЛІ ===
+    const [showOldPassword, setShowOldPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const pwdErrorTimerRef = useRef(null);
+
+    const showPasswordErrorMessage = (text) => {
+        setPasswordError(text);
+        if (pwdErrorTimerRef.current) clearTimeout(pwdErrorTimerRef.current);
+        pwdErrorTimerRef.current = setTimeout(() => setPasswordError(''), 5000);
+    };
+
+    const calculateStrength = (password) => {
+        let score = 0;
+        if (!password) return 0;
+        if (password.length >= 8) score += 1;
+        if (/[A-Z]/.test(password) || /[А-ЯІЇЄҐ]/.test(password)) score += 1;
+        if (/[a-z]/.test(password) || /[а-яіїєґ]/.test(password)) score += 1;
+        if (/[0-9]/.test(password)) score += 1;
+        if (/[^A-Za-z0-9А-Яа-яІіЇїЄєҐґ]/.test(password)) score += 1;
+        return score;
+    };
+
+    const pwdStrength = calculateStrength(passwordData.newPassword);
+    const strengthColors = ['bg-gray-200', 'bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-lime-500', 'bg-green-500'];
+    const strengthLabels = ['', 'Дуже слабкий', 'Слабкий', 'Нормальний', 'Надійний', 'Дуже надійний'];
+
     useEffect(() => {
         fetchData();
         window.scrollTo(0, 0);
@@ -622,21 +649,25 @@ const Profile = () => {
     // Функція зміни пароля
     const handlePasswordChange = async (e) => {
         e.preventDefault();
-        setPasswordError(''); // Очищаємо попередні помилки
+        setPasswordError('');
 
-        // Фронтенд перевірки
         if (passwordData.newPassword.length < 8) {
-            setPasswordError("Новий пароль має містити щонайменше 8 символів.");
+            showPasswordErrorMessage("Новий пароль має містити щонайменше 8 символів.");
+            return;
+        }
+
+        if (pwdStrength < 3) {
+            showPasswordErrorMessage("Пароль занадто слабкий. Виконайте умови безпеки.");
             return;
         }
 
         if (passwordData.newPassword !== passwordData.newPasswordConfirm) {
-            setPasswordError("Нові паролі не співпадають. Перевірте правильність вводу.");
+            showPasswordErrorMessage("Нові паролі не співпадають.");
             return;
         }
 
         if (passwordData.oldPassword === passwordData.newPassword) {
-            setPasswordError("Новий пароль не може співпадати з поточним.");
+            showPasswordErrorMessage("Новий пароль не може співпадати з поточним.");
             return;
         }
 
@@ -647,27 +678,24 @@ const Profile = () => {
                 new_password2: passwordData.newPasswordConfirm
             });
 
-            // Одразу закриваємо вікно і показуємо красиве сповіщення
             setIsPasswordModalOpen(false);
             setPasswordData({ oldPassword: '', newPassword: '', newPasswordConfirm: '' });
             setPasswordSuccess(true);
-
-            // Повідомлення зникне рівно через 2 секунди (2000 мс)
-            setTimeout(() => {
-                setPasswordSuccess(false);
-            }, 2000);
-
+            setTimeout(() => setPasswordSuccess(false), 2000);
         } catch (err) {
             const data = err.response?.data;
-            let errorMsg = "Виникла помилка. Перевірте правильність даних.";
-
             if (data) {
-                if (data.old_password) errorMsg = "Поточний пароль введено невірно.";
-                else if (data.new_password1) errorMsg = data.new_password1[0];
-                else if (data.non_field_errors) errorMsg = data.non_field_errors[0];
+                if (data.old_password) {
+                    showPasswordErrorMessage("Поточний пароль введено невірно.");
+                } else if (data.new_password1) {
+                    // ДИНАМІЧНЕ ПОВІДОМЛЕННЯ
+                    showPasswordErrorMessage(data.new_password1[0]);
+                } else if (data.non_field_errors) {
+                    showPasswordErrorMessage(data.non_field_errors[0]);
+                }
+            } else {
+                showPasswordErrorMessage("Виникла помилка з'єднання.");
             }
-
-            setPasswordError(errorMsg);
         }
     };
 
@@ -1185,30 +1213,81 @@ const Profile = () => {
                                                 </div>
                                             )}
 
-                                            <form onSubmit={(e) => {
-                                                e.preventDefault();
-                                                handlePasswordChange(e).then(() => {
-                                                    if(passwordSuccess) {
-                                                        setIsPasswordModalOpen(false);
-                                                    }
-                                                });
-                                            }} className="space-y-3 sm:space-y-4 mt-4">
-                                                <input
-                                                    type="password" required placeholder="Поточний пароль"
-                                                    value={passwordData.oldPassword} onChange={(e) => setPasswordData({...passwordData, oldPassword: e.target.value})}
-                                                    className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 outline-none focus:border-[#974F23] focus:ring-2 focus:ring-[#974F23]/20 transition-all font-medium text-sm sm:text-base"
-                                                />
-                                                <input
-                                                    type="password" required placeholder="Новий пароль"
-                                                    value={passwordData.newPassword} onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
-                                                    className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 outline-none focus:border-[#974F23] focus:ring-2 focus:ring-[#974F23]/20 transition-all font-medium text-sm sm:text-base"
-                                                />
-                                                <input
-                                                    type="password" required placeholder="Підтвердіть новий пароль"
-                                                    value={passwordData.newPasswordConfirm} onChange={(e) => setPasswordData({...passwordData, newPasswordConfirm: e.target.value})}
-                                                    className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 outline-none focus:border-[#974F23] focus:ring-2 focus:ring-[#974F23]/20 transition-all font-medium text-sm sm:text-base"
-                                                />
-                                                <button type="submit" className="w-full bg-[#974F23] text-white py-2.5 sm:py-3 rounded-xl font-bold hover:bg-[#7a3e1a] transition-colors shadow-md active:scale-95 duration-200 cursor-pointer text-sm sm:text-base">
+                                            <form onSubmit={handlePasswordChange} className="space-y-3 sm:space-y-4 mt-4 relative">
+
+                                                <div className="relative">
+                                                    <input
+                                                        type={showOldPassword ? "text" : "password"} required placeholder="Поточний пароль"
+                                                        value={passwordData.oldPassword}
+                                                        onChange={(e) => {
+                                                            setPasswordData({...passwordData, oldPassword: e.target.value});
+                                                            setPasswordError(''); if (pwdErrorTimerRef.current) clearTimeout(pwdErrorTimerRef.current);
+                                                        }}
+                                                        className={`w-full bg-white border rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 outline-none transition-all font-medium text-sm sm:text-base pr-10 ${passwordError ? 'border-red-400 focus:border-red-500' : 'border-gray-300 focus:border-[#974F23] focus:ring-2 focus:ring-[#974F23]/20'}`}
+                                                    />
+                                                    {passwordData.oldPassword.length > 0 && (
+                                                        <button type="button" onClick={() => setShowOldPassword(!showOldPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#974F23]">
+                                                            {showOldPassword ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>}
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                <div>
+                                                    <div className="relative">
+                                                        <input
+                                                            type={showNewPassword ? "text" : "password"} required placeholder="Новий пароль"
+                                                            value={passwordData.newPassword}
+                                                            onChange={(e) => {
+                                                                setPasswordData({...passwordData, newPassword: e.target.value});
+                                                                setPasswordError(''); if (pwdErrorTimerRef.current) clearTimeout(pwdErrorTimerRef.current);
+                                                            }}
+                                                            className={`w-full bg-white border rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 outline-none transition-all font-medium text-sm sm:text-base pr-10 ${passwordError ? 'border-red-400 focus:border-red-500' : 'border-gray-300 focus:border-[#974F23] focus:ring-2 focus:ring-[#974F23]/20'}`}
+                                                        />
+                                                        {passwordData.newPassword.length > 0 && (
+                                                            <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#974F23]">
+                                                                {showNewPassword ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>}
+                                                            </button>
+                                                        )}
+                                                    </div>
+
+                                                    {passwordData.newPassword && (
+                                                        <div className="mt-2 px-1">
+                                                            <div className="flex gap-1 h-1.5">
+                                                                {[1, 2, 3, 4, 5].map(level => (
+                                                                    <div key={level} className={`w-full rounded-full transition-colors duration-300 ${pwdStrength >= level ? strengthColors[pwdStrength] : 'bg-gray-200'}`} />
+                                                                ))}
+                                                            </div>
+                                                            <div className="flex justify-between items-center mt-1">
+                                                                <span className={`text-[10px] ${strengthColors[pwdStrength].replace('bg-', 'text-')}`}>{strengthLabels[pwdStrength]}</span>
+                                                            </div>
+                                                            <ul className="text-[10px] text-gray-500 mt-1 grid grid-cols-2 gap-1 font-['Inter']">
+                                                                {passwordData.newPassword.length < 8 && (<li><span className="text-gray-400 mr-1">○</span>8+ символів</li>)}
+                                                                {!/[A-ZА-ЯІЇЄҐ]/.test(passwordData.newPassword) && (<li><span className="text-gray-400 mr-1">○</span>Велика літера</li>)}
+                                                                {!/[0-9]/.test(passwordData.newPassword) && (<li><span className="text-gray-400 mr-1">○</span>Цифра</li>)}
+                                                                {!/[^A-Za-z0-9А-Яа-яІіЇїЄєҐґ]/.test(passwordData.newPassword) && (<li><span className="text-gray-400 mr-1">○</span>Спецсимвол</li>)}
+                                                            </ul>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="relative">
+                                                    <input
+                                                        type={showConfirmPassword ? "text" : "password"} required placeholder="Підтвердіть новий пароль"
+                                                        value={passwordData.newPasswordConfirm}
+                                                        onChange={(e) => {
+                                                            setPasswordData({...passwordData, newPasswordConfirm: e.target.value});
+                                                            setPasswordError(''); if (pwdErrorTimerRef.current) clearTimeout(pwdErrorTimerRef.current);
+                                                        }}
+                                                        className={`w-full bg-white border rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 outline-none transition-all font-medium text-sm sm:text-base pr-10 ${passwordError ? 'border-red-400 focus:border-red-500' : 'border-gray-300 focus:border-[#974F23] focus:ring-2 focus:ring-[#974F23]/20'}`}
+                                                    />
+                                                    {passwordData.newPasswordConfirm.length > 0 && (
+                                                        <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#974F23]">
+                                                            {showConfirmPassword ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>}
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                <button type="submit" className="w-full bg-[#974F23] text-white py-2.5 sm:py-3 rounded-xl font-bold hover:bg-[#7a3e1a] transition-colors shadow-md active:scale-95 duration-200 cursor-pointer text-sm sm:text-base mt-2">
                                                     Оновити пароль
                                                 </button>
                                             </form>

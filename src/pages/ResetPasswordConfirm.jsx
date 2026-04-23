@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import authBg from '../assets/auth/exit.jpg';
@@ -9,16 +9,58 @@ const ResetPasswordConfirm = () => {
 
     const [passwords, setPasswords] = useState({ new_password1: '', new_password2: '' });
     const [message, setMessage] = useState('');
-    const [error, setError] = useState('');
+    const [passwordError, setPasswordError] = useState(''); // Для локальних помилок пароля
 
-    const handleChange = (e) => setPasswords({ ...passwords, [e.target.name]: e.target.value });
+    const [showPassword1, setShowPassword1] = useState(false);
+    const [showPassword2, setShowPassword2] = useState(false);
+
+    const pwdErrorTimerRef = useRef(null);
+
+    const showPasswordErrorMessage = (text) => {
+        setPasswordError(text);
+        if (pwdErrorTimerRef.current) clearTimeout(pwdErrorTimerRef.current);
+        pwdErrorTimerRef.current = setTimeout(() => setPasswordError(''), 5000);
+    };
+
+    const handleChange = (e) => {
+            setPasswords({ ...passwords, [e.target.name]: e.target.value });
+
+        // Миттєве очищення помилки при новому вводі
+        setPasswordError('');
+        if (pwdErrorTimerRef.current) clearTimeout(pwdErrorTimerRef.current);
+    };
+
+    const calculateStrength = (password) => {
+        let score = 0;
+        if (!password) return 0;
+        if (password.length >= 8) score += 1;
+        if (/[A-Z]/.test(password) || /[А-ЯІЇЄҐ]/.test(password)) score += 1;
+        if (/[a-z]/.test(password) || /[а-яіїєґ]/.test(password)) score += 1;
+        if (/[0-9]/.test(password)) score += 1;
+        if (/[^A-Za-z0-9А-Яа-яІіЇїЄєҐґ]/.test(password)) score += 1;
+        return score;
+    };
+
+    const pwdStrength = calculateStrength(passwords.new_password1);
+    const strengthColors = ['bg-gray-200', 'bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-lime-500', 'bg-green-500'];
+    const strengthLabels = ['', 'Дуже слабкий', 'Слабкий', 'Нормальний', 'Надійний', 'Дуже надійний'];
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
+        setPasswordError('');
+
+        if (passwords.new_password1.length < 8) {
+            showPasswordErrorMessage('Пароль повинен містити щонайменше 8 символів.');
+            return;
+        }
+
+        if (pwdStrength < 3) {
+            showPasswordErrorMessage('Пароль занадто слабкий. Виконайте умови безпеки нижче.');
+            return;
+        }
 
         if (passwords.new_password1 !== passwords.new_password2) {
-            setError('Паролі не співпадають');
+            showPasswordErrorMessage('Паролі не співпадають. Перевірте правильність вводу.');
             return;
         }
 
@@ -34,19 +76,18 @@ const ResetPasswordConfirm = () => {
         } catch (err) {
             if (err.response && err.response.data) {
                 const errorData = err.response.data;
-                console.error("Деталі від сервера:", errorData);
-
+                // ДИНАМІЧНЕ ПОВІДОМЛЕННЯ: беремо текст помилки прямо від сервера
                 if (errorData.new_password1) {
-                    setError(`Помилка пароля: ${errorData.new_password1[0]}`);
+                    showPasswordErrorMessage(errorData.new_password1[0]);
                 } else if (errorData.non_field_errors) {
-                    setError(`Помилка: ${errorData.non_field_errors[0]}`);
+                    showPasswordErrorMessage(errorData.non_field_errors[0]);
                 } else if (errorData.uid || errorData.token) {
-                    setError('Недійсне або застаріле посилання. Надішліть запит на відновлення ще раз.');
+                    setMessage('Недійсне або застаріле посилання. Надішліть запит на відновлення ще раз.');
                 } else {
-                    setError('Невідома помилка перевірки даних.');
+                    showPasswordErrorMessage('Невідома помилка перевірки даних.');
                 }
             } else {
-                setError('Помилка з\'єднання з сервером.');
+                showPasswordErrorMessage('Помилка з\'єднання з сервером.');
             }
         }
     };
@@ -79,41 +120,66 @@ const ResetPasswordConfirm = () => {
                         Новий пароль
                     </h1>
 
-                    {message && (
-                        <div className="text-xs md:text-[13px] mb-4 p-3 rounded-xl font-medium border bg-white/90 backdrop-blur-sm shadow-sm inline-block text-green-700 border-green-200">
+                    <div className={`transition-all duration-500 overflow-hidden ${message ? 'max-h-24 opacity-100 mb-4' : 'max-h-0 opacity-0 mb-0'}`}>
+                        <div className={`text-xs md:text-[13px] p-3 rounded-lg font-medium border bg-white/80 backdrop-blur-sm inline-block ${message.includes('успішно') ? 'text-green-600 border-green-200' : 'text-red-500 border-red-200'}`}>
                             {message}
                         </div>
-                    )}
-                    {error && (
-                        <div className="text-xs md:text-[13px] mb-4 p-3 rounded-xl font-medium border bg-white/90 backdrop-blur-sm shadow-sm inline-block text-red-600 border-red-200">
-                            {error}
-                        </div>
-                    )}
+                    </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                            <label className="inline-block text-sm md:text-base font-semibold font-['El_Messiri'] text-gray-800 mb-1 ml-4">Новий пароль</label>
-                            <input
-                                type="password"
-                                name="new_password1"
-                                value={passwords.new_password1}
-                                onChange={handleChange}
-                                required
-                                placeholder="Введіть новий пароль"
-                                className="w-full px-5 font-['El_Messiri'] py-3 md:py-2.5 rounded-full border border-gray-300 focus:outline-none focus:border-[#42705D] transition text-base md:text-lg text-gray-700 bg-white"
-                            />
-                        </div>
-                        <div>
-                            <label className="inline-block text-sm md:text-base font-semibold font-['El_Messiri'] text-gray-800 mb-1 ml-4">Підтвердження пароля</label>
-                            <input
-                                type="password"
-                                name="new_password2"
-                                value={passwords.new_password2}
-                                onChange={handleChange}
-                                required
-                                placeholder="Повторіть новий пароль"
-                                className="w-full px-5 font-['El_Messiri'] py-3 md:py-2.5 rounded-full border border-gray-300 focus:outline-none focus:border-[#42705D] transition text-base md:text-lg text-gray-700 bg-white"
-                            />
+                        {/* БЛОК ПАРОЛІВ */}
+                        <div className="bg-gray-50/50 p-3 -mx-3 rounded-2xl border border-transparent transition-colors duration-300">
+
+                            {/* ЛОКАЛЬНА ПОМИЛКА ПАРОЛЯ */}
+                            <div className={`transition-all duration-500 overflow-hidden ${passwordError ? 'max-h-20 opacity-100 mb-3' : 'max-h-0 opacity-0 -mb-3'}`}>
+                                <div className="text-red-500 text-[12px] md:text-[13px] font-medium bg-red-50 border border-red-200 px-4 py-2 rounded-xl flex items-center gap-2">
+                                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    {passwordError}
+                                </div>
+                            </div>
+
+                            <div className="mb-3">
+                                <label className="inline-block text-sm md:text-base font-semibold font-['El_Messiri'] text-gray-800 mb-1 ml-4">Новий пароль</label>
+                                <div className="relative">
+                                    <input type={showPassword1 ? "text" : "password"} name="new_password1" value={passwords.new_password1} onChange={handleChange} required placeholder="Введіть новий пароль" className={`w-full px-5 py-3 md:py-2.5 font-['El_Messiri'] rounded-full border focus:outline-none transition text-base md:text-lg text-gray-700 bg-white pr-12 ${passwordError ? 'border-red-400 focus:border-red-500' : 'border-gray-300 focus:border-[#42705D]'}`} />
+                                    {passwords.new_password1.length > 0 && (
+                                        <button type="button" onClick={() => setShowPassword1(!showPassword1)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#42705D] transition-colors focus:outline-none">
+                                            {showPassword1 ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>}
+                                        </button>
+                                    )}
+                                </div>
+
+                                {passwords.new_password1 && (
+                                    <div className="mt-2 px-2">
+                                        <div className="flex gap-1 h-1.5">
+                                            {[1, 2, 3, 4, 5].map(level => (
+                                                <div key={level} className={`w-full rounded-full transition-colors duration-300 ${pwdStrength >= level ? strengthColors[pwdStrength] : 'bg-gray-200'}`} />
+                                            ))}
+                                        </div>
+                                        <div className="flex justify-between items-center mt-1">
+                                            <span className={`text-[11px] ${strengthColors[pwdStrength].replace('bg-', 'text-')}`}>{strengthLabels[pwdStrength]}</span>
+                                        </div>
+                                        <ul className="text-[11px] text-gray-500 mt-1 grid grid-cols-2 gap-1 font-['Inter']">
+                                            {passwords.new_password1.length < 8 && (<li><span className="text-gray-400 mr-1">○</span>8+ символів</li>)}
+                                            {!/[A-ZА-ЯІЇЄҐ]/.test(passwords.new_password1) && (<li><span className="text-gray-400 mr-1">○</span>Велика літера</li>)}
+                                            {!/[0-9]/.test(passwords.new_password1) && (<li><span className="text-gray-400 mr-1">○</span>Цифра</li>)}
+                                            {!/[^A-Za-z0-9А-Яа-яІіЇїЄєҐґ]/.test(passwords.new_password1) && (<li><span className="text-gray-400 mr-1">○</span>Спецсимвол</li>)}
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="inline-block text-sm md:text-base font-semibold font-['El_Messiri'] text-gray-800 mb-1 ml-4">Підтвердження пароля</label>
+                                <div className="relative">
+                                    <input type={showPassword2 ? "text" : "password"} name="new_password2" value={passwords.new_password2} onChange={handleChange} required placeholder="Повторіть новий пароль" className={`w-full px-5 py-3 md:py-2.5 font-['El_Messiri'] rounded-full border focus:outline-none transition text-base md:text-lg text-gray-700 bg-white pr-12 ${passwordError ? 'border-red-400 focus:border-red-500' : 'border-gray-300 focus:border-[#42705D]'}`} />
+                                    {passwords.new_password2.length > 0 && (
+                                        <button type="button" onClick={() => setShowPassword2(!showPassword2)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#42705D] transition-colors focus:outline-none">
+                                            {showPassword2 ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>}
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
                         </div>
 
                         <button type="submit" className="w-full bg-[#1A1A1A] text-white font-['El_Messiri'] font-medium rounded-full py-3 md:py-2.5 hover:bg-gray-800 transition mt-6 text-base md:text-lg shadow-md cursor-pointer transition-all duration-300 ease-out active:scale-95 group">
