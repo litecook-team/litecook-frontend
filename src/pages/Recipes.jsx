@@ -259,8 +259,8 @@ const Recipes = () => {
                 setEmptyFilterError(false); // Скидаємо помилку іншого табу
                 setDuplicateError(null); // Очищаємо помилку дублікату, якщо вона є
                 return;
-            } else if (activeTab !== 'ingredients' && !hasFilters && !hasSearchQuery) {
-                // Якщо ми на табі фільтрів, і не вибрано фільтрів, І немає тексту в пошуку
+            } else if (activeTab !== 'ingredients' && !hasFilters) {
+                // ВИПРАВЛЕНО: Тепер ми вимагаємо наявність фільтрів незалежно від того, чи є інгредієнти
                 showError('emptyFilter');
                 setEmptyIngredientsError(false);
                 return;
