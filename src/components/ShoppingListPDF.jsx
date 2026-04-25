@@ -35,13 +35,13 @@ const styles = StyleSheet.create({
     footer: { marginTop: 'auto', borderTopWidth: 1, borderTopColor: '#E5E7EB', paddingTop: 15, textAlign: 'center', fontSize: 9, color: '#9CA3AF' }
 });
 
-const ShoppingListPDF = ({ list, subtitleText, dateString }) => (
+const ShoppingListPDF = ({ list, subtitleText, dateString, tTitle, tFooter }) => (
     <Document>
         <Page size="A4" style={styles.page}>
 
             <View style={styles.header}>
                 <View style={styles.titleBlock}>
-                    <Text style={styles.title}>Список продуктів</Text>
+                    <Text style={styles.title}>{tTitle}</Text>
                     <Text style={styles.subtitle}>{subtitleText}</Text>
                 </View>
                 <View style={styles.logoBlock}>
@@ -70,7 +70,7 @@ const ShoppingListPDF = ({ list, subtitleText, dateString }) => (
             </View>
 
             <View style={styles.footer}>
-                <Text>Згенеровано в додатку LITE cook. Нехай готування приносить радість!</Text>
+                <Text>{tFooter}</Text>
             </View>
 
         </Page>
