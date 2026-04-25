@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next'; // ІМПОРТ ПЕРЕКЛАДУ
 import authBg from '../assets/auth/exit.jpg';
 
 const ResetPassword = () => {
+    const { t } = useTranslation(); // ІНІЦІАЛІЗАЦІЯ ПЕРЕКЛАДУ
+
     const [email, setEmail] = useState('');
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
@@ -12,7 +15,7 @@ const ResetPassword = () => {
     const validateEmail = (email) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            return 'Будь ласка, введіть коректну електронну адресу (наприклад, name@example.com).';
+            return t('forgot_password_page.error_email_format');
         }
 
         const domain = email.split('@')[1].toLowerCase();
@@ -20,12 +23,12 @@ const ResetPassword = () => {
         const ruDomains = ['.ru', '.su', '.рф', 'yandex', 'mail.ru', 'bk.ru', 'inbox.ru', 'list.ru'];
         const isRuDomain = ruDomains.some(ru => domain.endsWith(ru) || domain.includes(ru));
         if (isRuDomain) {
-            return 'Зазначена поштова скринька належить до країни-терориста. Наш сервіс не підтримує такі адреси.';
+            return t('forgot_password_page.error_email_ru');
         }
 
         const blockedTypos = ['gmail.co', 'gmail.c', 'gmai.com', 'gmal.com', 'ukr.ne', 'yahoo.c', 'yaho.com'];
         if (blockedTypos.includes(domain)) {
-            return "Схоже, ви припустилися помилки в домені пошти. Будь ласка, перевірте правильність.";
+            return t('forgot_password_page.error_email_typo');
         }
 
         return '';
@@ -46,11 +49,11 @@ const ResetPassword = () => {
         try {
             // Якщо бекенд знаходить пошту і все добре, він має повернути успішну відповідь
             await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/password/reset/`, { email });
-            setMessage('Інструкцію з відновлення пароля відправлено на вашу пошту. Будь ласка, перевірте пошту.');
+            setMessage(t('forgot_password_page.success_msg'));
             setEmail('');
         } catch (err) {
             // 2. Обробка помилок від бекенда (бекенд повертає 400 з текстом)
-            let errorMsg = 'Сталася помилка при відправці запиту. Спробуйте пізніше.';
+            let errorMsg = t('forgot_password_page.error_server');
 
             if (err.response && err.response.data) {
                 const data = err.response.data;
@@ -83,7 +86,7 @@ const ResetPassword = () => {
                     <polyline points="12 8 8 12 12 16"></polyline>
                     <line x1="16" y1="12" x2="8" y2="12"></line>
                 </svg>
-                Назад
+                {t('forgot_password_page.back_btn')}
             </Link>
 
             <div className="flex flex-col items-center w-full max-w-[700px] z-10 pt-6 md:pt-0">
@@ -95,7 +98,7 @@ const ResetPassword = () => {
                 <div className="bg-white/90 backdrop-blur-sm shadow-xl rounded-[2rem] p-6 sm:p-10 w-full max-w-[520px] font-['Inter'] mx-auto">
 
                     <h1 className="text-2xl md:text-3xl font-['El_Messiri'] font-bold mb-6 text-[#1A1A1A] text-center md:text-left">
-                        Забули ваш пароль?
+                        {t('forgot_password_page.title')}
                     </h1>
 
                     {message && (
@@ -112,24 +115,24 @@ const ResetPassword = () => {
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label className="inline-block text-sm md:text-base font-semibold font-['El_Messiri'] text-gray-800 mb-1 ml-4">Не хвилюйтеся! Ми допоможемо вам скинути пароль.</label>
+                            <label className="inline-block text-sm md:text-base font-semibold font-['El_Messiri'] text-gray-800 mb-1 ml-4">{t('forgot_password_page.subtitle')}</label>
                             <input
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
-                                placeholder="Введіть електронну пошту"
+                                placeholder={t('forgot_password_page.email_placeholder')}
                                 className="w-full px-5 font-['El_Messiri'] py-3 md:py-2.5 rounded-full border border-gray-300 focus:outline-none focus:border-[#42705D] transition text-base md:text-lg text-gray-700 bg-white"
                             />
                         </div>
 
                         <button type="submit" className="w-full bg-[#1A1A1A] text-white font-['El_Messiri'] font-medium rounded-full py-3 md:py-2.5 hover:bg-gray-800 transition mt-4 text-base md:text-lg shadow-md cursor-pointer transition-all duration-300 ease-out active:scale-95 group">
-                            Надіслати посилання для скидання пароля
+                            {t('forgot_password_page.submit_btn')}
                         </button>
                     </form>
 
                     <div className="mt-8 text-center text-sm sm:text-base font-['El_Messiri'] text-gray-800 font-medium">
-                        Згадали пароль? <Link to="/login" className="text-blue-600 hover:text-[#42705D] hover:underline font-bold ml-1 transition">Увійти</Link>
+                        {t('forgot_password_page.remembered_password')} <Link to="/login" className="text-blue-600 hover:text-[#42705D] hover:underline font-bold ml-1 transition">{t('forgot_password_page.login_link')}</Link>
                     </div>
                 </div>
             </div>

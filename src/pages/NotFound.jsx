@@ -1,11 +1,14 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next'; // ІМПОРТ ПЕРЕКЛАДУ
 
 // Імпортуємо зображення авокадо
 import avocadoImg from '../assets/notFound/avokado_not_found.png';
 import avocadoAvatar from '../assets/global/avokado_avatar.png';
 
 const NotFound = () => {
+    const { t } = useTranslation(); // ІНІЦІАЛІЗАЦІЯ ПЕРЕКЛАДУ
+
     // Прокрутка вгору при завантаженні сторінки
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -24,25 +27,25 @@ const NotFound = () => {
                     {/* ВЕРХНІЙ ТЕКСТ ПО ЦЕНТРУ */}
                     <div className="w-full flex flex-col items-center">
                         <h1 className="mt-12 sm:mt-16 md:mt-17 lg:mt-32 xl:mt-24 text-6xl sm:text-7xl md:text-[70px] lg:text-[87px] xl:text-[100px] 2xl:text-[120px] font-bold font-['El_Messiri'] text-[#1A1A1A] leading-none mb-2 md:mb-4">
-                            404!
+                            {t('not_found_page.title_404')}
                         </h1>
                         <h2 className="text-4xl sm:text-5xl md:text-5xl lg:text-[52px] xl:text-[65px] 2xl:text-[75px] font-['El_Messiri'] text-[#1A1A1A] leading-tight mb-6 lg:mb-10">
-                            Отакої!
+                            {t('not_found_page.subtitle')}
                         </h2>
                     </div>
 
                     {/* НИЖНІЙ ТЕКСТ ЛІВОРУЧ (або по центру на мобільному) */}
                     <div className="w-full text-center md:text-left">
                         <h3 className="text-3xl sm:text-4xl md:text-[30px] lg:text-[38px] xl:text-[50px] 2xl:text-[53px] font-['El_Messiri'] text-[#1A1A1A] leading-tight mb-4 md:mb-8 lg:mb-10">
-                            Схоже, щось пішло не так
+                            {t('not_found_page.text_1')}
                         </h3>
 
                         <div className="mb-4 md:mb-10 lg:mb-14">
                             <p className="text-2xl sm:text-3xl md:text-[27px] lg:text-[32px] xl:text-[38px] 2xl:text-[44px] font-['El_Messiri'] text-[#A0354E] leading-relaxed mb-1">
-                                Цієї сторінки не існує.
+                                {t('not_found_page.text_2')}
                             </p>
                             <p className="text-2xl sm:text-3xl md:text-[27px] lg:text-[32px] xl:text-[38px] 2xl:text-[44px] font-['El_Messiri'] text-[#A0354E] leading-relaxed">
-                                Давайте пошукаємо щось інше
+                                {t('not_found_page.text_3')}
                             </p>
                         </div>
                     </div>
@@ -95,13 +98,13 @@ const NotFound = () => {
                         to="/recipes"
                         className="px-8 py-3.5 sm:py-3 bg-white text-[#1A1A1A] border border-gray-800 rounded-full font-['El_Messiri'] text-xl lg:text-1xl text-center hover:bg-gray-50 transition-all w-full sm:w-auto min-w-[220px] shadow-sm cursor-pointer duration-300 ease-out active:scale-95 group"
                     >
-                        Пошук рецептів...
+                        {t('not_found_page.btn_search')}
                     </Link>
                     <Link
                         to="/"
                         className="px-8 py-3.5 sm:py-3 bg-[#B5C9AD] text-[#1A1A1A] rounded-full font-['El_Messiri'] text-xl lg:text-1xl text-center hover:bg-[#A3B89B] transition-all w-full sm:w-auto min-w-[250px] shadow-sm cursor-pointer duration-300 ease-out active:scale-95 group"
                     >
-                        На головну
+                        {t('not_found_page.btn_home')}
                     </Link>
                 </div>
 

@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next'; // ІМПОРТ ПЕРЕКЛАДУ
+
 import api from '../api';
 import { ENDPOINTS, API_URL, TOKEN_KEY } from '../constants/api';
 import { DICTIONARIES } from '../constants/translations';
-
-// декоративне зображення
+/// декоративне зображення
 import decorImage from '../assets/recipe/fon_filter.jpg';
 
 // Допоміжна функція для правильного відмінювання слів
@@ -17,36 +18,37 @@ const getPluralForm = (number, titles) => {
     return titles[2];
 };
 
-// Словники для нових фільтрів
-const MONTHS_DICT = {
-    1: 'Січень', 2: 'Лютий', 3: 'Березень', 4: 'Квітень',
-    5: 'Травень', 6: 'Червень', 7: 'Липень', 8: 'Серпень',
-    9: 'Вересень', 10: 'Жовтень', 11: 'Листопад', 12: 'Грудень'
-};
-
-const INGREDIENT_CATEGORIES_DICT = {
-    'vegetables': 'Овочі та коренеплоди', 'fruits': 'Фрукти та ягоди', 'greens': 'Зелень та трави',
-    'mushrooms': 'Гриби', 'meat_bird': 'Птиця', 'meat_pork': 'Свинина', 'meat_beef': 'Яловичина',
-    'fish_red': 'Червона риба', 'fish_white': 'Біла риба', 'seafood': 'Морепродукти',
-    'cheese': 'Сири', 'dairy': 'Молочні продукти та яйця', 'grains': 'Крупи та бобові',
-    'flour': 'Борошно', 'nuts': 'Горіхи та насіння', 'spices': 'Спеції та приправи'
-};
-
-// Список табів
-const TABS = [
-    { id: 'ingredients', label: 'Інгредієнти' },
-    { id: 'ingredient_cats', label: 'Групи продуктів' },
-    { id: 'meal_time', label: 'Прийом їжі' },
-    { id: 'dish_type', label: 'Тип страви' },
-    { id: 'cuisine', label: 'Кухня' },
-    { id: 'difficulty', label: 'Складність' },
-    { id: 'time', label: 'Час приготування' },
-    { id: 'calories', label: 'Калорійність' },
-    { id: 'diet', label: 'Дієтичні обмеження' },
-    { id: 'season', label: 'Сезонність' },
-];
-
 const Recipes = () => {
+    const { t, i18n } = useTranslation(); // ПІДКЛЮЧЕННЯ ПЕРЕКЛАДУ
+
+    // Динамічні словники всередині компонента
+    const MONTHS_DICT = {
+        1: t('recipes_page.month_1'), 2: t('recipes_page.month_2'), 3: t('recipes_page.month_3'), 4: t('recipes_page.month_4'),
+        5: t('recipes_page.month_5'), 6: t('recipes_page.month_6'), 7: t('recipes_page.month_7'), 8: t('recipes_page.month_8'),
+        9: t('recipes_page.month_9'), 10: t('recipes_page.month_10'), 11: t('recipes_page.month_11'), 12: t('recipes_page.month_12')
+    };
+
+    const INGREDIENT_CATEGORIES_DICT = {
+        'vegetables': t('recipes_page.cat_vegetables'), 'fruits': t('recipes_page.cat_fruits'), 'greens': t('recipes_page.cat_greens'),
+        'mushrooms': t('recipes_page.cat_mushrooms'), 'meat_bird': t('recipes_page.cat_meat_bird'), 'meat_pork': t('recipes_page.cat_meat_pork'), 'meat_beef': t('recipes_page.cat_meat_beef'),
+        'fish_red': t('recipes_page.cat_fish_red'), 'fish_white': t('recipes_page.cat_fish_white'), 'seafood': t('recipes_page.cat_seafood'),
+        'cheese': t('recipes_page.cat_cheese'), 'dairy': t('recipes_page.cat_dairy'), 'grains': t('recipes_page.cat_grains'),
+        'flour': t('recipes_page.cat_flour'), 'nuts': t('recipes_page.cat_nuts'), 'spices': t('recipes_page.cat_spices')
+    };
+
+    const TABS = [
+        { id: 'ingredients', label: t('recipes_page.tab_ingredients') },
+        { id: 'ingredient_cats', label: t('recipes_page.tab_categories') },
+        { id: 'meal_time', label: t('recipes_page.tab_meal_time') },
+        { id: 'dish_type', label: t('recipes_page.tab_dish_type') },
+        { id: 'cuisine', label: t('recipes_page.tab_cuisine') },
+        { id: 'difficulty', label: t('recipes_page.tab_difficulty') },
+        { id: 'time', label: t('recipes_page.tab_time') },
+        { id: 'calories', label: t('recipes_page.tab_calories') },
+        { id: 'diet', label: t('recipes_page.tab_diet') },
+        { id: 'season', label: t('recipes_page.tab_season') },
+    ];
+
     const isAuthenticated = !!localStorage.getItem(TOKEN_KEY) || !!sessionStorage.getItem(TOKEN_KEY);
     const location = useLocation(); // для розуміння, чи ми щойно зайшли на сторінку
 
@@ -159,7 +161,8 @@ const Recipes = () => {
     }, [recipes, visibleCount, activeTab, searchQuery, selectedCuisines, selectedDifficulties, selectedDiets, selectedDishTypes, selectedMealTimes, selectedMonths, selectedIngredientCategories, maxTime, maxCalories, isSeasonal, hasActiveFilters, matchedIngredientIds, lastQueryUrl]);
 
     useEffect(() => {
-        // Завантажуємо всі інгредієнти з БД для підказок та списку
+        // 1. Завантажуємо всі інгредієнти з БД для підказок та списку
+        // (вони автоматично оновляться при зміні мови)
         const fetchIngredients = async () => {
             try {
                 const res = await api.get('/api/ingredients/?limit=1000');
@@ -169,37 +172,27 @@ const Recipes = () => {
             }
         };
         fetchIngredients();
+    }, [i18n.language]);
 
-        // ЛОГІКА ОЧИЩЕННЯ/ВІДНОВЛЕННЯ:
-        // Перевіряємо, чи перехід був зі сторінки детального рецепту
+    // ЛОГІКА ОЧИЩЕННЯ ТА ПЕРЕЗАВАНТАЖЕННЯ РЕЦЕПТІВ (При зміні мови - перезавантажуємо!)
+    useEffect(() => {
         const isFromRecipeDetail = location.state?.fromRecipe === true;
-
-        // Перевіряємо, чи перехід був з головної сторінки з наміром відкрити певний таб
         const hasInitialTab = location.state?.initialTab !== undefined;
 
-        if (isFromRecipeDetail) {
-            // МИ ПОВЕРНУЛИСЯ З РЕЦЕПТУ: Завантажуємо кеш
-            const savedRecipes = loadStateFromStorage('recipes', []);
-            if (savedRecipes.length === 0) {
-                 fetchRecipes(false);
-            } else {
-                 setLoading(false);
-            }
+        if (isFromRecipeDetail && loadStateFromStorage('recipes', []).length > 0) {
+            // Перезавантажуємо примусово, щоб отримати нову мову, але не скидаємо фільтри
+            fetchRecipes(false, lastQueryUrl ? 'reload_same_url' : null);
         } else if (hasInitialTab) {
-            // МИ ПРИЙШЛИ З ГОЛОВНОЇ ЧЕРЕЗ КАРТКУ: Очищаємо кеш, встановлюємо таб і робимо свіжий запит
             clearAllFiltersStorageOnly();
             setActiveTab(location.state.initialTab);
             setTimeout(() => fetchRecipes(false, 'clear'), 0);
         } else {
-            // МИ ПРИЙШЛИ ЗВІДКИСЬ ІНШОГО (Меню, Логін, Клік по лінку в шапці):
-            // Очищаємо весь кеш і робимо свіжий запит
             clearAllFiltersStorageOnly();
             setActiveTab('ingredients');
             setTimeout(() => fetchRecipes(false, 'clear'), 0);
         }
-
         window.scrollTo(0, 0);
-    }, [location.state]); // Залежність від location.state важлива!
+    }, [location.state, i18n.language]); // РЕАГУЄ НА ЗМІНУ МОВИ
 
     // Закриття підказок при кліку поза ними
     useEffect(() => {
@@ -238,8 +231,7 @@ const Recipes = () => {
     };
 
     const fetchRecipes = async (isUserAction = true, overrideParams = null) => {
-        // Перевірка на те, чи обрані фільтри перед відправкою запиту
-        if (isUserAction && overrideParams !== 'clear') {
+        if (isUserAction && overrideParams !== 'clear' && overrideParams !== 'reload_same_url') {
             const hasSearchQuery = searchQuery.trim() !== '';
             const hasFilters =
                 selectedCuisines.length > 0 ||
@@ -279,7 +271,13 @@ const Recipes = () => {
             // Отримуємо 100% точні ID з бази
             if (overrideParams === 'clear') {
                 setMatchedIngredientIds([]);
+            } else if (overrideParams === 'reload_same_url') {
+                // ФІКС: Якщо ми просто перезавантажуємо сторінку після повернення,
+                // беремо вже збережені ID інгредієнтів (вони не залежать від мови),
+                // замість того, щоб шукати їх заново за текстом попередньої мови.
+                currentMatchedIds = matchedIngredientIds;
             } else {
+                // Звичайний новий пошук
                 currentMatchedIds = getIngredientIdsFromSearch(searchQuery);
                 setMatchedIngredientIds(currentMatchedIds);
             }
@@ -287,6 +285,8 @@ const Recipes = () => {
             if (overrideParams === 'clear') {
                 url = `${ENDPOINTS.RECIPES}`;
                 setHasActiveFilters(false);
+            } else if (overrideParams === 'reload_same_url') {
+                url = lastQueryUrl || `${ENDPOINTS.RECIPES}`;
             } else {
                 const params = new URLSearchParams();
                 const hasSearch = searchQuery.trim() !== '';
@@ -331,17 +331,22 @@ const Recipes = () => {
 
             // Запобігання дублюванню запитів до сервера
             // Якщо це не очищення фільтрів і новий URL збігається зі старим, нічого не робимо
-            if (isUserAction && overrideParams !== 'clear' && url === lastQueryUrl) {
+            if (isUserAction && overrideParams !== 'clear' && overrideParams !== 'reload_same_url' && url === lastQueryUrl) {
+                setLoading(false);
                 return;
             }
 
-            setLoading(true);
             const response = await api.get(url);
             setRecipes(response.data.results || response.data);
+
+            // Оновлюємо модалку, якщо вона відкрита і ми переклали мову
+            if (selectedRecipeForModal) {
+                const updatedRecipe = (response.data.results || response.data).find(r => r.id === selectedRecipeForModal.id);
+                if (updatedRecipe) setSelectedRecipeForModal(updatedRecipe);
+            }
+
             setVisibleCount(6);
             setShowSuggestions(false);
-
-            // Зберігаємо цей URL як останній успішний запит
             setLastQueryUrl(url);
 
         } catch (error) {
@@ -412,14 +417,14 @@ const Recipes = () => {
             if (recipe.is_favorited) {
                 await api.delete(`${ENDPOINTS.FAVORITES}${recipe.id}/`);
                 setRecipes(recipes.map(r => r.id === recipe.id ? { ...r, is_favorited: false } : r));
-                showToast("🤍 Видалено з улюблених");
+                showToast(t('recipe_detail_page.toast_fav_removed'));
             } else {
                 await api.post(ENDPOINTS.FAVORITES, { recipe: recipe.id });
                 setRecipes(recipes.map(r => r.id === recipe.id ? { ...r, is_favorited: true } : r));
-                showToast("❤️ Додано в улюблені!");
+                showToast(t('recipe_detail_page.toast_fav_added'));
             }
         } catch (error) {
-            showToast("❌ Помилка синхронізації");
+            showToast(t('recipe_detail_page.toast_fav_error'));
         }
     };
 
@@ -517,19 +522,19 @@ const Recipes = () => {
     };
 
     // Підрахунок активних фільтрів для мобільного меню
-    const getActiveFiltersCount = () => {
-        return (searchQuery ? 1 : 0) +
-            selectedCuisines.length +
-            selectedDifficulties.length +
-            selectedDiets.length +
-            selectedDishTypes.length +
-            selectedMealTimes.length +
-            selectedMonths.length +
-            selectedIngredientCategories.length +
-            (maxTime ? 1 : 0) +
-            (maxCalories ? 1 : 0) +
-            (isSeasonal ? 1 : 0);
-    };
+    // const getActiveFiltersCount = () => {
+    //     return (searchQuery ? 1 : 0) +
+    //         selectedCuisines.length +
+    //         selectedDifficulties.length +
+    //         selectedDiets.length +
+    //         selectedDishTypes.length +
+    //         selectedMealTimes.length +
+    //         selectedMonths.length +
+    //         selectedIngredientCategories.length +
+    //         (maxTime ? 1 : 0) +
+    //         (maxCalories ? 1 : 0) +
+    //         (isSeasonal ? 1 : 0);
+    // };
 
     // Допоміжна функція для форматування кількості
     const formatAmount = (amount, unit) => {
@@ -574,7 +579,7 @@ const Recipes = () => {
                         {/* ЄДИНИЙ ЗАГОЛОВОК "ФІЛЬТРИ" ДЛЯ ВСІХ ЕКРАНІВ */}
                         <div className="mb-3 lg:mb-4 inline-block w-max">
                             <h3 className="font-['El_Messiri'] font-bold text-xl text-gray-800 px-3 py-1 bg-white/70 backdrop-blur-md rounded-lg shadow-sm border border-white/50">
-                                Фільтри
+                                {t('recipes_page.filters_title')}
                             </h3>
                         </div>
 
@@ -625,7 +630,7 @@ const Recipes = () => {
                                     className="flex items-center gap-1.5 bg-red-50 text-red-600 hover:bg-red-100 transition-colors font-['Inter'] text-[13px] font-bold px-4 py-1.5 rounded-full border border-red-200 shadow-sm animate-fade-in"
                                 >
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                                    <span className="hidden sm:inline cursor-pointer transition-all duration-300 ease-out active:scale-95 group">Очистити фільтри</span>
+                                    <span className="hidden sm:inline cursor-pointer transition-all duration-300 ease-out active:scale-95 group">{t('recipes_page.clear_filters')}</span>
                                 </button>
                             ) : (
                                 <div></div>
@@ -634,7 +639,7 @@ const Recipes = () => {
                             <div className="flex items-center gap-2">
                                 <div className="w-4 h-4 bg-[#6A907B] mr-2 shrink-0"></div>
                                 <span className="font-['El_Messiri'] font-bold text-gray-800 tracking-wider uppercase text-sm text-xl">
-                                    ПІДІБРАТИ РЕЦЕПТ
+                                    {t('recipes_page.pick_recipe')}
                                 </span>
                             </div>
                         </div>
@@ -642,7 +647,7 @@ const Recipes = () => {
                         {/* ТАБ 1: ІНГРЕДІЄНТИ / ПОШУК */}
                         {activeTab === 'ingredients' && (
                             <div className="animate-fade-in flex flex-col h-full font-['El_Messiri']">
-                                <h3 className="text-[22px] md:text-[28px] font-bold text-[#1A1A1A] mb-5">Введіть інгредієнти, які у вас є:</h3>
+                                <h3 className="text-[22px] md:text-[28px] font-bold text-[#1A1A1A] mb-5">{t('recipes_page.enter_ingredients')}</h3>
 
                                 {/* БЛОК ПОШУКУ З ПІДКАЗКАМИ */}
                                 <div className="relative mb-6 shrink-0" ref={suggestionsRef}>
@@ -651,7 +656,7 @@ const Recipes = () => {
                                     {duplicateError && (
                                         <div className="absolute -top-8 left-0 animate-fade-in w-max px-3 py-1.5 bg-red-100 border border-red-300 rounded-lg text-red-700 text-[12px] sm:text-[13px] font-medium flex items-center gap-1.5 shadow-sm z-20">
                                             <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                                            <span>Інгредієнт <b>«{duplicateError}»</b> вже додано до пошуку.</span>
+                                            <span>{t('recipes_page.err_duplicate', { name: duplicateError })}</span>
                                         </div>
                                     )}
 
@@ -659,12 +664,12 @@ const Recipes = () => {
                                     {emptyIngredientsError && !duplicateError && (
                                         <div className="absolute -top-8 left-0 animate-fade-in w-max px-3 py-1.5 bg-red-100 border border-red-300 rounded-lg text-red-700 text-[12px] sm:text-[13px] md:text-[15px] font-medium flex items-center gap-1.5 shadow-sm z-20">
                                             <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                                            <span>Введіть або оберіть інгредієнти для пошуку рецептів</span>
+                                            <span>{t('recipes_page.err_empty')}</span>
                                         </div>
                                     )}
 
                                     <p className="text-[12px] sm:text-[13px] md:text-[15px] text-gray-800 text-green-900 -mt-4 px-2">
-                                        💡 Розділяйте інгредієнти <b>комою</b> (наприклад: картопля, білий рис, морква)
+                                        {t('recipes_page.hint_comma')}
                                     </p>
                                     <div className="relative shadow-sm rounded-xl flex">
                                         <div className="relative flex-grow">
@@ -675,7 +680,7 @@ const Recipes = () => {
                                                 onChange={handleInputChange}
                                                 onFocus={() => setShowSuggestions(true)}
                                                 onKeyDown={(e) => e.key === 'Enter' && fetchRecipes()}
-                                                placeholder="Листя салату, картопля, бринза..."
+                                                placeholder={t('recipes_page.placeholder_ingredients')}
                                                 className={`w-full bg-white border-2 rounded-xl px-5 py-4 pl-12 pr-10 outline-none transition-colors text-gray-800 font-medium font-['Inter'] ${
                                                     (duplicateError || emptyIngredientsError)
                                                     ? 'border-red-300 focus:border-red-500 bg-red-50/50 text-red-900 placeholder-red-300' 
@@ -694,7 +699,7 @@ const Recipes = () => {
                                                         if (inputRef.current) inputRef.current.focus();
                                                     }}
                                                     className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
-                                                    title="Очистити поле"
+                                                    title={t('recipes_page.clear_filters')}
                                                 >
                                                     <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                                                 </button>
@@ -729,7 +734,7 @@ const Recipes = () => {
                                     {/* Ліва колонка: ШВИДКИЙ СКРОЛЯЧИЙ СПИСОК ІНГРЕДІЄНТІВ */}
                                     <div className="w-full lg:w-[60%] flex flex-col bg-white border border-gray-200 rounded-2xl p-4 shadow-sm max-h-[320px]">
                                         <p className="text-[14px] font-bold text-gray-800 mb-3 flex items-center gap-1 shrink-0">
-                                            Швидкий вибір <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+                                            {t('recipes_page.quick_choice')} <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
                                         </p>
 
                                         {allIngredients.length > 0 ? (
@@ -752,7 +757,7 @@ const Recipes = () => {
                                                 ))}
                                             </div>
                                         ) : (
-                                            <div className="text-sm text-gray-500 italic py-4">Завантаження бази інгредієнтів...</div>
+                                            <div className="text-sm text-gray-500 italic py-4">{t('recipes_page.loading_ingredients')}</div>
                                         )}
 
                                         {/* ПУНКТ 2/7: Кнопка пошуку для мобільних екранів ТІЛЬКИ на табі інгредієнтів (всередині лівої колонки) */}
@@ -761,7 +766,7 @@ const Recipes = () => {
                                                 onClick={() => fetchRecipes(true)}
                                                 className="w-full py-3 bg-[#6A907B] text-white rounded-xl font-bold text-[17px] hover:bg-[#5B826B] transition-colors shadow-lg text-center tracking-wide block cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out hover:shadow-[0_12px_25px_rgba(180,114,49,0.15)] active:scale-95 group"
                                             >
-                                                Знайти рецепт
+                                                {t('recipes_page.find_recipe_btn')}
                                             </button>
                                         </div>
                                     </div>
@@ -773,22 +778,22 @@ const Recipes = () => {
 
                                             <h4 className="font-bold text-[#B47231] uppercase tracking-wider mb-3 text-[13px] flex items-center gap-2">
                                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                                                {hasActiveFilters ? 'Результати' : 'Усі страви'}
+                                                {hasActiveFilters ? t('recipes_page.results') : t('recipes_page.all_dishes')}
                                             </h4>
 
                                             <div className="text-gray-800 text-[14px] mb-4">
                                                 {hasActiveFilters ? (
                                                     <>
-                                                        Знайдено рецептів: <span className="font-bold text-lg ml-1 text-[#1A1A1A]">{recipes.length}</span>
+                                                        {t('recipes_page.found_recipes')} <span className="font-bold text-lg ml-1 text-[#1A1A1A]">{recipes.length}</span>
                                                         <p className="text-[12px] text-gray-500 mt-1 leading-tight">
-                                                            за вашими критеріями пошуку
+                                                            {t('recipes_page.by_your_criteria')}
                                                         </p>
                                                     </>
                                                 ) : (
                                                     <>
-                                                        Доступно рецептів: <span className="font-bold text-lg ml-1 text-[#1A1A1A]">{recipes.length}</span>
+                                                        {t('recipes_page.available_recipes')} <span className="font-bold text-lg ml-1 text-[#1A1A1A]">{recipes.length}</span>
                                                         <p className="text-[12px] text-gray-500 mt-1 leading-tight">
-                                                            Оберіть інгредієнти або фільтри, щоб розпочати пошук.
+                                                            {t('recipes_page.select_filters_hint')}
                                                         </p>
                                                     </>
                                                 )}
@@ -797,19 +802,19 @@ const Recipes = () => {
                                             {/* Блок промо реєстрації для гостей */}
                                             {!isAuthenticated ? (
                                                 <div className="mt-auto bg-[#DCE8D9]/40 rounded-xl p-4 border border-[#DCE8D9]">
-                                                    <h5 className="font-bold text-[#5B826B] mb-2 text-sm">Список покупок 🛒</h5>
+                                                    <h5 className="font-bold text-[#5B826B] mb-2 text-sm">{t('recipes_page.promo_shopping_title')}</h5>
                                                     <p className="text-[12px] text-gray-600 mb-4 leading-relaxed">
-                                                        Бракує інгредієнтів? Зареєструйтесь, щоб автоматично формувати список для покупок.
+                                                        {t('recipes_page.promo_shopping_desc')}
                                                     </p>
                                                     <Link to="/register" className="block text-center w-full py-2.5 bg-[#5B826B] text-white rounded-lg text-[13px] font-semibold hover:bg-[#42705D] transition-colors shadow-sm">
-                                                        Зареєструватися
+                                                        {t('recipes_page.register_btn')}
                                                     </Link>
                                                 </div>
                                             ) : (
                                                 <div className="mt-auto bg-[#DCE8D9]/40 rounded-xl p-4 border border-[#DCE8D9]">
-                                                    <h5 className="font-bold text-[#5B826B] mb-2 text-sm">Тижневе меню 📅</h5>
+                                                    <h5 className="font-bold text-[#5B826B] mb-2 text-sm">{t('recipes_page.promo_menu_title')}</h5>
                                                     <p className="text-[12px] text-gray-600 leading-relaxed">
-                                                        Ви можете додати будь-який із цих рецептів у своє тижневе меню та згенерувати список покупок.
+                                                        {t('recipes_page.promo_menu_desc')}
                                                     </p>
                                                 </div>
                                             )}
@@ -824,8 +829,8 @@ const Recipes = () => {
                         {/* ТАБ 2: ГРУПИ ПРОДУКТІВ */}
                         {activeTab === 'ingredient_cats' && (
                             <div className="animate-fade-in flex flex-col h-full font-['Inter']">
-                                <h3 className="text-lg font-bold text-gray-900 mb-3 uppercase tracking-wider">Групи продуктів</h3>
-                                <p className="text-gray-500 text-sm mb-5">Шукати рецепти, що містять продукти з обраних категорій:</p>
+                                <h3 className="text-lg font-bold text-gray-900 mb-3 uppercase tracking-wider">{t('recipes_page.tab_categories')}</h3>
+                                <p className="text-gray-500 text-sm mb-5">{t('recipes_page.cat_hint')}</p>
                                 <div className="flex flex-wrap gap-3 overflow-y-auto max-h-[300px] custom-scrollbar pr-2">
                                     {Object.entries(INGREDIENT_CATEGORIES_DICT).map(([key, value]) => {
                                         // Логіка для визначення базових класів
@@ -856,7 +861,7 @@ const Recipes = () => {
                         {/* ТАБ 3: ПРИЙОМ ЇЖІ */}
                         {activeTab === 'meal_time' && (
                             <div className="animate-fade-in flex flex-col h-full font-['Inter']">
-                                <h3 className="text-lg font-bold text-gray-900 mb-4 uppercase tracking-wider">Прийом їжі</h3>
+                                <h3 className="text-lg font-bold text-gray-900 mb-4 uppercase tracking-wider">{t('recipes_page.tab_meal_time')}</h3>
                                 <div className="flex flex-wrap gap-3">
                                     {Object.entries(DICTIONARIES.meal_times).map(([key, value]) => {
                                         const isSelected = selectedMealTimes.includes(key);
@@ -885,7 +890,7 @@ const Recipes = () => {
                         {/* ТАБ 4: ТИП СТРАВИ */}
                         {activeTab === 'dish_type' && (
                             <div className="animate-fade-in flex flex-col h-full font-['Inter']">
-                                <h3 className="text-lg font-bold text-gray-900 mb-4 uppercase tracking-wider">Тип страви</h3>
+                                <h3 className="text-lg font-bold text-gray-900 mb-4 uppercase tracking-wider">{t('recipes_page.tab_dish_type')}</h3>
                                 <div className="flex flex-wrap gap-3 overflow-y-auto max-h-[300px] custom-scrollbar pr-2">
                                     {Object.entries(DICTIONARIES.dish_types).map(([key, value]) => {
                                         const isSelected = selectedDishTypes.includes(key);
@@ -914,7 +919,7 @@ const Recipes = () => {
                         {/* ТАБ 5: КУХНЯ */}
                         {activeTab === 'cuisine' && (
                             <div className="animate-fade-in flex flex-col h-full font-['Inter']">
-                                <h3 className="text-lg font-bold text-gray-900 mb-4 uppercase tracking-wider">Кухня світу</h3>
+                                <h3 className="text-lg font-bold text-gray-900 mb-4 uppercase tracking-wider">{t('recipes_page.tab_cuisine_world')}</h3>
                                 <div className="flex flex-wrap gap-3 overflow-y-auto max-h-[300px] custom-scrollbar pr-2">
                                     {Object.entries(DICTIONARIES.cuisine).map(([key, value]) => {
                                         const isSelected = selectedCuisines.includes(key);
@@ -943,7 +948,7 @@ const Recipes = () => {
                         {/* ТАБ 6: СКЛАДНІСТЬ */}
                         {activeTab === 'difficulty' && (
                             <div className="animate-fade-in flex flex-col h-full font-['Inter']">
-                                <h3 className="text-lg font-bold text-gray-900 mb-4 uppercase tracking-wider">Складність приготування</h3>
+                                <h3 className="text-lg font-bold text-gray-900 mb-4 uppercase tracking-wider">{t('recipes_page.tab_diff_prep')}</h3>
                                 <div className="flex flex-wrap gap-4">
                                     {Object.entries(DICTIONARIES.difficulty).map(([key, value]) => {
                                         const isSelected = selectedDifficulties.includes(key);
@@ -972,7 +977,7 @@ const Recipes = () => {
                         {/* ТАБ 7: ЧАС */}
                         {activeTab === 'time' && (
                             <div className="animate-fade-in flex flex-col h-full font-['Inter']">
-                                <h3 className="text-lg font-bold text-gray-900 mb-4 uppercase tracking-wider">Максимальний час (хвилин)</h3>
+                                <h3 className="text-lg font-bold text-gray-900 mb-4 uppercase tracking-wider">{t('recipes_page.tab_max_time')}</h3>
                                 <div className="flex flex-wrap gap-4">
                                     {['15', '30', '45', '60', '120'].map(time => {
                                         const isSelected = maxTime === time;
@@ -990,7 +995,7 @@ const Recipes = () => {
                                                 }}
                                                 className={`px-6 py-3 rounded-xl text-base font-bold transition-all border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${baseClasses}`}
                                             >
-                                                До {time} хв
+                                                {t('recipes_page.up_to_mins', { time })}
                                             </button>
                                         )
                                     })}
@@ -1001,8 +1006,8 @@ const Recipes = () => {
                         {/* ТАБ 8: КАЛОРИЙНІСТЬ */}
                         {activeTab === 'calories' && (
                             <div className="animate-fade-in flex flex-col h-full font-['Inter']">
-                                <h3 className="text-lg font-bold text-gray-900 mb-4 uppercase tracking-wider">Калорійність (на 1 порцію)</h3>
-                                <p className="text-gray-500 text-sm mb-5">Оберіть максимальну кількість калорій:</p>
+                                <h3 className="text-lg font-bold text-gray-900 mb-4 uppercase tracking-wider">{t('recipes_page.tab_calories_portion')}</h3>
+                                <p className="text-gray-500 text-sm mb-5">{t('recipes_page.cal_hint')}</p>
                                 <div className="flex flex-wrap gap-4">
                                     {['200', '300', '400', '500', '800'].map(cal => {
                                         const isSelected = maxCalories === cal;
@@ -1020,7 +1025,7 @@ const Recipes = () => {
                                                 }}
                                                 className={`px-6 py-3 rounded-xl text-base font-bold transition-all border cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group ${baseClasses}`}
                                             >
-                                                До {cal} ккал
+                                                {t('recipes_page.up_to_kcal', { cal })}
                                             </button>
                                         )
                                     })}
@@ -1031,7 +1036,7 @@ const Recipes = () => {
                         {/* ТАБ 9: ДІЄТИ */}
                         {activeTab === 'diet' && (
                             <div className="animate-fade-in flex flex-col h-full font-['Inter']">
-                                <h3 className="text-lg font-bold text-gray-900 mb-4 uppercase tracking-wider">Дієтичні обмеження</h3>
+                                <h3 className="text-lg font-bold text-gray-900 mb-4 uppercase tracking-wider">{t('recipes_page.tab_diet')}</h3>
                                 <div className="flex flex-wrap gap-3 overflow-y-auto max-h-[300px] custom-scrollbar pr-2">
                                     {Object.entries(DICTIONARIES.dietary_tags).map(([key, value]) => {
                                         const isSelected = selectedDiets.includes(key);
@@ -1060,7 +1065,7 @@ const Recipes = () => {
                         {/* ТАБ 10: СЕЗОННІСТЬ */}
                         {activeTab === 'season' && (
                             <div className="animate-fade-in flex flex-col h-full font-['Inter']">
-                                <h3 className="text-lg font-bold text-gray-900 mb-4 uppercase tracking-wider">Сезонні продукти</h3>
+                                <h3 className="text-lg font-bold text-gray-900 mb-4 uppercase tracking-wider">{t('recipes_page.tab_seasonal')}</h3>
 
                                 <button
                                     onClick={() => {
@@ -1075,10 +1080,10 @@ const Recipes = () => {
                                             : 'bg-white text-gray-700 border-gray-300 hover:border-[#6A907B]'
                                     }`}
                                 >
-                                    {isSeasonal ? '✅ Увімкнено (Всі сезонні)' : 'Вимкнено (Показувати все)'}
+                                    {isSeasonal ? t('recipes_page.season_on') : t('recipes_page.season_off')}
                                 </button>
 
-                                <h3 className="text-sm font-bold text-gray-500 mb-4 uppercase tracking-wider">Або оберіть конкретні місяці:</h3>
+                                <h3 className="text-sm font-bold text-gray-500 mb-4 uppercase tracking-wider">{t('recipes_page.season_hint')}</h3>
                                 <div className="flex flex-wrap gap-2">
                                     {Object.entries(MONTHS_DICT).map(([key, value]) => {
                                         const isSelected = selectedMonths.includes(key);
@@ -1110,14 +1115,14 @@ const Recipes = () => {
                              {emptyFilterError && activeTab !== 'ingredients' && (
                                 <div className="absolute -top-5 sm:-top-5 md:-top-5 left-1/2 transform -translate-x-1/2 animate-fade-in w-max px-3 py-1.5 bg-red-100 border border-red-300 rounded-lg text-red-700 text-[11px] sm:text-[13px] font-medium flex items-center gap-1.5 shadow-sm z-20">
                                     <svg className="shrink-0" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                                    <span>Оберіть хоча б один фільтр</span>
+                                    <span>{t('recipes_page.err_filter_empty')}</span>
                                 </div>
                             )}
                             <button
                                 onClick={() => fetchRecipes(true)}
                                 className="w-full sm:flex-1 md:w-max md:px-16 py-3 bg-[#6A907B] text-white rounded-xl font-bold text-[17px] hover:bg-[#5B826B] transition-colors shadow-lg text-center tracking-wide block cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out hover:shadow-[0_12px_25px_rgba(180,114,49,0.15)] active:scale-95 group"
                             >
-                                {activeTab === 'ingredients' ? 'Знайти рецепт' : 'Застосувати фільтри'}
+                                {activeTab === 'ingredients' ? t('recipes_page.find_recipe_btn') : t('recipes_page.apply_filters')}
                             </button>
                         </div>
                     </div>
@@ -1130,7 +1135,7 @@ const Recipes = () => {
                         <div className="flex items-center gap-3 md:gap-4 shrink-0">
                             <div className="w-4 h-4 md:w-5 md:h-5 bg-[#5B826B] shrink-0"></div>
                             <h2 className="text-xl md:text-2xl lg:text-[26px] font-['El_Messiri'] font-bold text-gray-800 tracking-wider uppercase whitespace-nowrap">
-                                {hasActiveFilters ? 'Результати пошуку' : 'Всі рецепти'}
+                                {hasActiveFilters ? t('recipes_page.search_results') : t('recipes_page.all_recipes')}
                             </h2>
                         </div>
 
@@ -1138,7 +1143,7 @@ const Recipes = () => {
                         <div className="flex items-center gap-4 flex-grow min-w-0">
                             <div className="flex-grow border-t-[3px] border-gray-300"></div>
                             <span className="text-sm md:text-base font-semibold text-gray-500 font-['Inter'] whitespace-nowrap shrink-0">
-                                {recipes.length} {getPluralForm(recipes.length, ['рецепт', 'рецепти', 'рецептів'])}
+                                {recipes.length} {getPluralForm(recipes.length, [t('recipes_page.rec_1'), t('recipes_page.rec_2'), t('recipes_page.rec_5')])}
                             </span>
                         </div>
                     </div>
@@ -1170,10 +1175,10 @@ const Recipes = () => {
 
                             {/* Текст */}
                             <h3 className="relative z-10 font-['El_Messiri'] text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 uppercase tracking-wide drop-shadow-sm">
-                                Рецептів не знайдено
+                                {t('recipes_page.no_recipes_found')}
                             </h3>
                             <p className="relative z-10 text-gray-600 font-['Inter'] text-sm sm:text-base lg:text-lg max-w-md mb-8">
-                                Схоже, ми не маємо рецептів, які відповідають усім обраним критеріям. Спробуйте змінити фільтри або набір інгредієнтів.
+                                {t('recipes_page.no_recipes_desc')}
                             </p>
 
                             {/* Кнопка "Очистити фільтри" */}
@@ -1182,7 +1187,7 @@ const Recipes = () => {
                                 className="relative z-10 px-8 py-3.5 bg-[#1A1A1A] text-white rounded-[20px] font-bold font-['Inter'] hover:bg-[#6A907B] transition-colors shadow-[0_8px_20px_rgba(0,0,0,0.15)] flex items-center gap-2 cursor-pointer duration-300 ease-out active:scale-95 group/btn"
                             >
                                 <svg className="group-hover/btn:-rotate-180 transition-transform duration-500" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                                Очистити фільтри та спробувати знову
+                                {t('recipes_page.clear_and_try_again')}
                             </button>
                         </div>
                     ) : (
@@ -1224,35 +1229,23 @@ const Recipes = () => {
                                                         setSelectedRecipeForModal(recipe);
                                                     }}
                                                     className="absolute top-3 right-3 bg-[#FDFBF7]/85 backdrop-blur-md font-['Inter'] rounded-2xl p-1.5 sm:p-1.5 shadow-[0_8px_20px_rgba(0,0,0,0.08)] z-10 flex flex-col items-center min-w-[50px] sm:min-w-[60px] transform origin-top-right cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out hover:scale-105 hover:-translate-y-1 hover:shadow-[0_12px_25px_rgba(180,114,49,0.15)] active:scale-95 group"
-                                                    title="Натисніть, щоб переглянути список інгредієнтів"
                                                 >
                                                     {/* Інформація про те, скільки всього */}
                                                     <div className="w-full border-b border-gray-200/80 pb-1 mb-1 text-center pt-0.5">
                                                         <div className="flex items-center justify-center gap-1">
                                                             <span className="text-[15px] sm:text-[17px] font-black text-[#1A1A1A] leading-none">{recipe.total_count}</span>
-
-                                                            {/* Інгредієнти/Овочі */}
                                                             <svg className="w-4 h-4 sm:w-4.5 sm:h-4.5" viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                                                                {/* Зелень */}
                                                                 <path d="M4 14c-2-3 2-6 4-3 1-2 4-1 3 2-2 3-5 4-7 1z" fill="#DCE8D9" stroke="#5B826B" strokeWidth="1.2" />
                                                                 <path d="M20 12c1-2-2-5-4-3-1-2-4-1-3 2 2 3 5 4 7 1z" fill="#DCE8D9" stroke="#5B826B" strokeWidth="1.2" />
-
-                                                                {/* Ананас */}
                                                                 <ellipse cx="8" cy="14" rx="3.5" ry="4.5" fill="#FFEAA7" stroke="#D9A05B" strokeWidth="1.2" />
-                                                                {/* Хвостик ананаса */}
                                                                 <path d="M8 9.5l-1.5-3.5 1.5 2 1-3 1 3 1.5-2L10 9.5" fill="#DCE8D9" stroke="#5B826B" strokeWidth="1" />
-                                                                {/* Текстура ананаса */}
                                                                 <path d="M5.5 12.5l5 3M9.5 12.5l-3 3" stroke="#D9A05B" strokeWidth="1" opacity="0.6" />
-
-                                                                {/* Банан */}
                                                                 <path d="M12 18c5 3 9 1 10-4-1 1-4 1-6 0-3-1-4-3-4-5 0 3-1 6 0 9z" fill="#FCE7A1" stroke="#D9B44A" strokeWidth="1.2" />
-
-                                                                {/* Помідор */}
                                                                 <circle cx="13" cy="17" r="4" fill="#FFB4A2" stroke="#E56B55" strokeWidth="1.2" />
                                                                 <path d="M13 13v1.5M12 14h2" stroke="#5B826B" strokeWidth="1.2" />
                                                             </svg>
                                                         </div>
-                                                        <div className="text-[7px] sm:text-[8px] uppercase tracking-widest text-gray-500 font-bold mt-1 leading-tight">Всього</div>
+                                                        <div className="text-[7px] sm:text-[8px] uppercase tracking-widest text-gray-500 font-bold mt-1 leading-tight">{t('recipes_page.total')}</div>
                                                     </div>
 
                                                     {/* Інформація про те, що Є У МЕНЕ */}
@@ -1261,7 +1254,7 @@ const Recipes = () => {
                                                             <span className="text-[15px] sm:text-[17px] font-black text-[#5B826B] leading-none">{recipe.match_count}</span>
                                                             <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#5B826B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                                         </div>
-                                                        <div className="text-[7px] sm:text-[8px] uppercase tracking-tight sm:tracking-normal text-gray-500 font-bold mt-1 leading-none">В наявності</div>
+                                                        <div className="text-[7px] sm:text-[8px] uppercase tracking-tight sm:tracking-normal text-gray-500 font-bold mt-1 leading-none">{t('recipes_page.in_stock')}</div>
                                                     </div>
 
                                                     {/* Інформація про те, чого НЕ ВИСТАЧАЄ (Докупити) */}
@@ -1270,7 +1263,7 @@ const Recipes = () => {
                                                             <span className="text-[15px] sm:text-[17px] font-black text-[#B47231] leading-none">{recipe.total_count - recipe.match_count}</span>
                                                             <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#B47231]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path><line x1="16" y1="10" x2="16" y2="14"></line><line x1="14" y1="12" x2="18" y2="12"></line></svg>
                                                         </div>
-                                                        <div className="text-[7px] sm:text-[8px] uppercase tracking-wide text-gray-500 font-bold mt-1 leading-none">Докупити</div>
+                                                        <div className="text-[7px] sm:text-[8px] uppercase tracking-wide text-gray-500 font-bold mt-1 leading-none">{t('recipes_page.to_buy')}</div>
                                                     </div>
                                                 </button>
                                             )}
@@ -1284,19 +1277,19 @@ const Recipes = () => {
                                             <div className="flex flex-col items-center flex-1 px-0.5">
                                                 <svg className="mb-1.5 md:mb-2 text-[#B47231] w-9 h-9 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                                                 <span className="text-[14px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-medium text-gray-800 leading-tight text-center">
-                                                    {recipe.cooking_time} {getPluralForm(recipe.cooking_time, ['хвилина', 'хвилини', 'хвилин'])}
+                                                    {recipe.cooking_time} {getPluralForm(recipe.cooking_time, [t('recipes_page.min_short_1'), t('recipes_page.min_short_2'), t('recipes_page.min_short_5')])}
                                                 </span>
                                             </div>
                                             <div className="flex flex-col items-center flex-1 px-0.5">
                                                 <svg className="mb-1.5 md:mb-2 text-[#B47231] w-9 h-9 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0"><path d="M17 8h1a4 4 0 1 1 0 8h-1"></path><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"></path><line x1="6" y1="2" x2="6" y2="4"></line><line x1="10" y1="2" x2="10" y2="4"></line><line x1="14" y1="2" x2="14" y2="4"></line></svg>
                                                 <span className="text-[14px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-medium text-gray-800 leading-tight text-center">
-                                                    {recipe.portions || 1} {getPluralForm(recipe.portions || 1, ['порція', 'порції', 'порцій'])}
+                                                    {recipe.portions || 1} {getPluralForm(recipe.portions || 1, [t('recipes_page.port_1'), t('recipes_page.port_2'), t('recipes_page.port_5')])}
                                                 </span>
                                             </div>
                                             <div className="flex flex-col items-center flex-1 px-0.5">
                                                 <svg className="mb-1.5 md:mb-2 text-[#B47231] w-9 h-9 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
                                                 <span className="text-[14px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-medium text-gray-800 leading-tight text-center break-words">
-                                                    {recipe.calories} ккал/порція
+                                                    {recipe.calories} {t('recipes_page.kcal_per_portion')}
                                                 </span>
                                             </div>
                                             <div className="flex flex-col items-center flex-1 px-0.5">
@@ -1309,7 +1302,7 @@ const Recipes = () => {
 
                                         <div className="mt-auto">
                                             <div className="block w-full py-3 rounded-[20px] border border-gray-400 text-center font-['Inter'] font-medium text-[14px] md:text-[15px] text-[#1A1A1A] group-hover:bg-[#1A1A1A] group-hover:text-white group-hover:border-[#1A1A1A] transition-colors">
-                                                Переглянути
+                                                {t('recipes_page.view_btn')}
                                             </div>
                                         </div>
                                     </Link>
@@ -1323,7 +1316,7 @@ const Recipes = () => {
                                         onClick={() => setVisibleCount(prev => prev + 6)}
                                         className="px-10 py-3.5 bg-transparent border-2 border-[#5B826B] text-[#5B826B] rounded-full font-bold font-['Inter'] hover:bg-[#5B826B] hover:text-white transition-colors cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group"
                                     >
-                                        Показати ще рецепти
+                                        {t('recipes_page.show_more_btn')}
                                     </button>
                                 </div>
                             )}
@@ -1336,11 +1329,11 @@ const Recipes = () => {
             {selectedRecipeForModal && (
                 <div
                     className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm transform-gpu"
-                    onClick={() => setSelectedRecipeForModal(null)} // Закриття по кліку на фон
+                    onClick={() => setSelectedRecipeForModal(null)}
                 >
                     <div
                         className="bg-white rounded-[2.5rem] p-6 sm:p-10 max-w-[650px] w-full shadow-2xl relative flex flex-col max-h-[90vh] font-['Inter']"
-                        onClick={(e) => e.stopPropagation()} // Блокуємо закриття при кліку на саме вікно
+                        onClick={(e) => e.stopPropagation()}
                     >
                         {/* Кнопка закриття */}
                         <button
@@ -1361,19 +1354,19 @@ const Recipes = () => {
                                 <div className="flex items-center gap-1.5">
                                     <svg className="w-5 h-5 sm:w-6 sm:h-6 text-[#B47231]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                                     <span className="text-[13px] sm:text-[15px] font-medium text-gray-800">
-                                        {selectedRecipeForModal.cooking_time} {getPluralForm(selectedRecipeForModal.cooking_time, ['хв', 'хв', 'хв'])}
+                                        {selectedRecipeForModal.cooking_time} {getPluralForm(selectedRecipeForModal.cooking_time, [t('recipes_page.min_short_1'), t('recipes_page.min_short_2'), t('recipes_page.min_short_5')])}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <svg className="w-5 h-5 sm:w-6 sm:h-6 text-[#B47231]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 8h1a4 4 0 1 1 0 8h-1"></path><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"></path><line x1="6" y1="2" x2="6" y2="4"></line><line x1="10" y1="2" x2="10" y2="4"></line><line x1="14" y1="2" x2="14" y2="4"></line></svg>
                                     <span className="text-[13px] sm:text-[15px] font-medium text-gray-800">
-                                        {selectedRecipeForModal.portions || 1} {getPluralForm(selectedRecipeForModal.portions || 1, ['порція', 'порції', 'порцій'])}
+                                        {selectedRecipeForModal.portions || 1} {getPluralForm(selectedRecipeForModal.portions || 1, [t('recipes_page.port_1'), t('recipes_page.port_2'), t('recipes_page.port_5')])}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <svg className="w-5 h-5 sm:w-6 sm:h-6 text-[#B47231]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
                                     <span className="text-[13px] sm:text-[15px] font-medium text-gray-800">
-                                        {selectedRecipeForModal.calories} ккал/порція
+                                        {selectedRecipeForModal.calories} {t('recipes_page.kcal_per_portion')}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
@@ -1385,7 +1378,7 @@ const Recipes = () => {
                             </div>
 
                             <p className="text-gray-500 text-[13px] sm:text-sm text-center font-medium max-w-sm">
-                                Інгредієнти, які необхідні для приготування:
+                                {t('recipes_page.ingredients_needed')}
                             </p>
                         </div>
 
@@ -1401,7 +1394,7 @@ const Recipes = () => {
                                         </div>
                                         {/* Динамічний заголовок зі схилянням */}
                                         <h3 className="font-bold text-[#5B826B] uppercase tracking-wide text-[12px] sm:text-[13px] leading-tight">
-                                            В наявності {selectedRecipeForModal.match_count} {getPluralForm(selectedRecipeForModal.match_count, ['інгредієнт', 'інгредієнти', 'інгредієнтів'])}
+                                            {t('recipes_page.in_stock_count', { count: selectedRecipeForModal.match_count })} {getPluralForm(selectedRecipeForModal.match_count, [t('recipes_page.ing_1'), t('recipes_page.ing_2'), t('recipes_page.ing_5')])}
                                         </h3>
                                     </div>
 
@@ -1433,7 +1426,7 @@ const Recipes = () => {
                                         </div>
                                         {/* Динамічний заголовок зі схилянням */}
                                         <h3 className="font-bold text-[#B47231] uppercase tracking-wide text-[12px] sm:text-[13px] leading-tight">
-                                            Докупити {selectedRecipeForModal.total_count - selectedRecipeForModal.match_count} {getPluralForm(selectedRecipeForModal.total_count - selectedRecipeForModal.match_count, ['інгредієнт', 'інгредієнти', 'інгредієнтів'])}
+                                            {t('recipes_page.to_buy_count', { count: selectedRecipeForModal.total_count - selectedRecipeForModal.match_count })} {getPluralForm(selectedRecipeForModal.total_count - selectedRecipeForModal.match_count, [t('recipes_page.ing_1'), t('recipes_page.ing_2'), t('recipes_page.ing_5')])}
                                         </h3>
                                     </div>
 
@@ -1458,7 +1451,7 @@ const Recipes = () => {
                                         {(selectedRecipeForModal.total_count - selectedRecipeForModal.match_count) === 0 && (
                                             <li className="text-center py-6">
                                                 <span className="text-2xl mb-2 block">🎉</span>
-                                                <p className="text-xs font-bold text-gray-500">У вас є всі інгредієнти!</p>
+                                                <p className="text-xs font-bold text-gray-500">{t('recipes_page.have_all_ingredients')}</p>
                                             </li>
                                         )}
                                     </ul>
@@ -1474,7 +1467,7 @@ const Recipes = () => {
                                 state={{ fromRecipesPage: true }}
                                 className="px-10 py-3.5 bg-[#1A1A1A] text-white rounded-[20px] font-bold text-[15px] hover:bg-[#6A907B] transition-colors shadow-lg shadow-black/10 flex items-center gap-2 group w-full sm:w-auto justify-center cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group"
                             >
-                                Переглянути спосіб приготування
+                                {t('recipes_page.view_prep_method')}
                                 <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path></svg>
                             </Link>
                         </div>

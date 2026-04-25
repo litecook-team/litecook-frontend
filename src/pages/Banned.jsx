@@ -1,11 +1,15 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next'; // ІМПОРТ ПЕРЕКЛАДУ
 
 const Banned = () => {
+    const { t } = useTranslation(); // ІНІЦІАЛІЗАЦІЯ ПЕРЕКЛАДУ
+
     // Отримуємо причину бану з URL параметрів (якщо вона там є)
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
-    const reason = queryParams.get('reason') || "Порушення політики конфіденційності";
+    // Використовуємо переклад для дефолтної причини
+    const reason = queryParams.get('reason') || t('banned_page.default_reason');
 
     return (
         <div className="min-h-[calc(100vh-80px)] bg-[#F6F3F4] flex items-center justify-center p-6 font-['Inter']">
@@ -21,21 +25,25 @@ const Banned = () => {
                     </svg>
                 </div>
 
-                <h2 className="text-3xl font-['El_Messiri'] text-gray-900 mb-2">Доступ обмежено</h2>
-                <h3 className="text-lg text-red-600 font-medium mb-6 uppercase tracking-wider text-[13px]">Акаунт заблоковано</h3>
+                <h2 className="text-3xl font-['El_Messiri'] text-gray-900 mb-2">
+                    {t('banned_page.title')}
+                </h2>
+                <h3 className="text-lg text-red-600 font-medium mb-6 uppercase tracking-wider text-[13px]">
+                    {t('banned_page.subtitle')}
+                </h3>
 
                 <div className="bg-gray-50 rounded-2xl p-5 mb-8 text-left border border-gray-100">
-                    <p className="text-gray-500 text-sm uppercase tracking-wider mb-1 font-semibold">Причина блокування:</p>
+                    <p className="text-gray-500 text-sm uppercase tracking-wider mb-1 font-semibold">{t('banned_page.reason_label')}</p>
                     <p className="text-gray-800 italic leading-relaxed">«{reason}»</p>
                 </div>
 
                 <p className="text-gray-500 text-sm mb-8 leading-relaxed">
-                    Ваш сеанс було примусово завершено.<br/>
-                    Якщо ви вважаєте, що це сталося помилково, будь ласка, зверніться до служби підтримки LITE cook.
+                    {t('banned_page.desc_1')}<br/>
+                    {t('banned_page.desc_2')}
                 </p>
 
                 <Link to="/" className="inline-block bg-black text-white px-10 py-3.5 rounded-full hover:bg-gray-800 transition font-medium cursor-pointer transition-all duration-300 ease-out active:scale-95 shadow-md w-full">
-                    Повернутися на головну
+                    {t('banned_page.btn_home')}
                 </Link>
             </div>
         </div>

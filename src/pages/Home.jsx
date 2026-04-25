@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next'; // ІМПОРТ ПЕРЕКЛАДУ
 import api from '../api';
 import { ENDPOINTS, API_URL, TOKEN_KEY } from '../constants/api';
 import { DICTIONARIES } from '../constants/translations';
@@ -31,6 +32,8 @@ const getPluralForm = (number, titles) => {
 };
 
 const Home = () => {
+    const { t, i18n } = useTranslation();
+
     const navigate = useNavigate();
     const [recipeOfDay, setRecipeOfDay] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -42,12 +45,12 @@ const Home = () => {
 
     useEffect(() => {
         fetchRecipeOfTheDay();
-    }, []);
+    }, [i18n.language]);
 
     const fetchRecipeOfTheDay = async () => {
-        setLoading(true);
+        if (!recipeOfDay) setLoading(true);
         try {
-            // ЗМІНЕНО: Прибрано локальне кешування, тепер завжди беремо актуальні дані з бекенду.
+            // Прибрано локальне кешування, тепер завжди беремо актуальні дані з бекенду.
             // Якщо ви зміните рецепт в адмінці, фронтенд побачить це при оновленні сторінки.
             const response = await api.get(`${ENDPOINTS.RECIPES}random_recipe/`);
             setRecipeOfDay(response.data);
@@ -93,23 +96,23 @@ const Home = () => {
                 <div className="relative z-10 w-full px-6 lg:px-20 xl:px-55 flex justify-center md:justify-end mt-20 md:mt-40 lg:mt-32 xl:mt-1 transition-all">
 
                     {/* Класи bg-white/40 backdrop-blur-md створюють матове скло. */}
-                    <div className="flex flex-col items-center md:items-start text-center md:text-left max-w-4xl lg:max-w-3xl xl:max-w-4xl lg:mr-0 xl:mr-12 bg-white/70 min-[1600px]:bg-transparent backdrop-blur-md min-[1670px]:backdrop-blur-none p-6 sm:p-11 xl:p-11 rounded-[2rem] transition-all duration-500">
+                    <div className="flex flex-col items-center md:items-start text-center md:text-left max-w-4xl lg:max-w-3xl xl:max-w-4xl lg:mr-0 xl:mr-12 bg-white/70 min-[1900px]:bg-transparent backdrop-blur-md min-[1930px]:backdrop-blur-none p-6 sm:p-11 xl:p-11 rounded-[2rem] transition-all duration-500">
 
                         <h2 className="text-[#8B0021] text-xl md:text-2xl lg:text-[45px] font-['El_Messiri'] mb-3 lg:mb-5 leading-tight drop-shadow-sm">
-                            Твій особистий шеф-кухар
+                            {t('home_page.hero_subtitle')}
                         </h2>
                         <h1 className="text-6xl md:text-7xl lg:text-[90px] font-['El_Messiri'] text-[#1A1A1A] mb-3 lg:mb-6 tracking-wide drop-shadow-sm leading-none">
                             LITE cook
                         </h1>
                         <p className="text-gray-800 text-lg md:text-xl lg:text-[45px] font-['El_Messiri'] mb-8 lg:mb-12 whitespace-nowrap leading-tight drop-shadow-sm">
-                            Готує із того, що є вдома
+                            {t('home_page.hero_desc')}
                         </p>
 
                         <Link
                             to="/recipes"
                             className="px-8 py-3 bg-white/50 lg:bg-transparent border lg:text-[20px] border-black rounded-[30px] font-['Inter'] hover:bg-white/80 transition-colors shadow-sm cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group"
                         >
-                            Підібрати рецепт
+                            {t('home_page.find_recipe_btn')}
                         </Link>
 
                     </div>
@@ -134,22 +137,22 @@ const Home = () => {
                         {/* Картка 1: Веде на сторінку "Про нас" (/about) */}
                         <Link to="/about" className="bg-[#F6F3F4] backdrop-blur-md rounded-2xl px-6 py-10 sm:px-8 sm:py-10 flex flex-col items-center text-center shadow-[0_8px_30px_rgb(0,0,0,0.08)] transform hover:-translate-y-1 transition-transform cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group">
                             <div className="w-12 h-12 mb-4 flex items-center justify-center">
-                                <img src={iconLocation} alt="Готує із того, що є вдома" className="w-14 h-14 object-contain drop-shadow-sm" />
+                                <img src={iconLocation} alt="Icon" className="w-14 h-14 object-contain drop-shadow-sm" />
                             </div>
-                            <h3 className="font-bold text-[#1A1A1A] text-xl">Готує із того, що є в холодильнику</h3>
-                            <p className="text-lg text-gray-800">Рецепти під твій запит та смак</p>
+                            <h3 className="font-bold text-[#1A1A1A] text-xl">{t('home_page.card_1_title')}</h3>
+                            <p className="text-lg text-gray-800">{t('home_page.card_1_desc')}</p>
                         </Link>
 
                         {/* Картка 2: Веде на сторінку "Підбір рецепта" (/recipes) */}
                         <Link to="/recipes" state={{ initialTab: 'season' }} className="bg-[#F6F3F4] backdrop-blur-md rounded-2xl p-6 sm:p-8 flex flex-col items-center text-center shadow-[0_8px_30px_rgb(0,0,0,0.08)] transform hover:-translate-y-1 transition-transform cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group">
                             <div className="w-12 h-12 mb-4 flex items-center justify-center">
-                                <img src={iconSun} alt="Прості інгредієнти" className="w-14 h-14 object-contain drop-shadow-sm" />
+                                <img src={iconSun} alt="Icon" className="w-14 h-14 object-contain drop-shadow-sm" />
                             </div>
-                            <h3 className="font-bold text-[#1A1A1A] text-xl">Прості інгредієнти</h3>
-                            <p className="text-lg text-gray-800 ">Страви з сезонних продуктів</p>
+                            <h3 className="font-bold text-[#1A1A1A] text-xl">{t('home_page.card_2_title')}</h3>
+                            <p className="text-lg text-gray-800 ">{t('home_page.card_2_desc')}</p>
                         </Link>
 
-                        {/* Картка 3: ЗМІНЕНО trigger для відкриття модального вікна */}
+                        {/* Картка 3: trigger для відкриття модального вікна */}
                         <div
                             onClick={toggleModal} // Викликаємо функцію toggleModal при кліку
                             role="button"
@@ -158,10 +161,10 @@ const Home = () => {
                             className="bg-[#F6F3F4] backdrop-blur-md rounded-2xl p-6 sm:p-8 flex flex-col items-center text-center shadow-[0_8px_30px_rgb(0,0,0,0.08)] transform hover:-translate-y-1 transition-transform cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group"
                         >
                             <div className="w-12 h-12 mb-4 flex items-center justify-center">
-                                <img src={iconLeaf} alt="Швидко та легко" className="w-14 h-14 object-contain drop-shadow-sm" />
+                                <img src={iconLeaf} alt="Icon" className="w-14 h-14 object-contain drop-shadow-sm" />
                             </div>
-                            <h3 className="font-bold text-[#1A1A1A] text-xl">Швидко та легко</h3>
-                            <p className="text-lg text-gray-800 ">Смачне та корисне меню</p>
+                            <h3 className="font-bold text-[#1A1A1A] text-xl">{t('home_page.card_3_title')}</h3>
+                            <p className="text-lg text-gray-800 ">{t('home_page.card_3_desc')}</p>
                         </div>
 
                     </div>
@@ -177,7 +180,7 @@ const Home = () => {
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                         </svg>
-                        <h3 className="text-xl md:text-3xl font-['El_Messiri'] font-bold">Рецепт дня</h3>
+                        <h3 className="text-xl md:text-3xl font-['El_Messiri'] font-bold">{t('home_page.recipe_of_day_title')}</h3>
                     </div>
 
                     {/* Картка Рецепту Дня */}
@@ -186,10 +189,10 @@ const Home = () => {
                              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#42705D]"></div>
                          </div>
                     ) : recipeOfDay ? (
-                        <div className="flex flex-col md:flex-row items-center md:items-start gap-8 lg:gap-16 w-full max-w-7xl mr-auto mb-10">
+                        <div className="flex flex-col xl:flex-row items-center xl:items-start gap-8 lg:gap-12 xl:gap-16 w-full max-w-7xl mx-auto xl:mx-0 xl:mr-auto mb-10">
 
                             {/* фото */}
-                            <div className="w-[90%] sm:w-[400px] h-64 md:w-80 md:h-80 lg:w-[390px] lg:h-[270px] shrink-0 mx-auto md:mx-0 md:ml-4 lg:ml-10 mt-1 rounded-3xl overflow-hidden shadow-lg bg-white">
+                            <div className="w-[90%] sm:w-[500px] md:w-[600px] h-64 sm:h-[350px] md:h-[400px] xl:w-[450px] xl:h-[320px] shrink-0 mx-auto xl:mx-0 xl:ml-10 mt-1 rounded-3xl overflow-hidden shadow-lg bg-white">
                                 <Link to={`/recipe/${recipeOfDay.id}`} className="block w-full h-full">
                                     <img
                                         src={getImageUrl(recipeOfDay.image)}
@@ -200,7 +203,7 @@ const Home = () => {
                             </div>
 
                             {/* Інформація про рецепт */}
-                            <div className="flex flex-col text-center md:text-left mt-0 bg-white/70 min-[1700px]:bg-transparent backdrop-blur-md min-[1700px]:backdrop-blur-none p-6 md:p-8 xl:p-2 rounded-[2rem] flex-1 w-full transition-all duration-500">
+                            <div className="flex flex-col text-center xl:text-left mt-0 bg-white/70 min-[1700px]:bg-transparent backdrop-blur-md min-[1700px]:backdrop-blur-none p-6 sm:p-10 xl:p-2 rounded-[2rem] flex-1 w-full max-w-[800px] xl:max-w-none mx-auto xl:mx-0 transition-all duration-500">
                                 <h2 className="text-2xl sm:text-3xl md:text-4xl font-['El_Messiri'] text-[#1A1A1A] mb-4 mt-2">
                                     <Link to={`/recipe/${recipeOfDay.id}`} className="hover:text-[#42705D] transition-colors">
                                         {recipeOfDay.title}
@@ -208,7 +211,7 @@ const Home = () => {
                                 </h2>
 
                                 {/* Іконки статистики */}
-                                <div className="flex flex-wrap justify-center md:justify-start gap-6 lg:gap-10 mb-5 font-['El_Messiri']">
+                                <div className="flex flex-wrap justify-center xl:justify-start gap-6 lg:gap-10 mb-5 font-['El_Messiri']">
 
                                     {/* Час приготування */}
                                     <div className="flex flex-col items-center gap-2">
@@ -217,7 +220,7 @@ const Home = () => {
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2"></path>
                                         </svg>
                                         <span className="text-sm lg:text-[18px] text-black">
-                                            {recipeOfDay.cooking_time} {getPluralForm(recipeOfDay.cooking_time, ['хвилина', 'хвилини', 'хвилин'])}
+                                            {recipeOfDay.cooking_time} {getPluralForm(recipeOfDay.cooking_time, [t('home_page.min_1'), t('home_page.min_2'), t('home_page.min_5')])}
                                         </span>
                                     </div>
 
@@ -229,7 +232,7 @@ const Home = () => {
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M18 10h1a2 2 0 012 2v1a2 2 0 01-2 2h-1"></path>
                                         </svg>
                                         <span className="text-sm lg:text-[18px] font-semibold text-black">
-                                            {recipeOfDay.portions} {getPluralForm(recipeOfDay.portions, ['порція', 'порції', 'порцій'])}
+                                            {recipeOfDay.portions} {getPluralForm(recipeOfDay.portions, [t('home_page.port_1'), t('home_page.port_2'), t('home_page.port_5')])}
                                         </span>
                                     </div>
 
@@ -239,7 +242,7 @@ const Home = () => {
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path>
                                         </svg>
                                         <span className="text-sm lg:text-base font-semibold text-black">
-                                            {recipeOfDay.calories} ккал / порція
+                                            {recipeOfDay.calories} {t('home_page.kcal_per_portion')}
                                         </span>
                                     </div>
 
@@ -260,18 +263,18 @@ const Home = () => {
                                     {recipeOfDay.description}
                                 </p>
 
-                                <div className="flex justify-center md:justify-start mb-4 ml-4 md:ml-0">
+                                <div className="flex justify-center xl:justify-start mb-4">
                                     <Link
                                         to={`/recipe/${recipeOfDay.id}`}
                                         className="px-10 py-3 border-2 border-black rounded-[30px] font-['Inter'] lg:text-[18px] hover:bg-black hover:text-white transition-colors w-max"
                                     >
-                                        Переглянути рецепт
+                                        {t('home_page.view_recipe_btn')}
                                     </Link>
                                 </div>
                             </div>
                         </div>
                     ) : (
-                        <div className="py-20 text-center text-gray-500 font-medium flex-grow">Не вдалося завантажити рецепт дня</div>
+                        <div className="py-20 text-center text-gray-500 font-medium flex-grow">{t('home_page.error_load_recipe')}</div>
                     )}
 
                     <div className="border-t-2 border-gray-500 w-full mb-12"></div>
@@ -285,19 +288,19 @@ const Home = () => {
 
                              <div>
                                  <h3 className="font-['Inter'] text-gray-900 text-xl md:text-2xl mb-1">
-                                     Маєте продукти вдома?
+                                    {t('home_page.banner_title')}
                                  </h3>
                                  <p className="text-gray-900 font-['Inter'] text-lg sm:text-xl md:text-2xl">
-                                     Знайдіть рецепт прямо зараз
+                                     {t('home_page.banner_subtitle')}
                                  </p>
                              </div>
                          </div>
 
-                         <button
+                        <button
                              onClick={() => navigate('/recipes')}
                              className="px-8 py-2.5 border border-black rounded-[30px] font-['Inter'] text-lg lg:mr-5 hover:bg-black hover:text-white transition-colors whitespace-nowrap cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group"
                          >
-                             Підібрати рецепт
+                             {t('home_page.find_recipe_btn')}
                          </button>
 
                      </div>
@@ -333,10 +336,10 @@ const Home = () => {
                         {/* ГОЛОВНИЙ ЗАГОЛОВОК */}
                         <div className="md:absolute top-8 md:top-12 lg:top-12 md:-right-18 lg:right-2 z-20 w-full md:max-w-lg text-center md:text-left mb-6 md:mb-0 bg-white/60 md:bg-transparent backdrop-blur-md md:backdrop-blur-none p-4 md:p-0 rounded-2xl md:rounded-none">
                              <h2 className="text-3xl sm:text-4xl md:text-4xl lg:text-[50px] font-['El_Messiri'] text-[#D34122] leading-tight tracking-wide mb-1 md:mb-2 drop-shadow-[0_2px_2px_rgba(255,255,255,0.8)]">
-                                Відкрий більше
+                                {t('home_page.modal_title_1')}
                             </h2>
                             <h2 className="text-3xl sm:text-4xl md:text-4xl lg:text-[50px] font-['El_Messiri'] text-[#D34122] leading-tight tracking-wide drop-shadow-[0_2px_2px_rgba(255,255,255,0.8)]">
-                                разом з LITE cook!
+                                {t('home_page.modal_title_2')}
                             </h2>
                         </div>
 
@@ -345,10 +348,10 @@ const Home = () => {
 
                             {/* Підзаголовок */}
                             <h3 className="text-[12px] sm:text-[13px] lg:text-[15px] font-bold font-['Inter'] text-[#1A1A1A] text-center mb-6 lg:mb-8 leading-relaxed italic">
-                                А ви знали, що зареєстровані користувачі <br className="hidden sm:block"/>
-                                отримують доступ до унікальних <br className="hidden sm:block"/>
-                                можливостей сайту? <br className="hidden sm:block"/>
-                                Так, так і ось вони:
+                                {t('home_page.modal_subtitle_1')} <br className="hidden sm:block"/>
+                                {t('home_page.modal_subtitle_2')} <br className="hidden sm:block"/>
+                                {t('home_page.modal_subtitle_3')} <br className="hidden sm:block"/>
+                                {t('home_page.modal_subtitle_4')}
                             </h3>
 
                             {/* Список переваг (Колонки) */}
@@ -357,42 +360,42 @@ const Home = () => {
                                 {/* Пункт 1 */}
                                 <div className="flex items-start gap-3 lg:gap-4">
                                     <div className="shrink-0 pt-1">
-                                        <img src={RestaurantMenuIcon} alt="Тижневе меню" className="w-6 h-6 lg:w-7 lg:h-7 object-contain" />
+                                        <img src={RestaurantMenuIcon} alt="Icon" className="w-6 h-6 lg:w-7 lg:h-7 object-contain" />
                                     </div>
                                     <p className="text-[13px] lg:text-[15px] text-black font-['Inter'] leading-snug break-words max-w-[180px] sm:max-w-[340px] md:max-w-[290px] lg:max-w-[257px]">
-                                        <span className="font-bold">Тижневе меню</span> — обирай <br className="hidden sm:hidden md:hidden lg:hidden"/>
-                                        рецепти на кожен день та <br className="hidden sm:hidden md:hidden lg:hidden"/>
-                                        отримуй автоматичний <br className="hidden sm:hidden md:hidden lg:hidden"/>
-                                        список продуктів на день <br className="hidden sm:hidden md:hidden lg:hidden"/>
-                                        або тиждень
+                                        <span className="font-bold">{t('home_page.modal_f1_title')}</span> {t('home_page.modal_f1_d1')} <br className="hidden sm:hidden md:hidden lg:hidden"/>
+                                        {t('home_page.modal_f1_d2')} <br className="hidden sm:hidden md:hidden lg:hidden"/>
+                                        {t('home_page.modal_f1_d3')} <br className="hidden sm:hidden md:hidden lg:hidden"/>
+                                        {t('home_page.modal_f1_d4')} <br className="hidden sm:hidden md:hidden lg:hidden"/>
+                                        {t('home_page.modal_f1_d5')}
                                     </p>
                                 </div>
 
                                 {/* Пункт 2 */}
                                 <div className="flex items-start gap-3 lg:gap-4">
                                     <div className="shrink-0 pt-1">
-                                        <img src={UserMenuMaleIcon} alt="Особистий кабінет" className="w-6 h-6 lg:w-7 lg:h-7 object-contain" />
+                                        <img src={UserMenuMaleIcon} alt="Icon" className="w-6 h-6 lg:w-7 lg:h-7 object-contain" />
                                     </div>
                                     <p className="text-[13px] lg:text-[15px] text-black font-['Inter'] leading-snug break-words max-w-[190px] sm:max-w-[340px] md:max-w-[270px] lg:max-w-[258px]">
-                                        <span className="font-bold">Особистий кабінет</span> — <br className="hidden sm:hidden md:hidden lg:hidden"/>
-                                        налаштовуй кухню та <br className="hidden sm:hidden md:hidden lg:hidden"/>
-                                        рецепти, які хочеш бачити, <br className="hidden sm:hidden md:hidden lg:hidden"/>
-                                        вказуй алергії чи харчові <br className="hidden sm:hidden md:hidden lg:hidden"/>
-                                        обмеження
+                                        <span className="font-bold">{t('home_page.modal_f2_title')}</span> {t('home_page.modal_f2_d1')} <br className="hidden sm:hidden md:hidden lg:hidden"/>
+                                        {t('home_page.modal_f2_d2')} <br className="hidden sm:hidden md:hidden lg:hidden"/>
+                                        {t('home_page.modal_f2_d3')} <br className="hidden sm:hidden md:hidden lg:hidden"/>
+                                        {t('home_page.modal_f2_d4')} <br className="hidden sm:hidden md:hidden lg:hidden"/>
+                                        {t('home_page.modal_f2_d5')}
                                     </p>
                                 </div>
 
                                 {/* Пункт 3 */}
                                 <div className="flex items-start gap-3 lg:gap-4">
                                     <div className="shrink-0 pt-1">
-                                        <img src={IdeaIcon} alt="Корисні поради" className="w-6 h-6 lg:w-7 lg:h-7 object-contain" />
+                                        <img src={IdeaIcon} alt="Icon" className="w-6 h-6 lg:w-7 lg:h-7 object-contain" />
                                     </div>
                                     <p className="text-[13px] lg:text-[15px] text-black font-['Inter'] leading-snug break-words max-w-[240px] sm:max-w-[340px] md:max-w-[290px] lg:max-w-[265px]">
-                                        <span className="font-bold">Корисні поради</span> — <br className="hidden sm:hidden md:hidden lg:hidden"/>
-                                        отримуй рекомендації та <br className="hidden sm:hidden md:hidden lg:hidden"/>
-                                        лайфхаки від команди LITE <br className="hidden sm:hidden md:hidden lg:hidden"/>
-                                        cook, щоб готувати ще <br className="hidden sm:hidden md:hidden lg:hidden"/>
-                                        простіше й цікавіше
+                                        <span className="font-bold">{t('home_page.modal_f3_title')}</span> {t('home_page.modal_f3_d1')} <br className="hidden sm:hidden md:hidden lg:hidden"/>
+                                        {t('home_page.modal_f3_d2')} <br className="hidden sm:hidden md:hidden lg:hidden"/>
+                                        {t('home_page.modal_f3_d3')} <br className="hidden sm:hidden md:hidden lg:hidden"/>
+                                        {t('home_page.modal_f3_d4')} <br className="hidden sm:hidden md:hidden lg:hidden"/>
+                                        {t('home_page.modal_f3_d5')}
                                     </p>
                                 </div>
 
@@ -405,13 +408,13 @@ const Home = () => {
                                     className="px-6 lg:px-8 py-3 bg-transparent border-[1.5px] border-black rounded-[30px] font-['Inter'] text-[13px] lg:text-[15px] text-black hover:bg-black hover:text-white transition-colors w-max font-medium"
                                     onClick={toggleModal}
                                 >
-                                    СПРОБУВАТИ БЕЗКОШТОВНО
+                                    {t('home_page.modal_btn')}
                                 </Link>
                             </div>
 
                             {/* 5. Додатковий текст (в самому низу білого блоку) */}
                             <p className="mt-8 text-center text-[#1A1A1A] font-['El_Messiri'] text-[14px] lg:text-[16px] leading-tight font-semibold opacity-80 border-t border-gray-300/50 pt-4">
-                                ЗДОРОВЕ ХАРЧУВАННЯ НЕ МАЄ БУТИ ДОРОГИМ, СКЛАДНИМ ТА ЧАСОЄМНИМ
+                                {t('home_page.modal_footer_text')}
                             </p>
 
 

@@ -6,13 +6,18 @@ const api = axios.create({
     withCredentials: true,
 });
 
-// 1. Інтерцептор ЗАПИТІВ: Додаємо токен до кожного запиту автоматично
+// 1. Інтерцептор ЗАПИТІВ: Додаємо токен та МОВУ до кожного запиту автоматично
 api.interceptors.request.use((config) => {
-    // Шукаємо токен у двох місцях (для функції "Запам'ятати мене")
+    // Шукаємо токен
     const token = localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Завжди передаємо бекенду поточну мову (uk, en, pl)
+    const currentLang = localStorage.getItem('i18nextLng') || 'uk';
+    config.headers['Accept-Language'] = currentLang;
+
     return config;
 });
 

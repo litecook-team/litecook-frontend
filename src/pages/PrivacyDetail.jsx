@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next'; // ІМПОРТ ПЕРЕКЛАДУ
 
 // Імпортуємо фонове зображення
 import bgPrivacy from '../assets/privacy/fon_privacy.jpg';
@@ -16,144 +17,144 @@ const classes = {
     liIcon: "flex items-start gap-3 text-gray-700 leading-relaxed",
 };
 
-// Словник з текстами
-const PRIVACY_CONTENT = {
+// Створюємо функцію замість константи, щоб передати `t`
+const getPrivacyContent = (t, date) => ({
     'data': {
-        title: 'Збір даних',
+        title: t('privacy_page.card_1_title'),
         content: (
             <>
-                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> Загальна інформація</h3>
-                <p className={classes.p}>Сервіс LITE cook збирає певні персональні дані користувачів для забезпечення коректної роботи платформи та надання персоналізованого досвіду.</p>
+                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> {t('privacy_page.data_1_h3')}</h3>
+                <p className={classes.p}>{t('privacy_page.data_1_p')}</p>
 
-                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> Які дані ми збираємо</h3>
-                <p className="mb-4 text-gray-700 text-[17px]">Під час користування сайтом ми можемо збирати такі дані:</p>
+                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> {t('privacy_page.data_2_h3')}</h3>
+                <p className="mb-4 text-gray-700 text-[17px]">{t('privacy_page.data_2_p')}</p>
                 <ul className={classes.ul}>
-                    <li className={classes.liIcon}><span>👤</span> Ім'я користувача</li>
-                    <li className={classes.liIcon}><span>📧</span> Адреса електронної пошти</li>
-                    <li className={classes.liIcon}><span>🔐</span> Дані для входу (логін та зашифрований пароль)</li>
-                    <li className={classes.liIcon}><span>🖱️</span> Інформація про взаємодію з сайтом (пошуки, переглянуті рецепти)</li>
-                    <li className={classes.liIcon}><span>📱</span> Дані про пристрій (тип браузера, операційна система, IP-адреса)</li>
+                    <li className={classes.liIcon}><span>👤</span> {t('privacy_page.data_2_li1')}</li>
+                    <li className={classes.liIcon}><span>📧</span> {t('privacy_page.data_2_li2')}</li>
+                    <li className={classes.liIcon}><span>🔐</span> {t('privacy_page.data_2_li3')}</li>
+                    <li className={classes.liIcon}><span>🖱️</span> {t('privacy_page.data_2_li4')}</li>
+                    <li className={classes.liIcon}><span>📱</span> {t('privacy_page.data_2_li5')}</li>
                 </ul>
 
-                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> Як ми отримуємо дані</h3>
-                <p className="mb-4 text-gray-700 text-[17px]">Ми отримуємо інформацію:</p>
+                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> {t('privacy_page.data_3_h3')}</h3>
+                <p className="mb-4 text-gray-700 text-[17px]">{t('privacy_page.data_3_p')}</p>
                 <ul className={classes.ul}>
-                    <li className={classes.liIcon}><span>📝</span> під час реєстрації на сайті</li>
-                    <li className={classes.liIcon}><span>🔑</span> при вході в акаунт</li>
-                    <li className={classes.liIcon}><span>💻</span> під час використання функціоналу платформи</li>
-                    <li className={classes.liIcon}><span>🍪</span> через автоматичні технології (cookies, аналітика)</li>
+                    <li className={classes.liIcon}><span>📝</span> {t('privacy_page.data_3_li1')}</li>
+                    <li className={classes.liIcon}><span>🔑</span> {t('privacy_page.data_3_li2')}</li>
+                    <li className={classes.liIcon}><span>💻</span> {t('privacy_page.data_3_li3')}</li>
+                    <li className={classes.liIcon}><span>🍪</span> {t('privacy_page.data_3_li4')}</li>
                 </ul>
 
-                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> Добровільність надання даних</h3>
-                <p className={classes.p}>Надання персональних даних є добровільним, але без цього деякі функції сайту можуть бути недоступні.</p>
+                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> {t('privacy_page.data_4_h3')}</h3>
+                <p className={classes.p}>{t('privacy_page.data_4_p')}</p>
             </>
         )
     },
     'usage': {
-        title: 'Використання',
+        title: t('privacy_page.card_2_title'),
         content: (
             <>
-                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> Основні цілі використання</h3>
-                <p className="mb-4 text-gray-700 text-[17px]">Зібрані дані використовуються для:</p>
+                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> {t('privacy_page.usage_1_h3')}</h3>
+                <p className="mb-4 text-gray-700 text-[17px]">{t('privacy_page.usage_1_p')}</p>
                 <ul className={classes.ul}>
-                    <li className={classes.liIcon}><span>✅</span> створення та обслуговування облікового запису</li>
-                    <li className={classes.liIcon}><span>✅</span> надання персоналізованих рецептів</li>
-                    <li className={classes.liIcon}><span>✅</span> покращення функціоналу сайту</li>
-                    <li className={classes.liIcon}><span>✅</span> аналізу поведінки користувачів</li>
-                    <li className={classes.liIcon}><span>✅</span> забезпечення безпеки платформи</li>
+                    <li className={classes.liIcon}><span>✅</span> {t('privacy_page.usage_1_li1')}</li>
+                    <li className={classes.liIcon}><span>✅</span> {t('privacy_page.usage_1_li2')}</li>
+                    <li className={classes.liIcon}><span>✅</span> {t('privacy_page.usage_1_li3')}</li>
+                    <li className={classes.liIcon}><span>✅</span> {t('privacy_page.usage_1_li4')}</li>
+                    <li className={classes.liIcon}><span>✅</span> {t('privacy_page.usage_1_li5')}</li>
                 </ul>
 
-                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> Комунікація з користувачем</h3>
-                <p className="mb-4 text-gray-700 text-[17px]">Ми можемо використовувати вашу електронну пошту для:</p>
+                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> {t('privacy_page.usage_2_h3')}</h3>
+                <p className="mb-4 text-gray-700 text-[17px]">{t('privacy_page.usage_2_p')}</p>
                 <ul className={classes.ul}>
-                    <li className={classes.liIcon}><span>📨</span> підтвердження реєстрації</li>
-                    <li className={classes.liIcon}><span>🔄</span> відновлення пароля</li>
-                    <li className={classes.liIcon}><span>⚠️</span> надсилання важливих повідомлень</li>
-                    <li className={classes.liIcon}><span>🔔</span> інформування про оновлення сервісу</li>
+                    <li className={classes.liIcon}><span>📨</span> {t('privacy_page.usage_2_li1')}</li>
+                    <li className={classes.liIcon}><span>🔄</span> {t('privacy_page.usage_2_li2')}</li>
+                    <li className={classes.liIcon}><span>⚠️</span> {t('privacy_page.usage_2_li3')}</li>
+                    <li className={classes.liIcon}><span>🔔</span> {t('privacy_page.usage_2_li4')}</li>
                 </ul>
 
-                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> Аналітика</h3>
-                <p className="mb-4 text-gray-700 text-[17px]">Ми аналізуємо використання сайту для:</p>
+                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> {t('privacy_page.usage_3_h3')}</h3>
+                <p className="mb-4 text-gray-700 text-[17px]">{t('privacy_page.usage_3_p')}</p>
                 <ul className={classes.ul}>
-                    <li className={classes.liIcon}><span>🎨</span> покращення інтерфейсу</li>
-                    <li className={classes.liIcon}><span>🔍</span> оптимізації пошуку рецептів</li>
-                    <li className={classes.liIcon}><span>💡</span> розробки нових функцій</li>
+                    <li className={classes.liIcon}><span>🎨</span> {t('privacy_page.usage_3_li1')}</li>
+                    <li className={classes.liIcon}><span>🔍</span> {t('privacy_page.usage_3_li2')}</li>
+                    <li className={classes.liIcon}><span>💡</span> {t('privacy_page.usage_3_li3')}</li>
                 </ul>
 
-                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> Обмеження використання</h3>
-                <p className={classes.p}>Ми не використовуємо ваші дані для продажу третім особам або для агресивної реклами.</p>
+                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> {t('privacy_page.usage_4_h3')}</h3>
+                <p className={classes.p}>{t('privacy_page.usage_4_p')}</p>
             </>
         )
     },
     'cookies': {
-        title: 'Куки (Cookies)',
+        title: t('privacy_page.card_3_title'),
         content: (
             <>
-                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> Що таке cookies</h3>
-                <p className={classes.p}>Cookies — це невеликі текстові файли, які зберігаються на вашому пристрої під час використання сайту.</p>
+                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> {t('privacy_page.cook_1_h3')}</h3>
+                <p className={classes.p}>{t('privacy_page.cook_1_p')}</p>
 
-                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> Для чого ми використовуємо cookies</h3>
-                <p className="mb-4 text-gray-700 text-[17px]">Ми використовуємо cookies для:</p>
+                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> {t('privacy_page.cook_2_h3')}</h3>
+                <p className="mb-4 text-gray-700 text-[17px]">{t('privacy_page.cook_2_p')}</p>
                 <ul className={classes.ul}>
-                    <li className={classes.liIcon}><span>🍪</span> забезпечення стабільної роботи сайту</li>
-                    <li className={classes.liIcon}><span>🍪</span> збереження ваших налаштувань</li>
-                    <li className={classes.liIcon}><span>🍪</span> автоматичного входу в акаунт</li>
-                    <li className={classes.liIcon}><span>🍪</span> збору аналітичних даних</li>
+                    <li className={classes.liIcon}><span>🍪</span> {t('privacy_page.cook_2_li1')}</li>
+                    <li className={classes.liIcon}><span>🍪</span> {t('privacy_page.cook_2_li2')}</li>
+                    <li className={classes.liIcon}><span>🍪</span> {t('privacy_page.cook_2_li3')}</li>
+                    <li className={classes.liIcon}><span>🍪</span> {t('privacy_page.cook_2_li4')}</li>
                 </ul>
 
-                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> Типи cookies</h3>
-                <p className="mb-4 text-gray-700 text-[17px]">На сайті можуть використовуватись:</p>
+                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> {t('privacy_page.cook_3_h3')}</h3>
+                <p className="mb-4 text-gray-700 text-[17px]">{t('privacy_page.cook_3_p')}</p>
                 <ul className={classes.ul}>
-                    <li className={classes.liIcon}><span>⚙️</span> <b>Необхідні cookies</b> — для роботи сайту</li>
-                    <li className={classes.liIcon}><span>📊</span> <b>Аналітичні cookies</b> — для аналізу використання</li>
-                    <li className={classes.liIcon}><span>🛠️</span> <b>Функціональні cookies</b> — для збереження налаштувань</li>
+                    <li className={classes.liIcon}><span>⚙️</span> <b>{t('privacy_page.cook_3_li1')}</b>{t('privacy_page.cook_3_li1_desc')}</li>
+                    <li className={classes.liIcon}><span>📊</span> <b>{t('privacy_page.cook_3_li2')}</b>{t('privacy_page.cook_3_li2_desc')}</li>
+                    <li className={classes.liIcon}><span>🛠️</span> <b>{t('privacy_page.cook_3_li3')}</b>{t('privacy_page.cook_3_li3_desc')}</li>
                 </ul>
 
-                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> Керування cookies</h3>
-                <p className="mb-4 text-gray-700 text-[17px]">Ви можете:</p>
+                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> {t('privacy_page.cook_4_h3')}</h3>
+                <p className="mb-4 text-gray-700 text-[17px]">{t('privacy_page.cook_4_p')}</p>
                 <ul className={classes.ul}>
-                    <li className={classes.liIcon}><span>🔧</span> змінити налаштування cookies у браузері</li>
-                    <li className={classes.liIcon}><span>🗑️</span> видалити cookies у будь-який момент</li>
-                    <li className={classes.liIcon}><span>🛑</span> обмежити їх використання</li>
+                    <li className={classes.liIcon}><span>🔧</span> {t('privacy_page.cook_4_li1')}</li>
+                    <li className={classes.liIcon}><span>🗑️</span> {t('privacy_page.cook_4_li2')}</li>
+                    <li className={classes.liIcon}><span>🛑</span> {t('privacy_page.cook_4_li3')}</li>
                 </ul>
-                <p className={classes.p}>Зверніть увагу: вимкнення cookies може вплинути на роботу сайту.</p>
+                <p className={classes.p}>{t('privacy_page.cook_4_p2')}</p>
             </>
         )
     },
     'control': {
-        title: 'Контроль',
+        title: t('privacy_page.card_4_title'),
         content: (
             <>
-                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> Права користувача</h3>
-                <p className="mb-4 text-gray-700 text-[17px]">Кожен користувач має право:</p>
+                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> {t('privacy_page.ctrl_1_h3')}</h3>
+                <p className="mb-4 text-gray-700 text-[17px]">{t('privacy_page.ctrl_1_p')}</p>
                 <ul className={classes.ul}>
-                    <li className={classes.liIcon}><span>🔑</span> отримати доступ до своїх даних</li>
-                    <li className={classes.liIcon}><span>✏️</span> змінити персональну інформацію</li>
-                    <li className={classes.liIcon}><span>🗑️</span> видалити акаунт</li>
-                    <li className={classes.liIcon}><span>✋</span> відкликати згоду на обробку даних</li>
+                    <li className={classes.liIcon}><span>🔑</span> {t('privacy_page.ctrl_1_li1')}</li>
+                    <li className={classes.liIcon}><span>✏️</span> {t('privacy_page.ctrl_1_li2')}</li>
+                    <li className={classes.liIcon}><span>🗑️</span> {t('privacy_page.ctrl_1_li3')}</li>
+                    <li className={classes.liIcon}><span>✋</span> {t('privacy_page.ctrl_1_li4')}</li>
                 </ul>
 
-                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> Видалення акаунту</h3>
-                <p className={classes.p}>Користувач може видалити свій акаунт у будь-який момент через налаштування профілю або звернувшись до служби підтримки.</p>
-                <p className="mb-4 text-gray-700 text-[17px]">Після видалення:</p>
+                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> {t('privacy_page.ctrl_2_h3')}</h3>
+                <p className={classes.p}>{t('privacy_page.ctrl_2_p')}</p>
+                <p className="mb-4 text-gray-700 text-[17px]">{t('privacy_page.ctrl_2_p2')}</p>
                 <ul className={classes.ul}>
-                    <li className={classes.liIcon}><span>🧹</span> персональні дані будуть видалені або анонімізовані</li>
-                    <li className={classes.liIcon}><span>🚫</span> доступ до акаунту буде втрачено</li>
+                    <li className={classes.liIcon}><span>🧹</span> {t('privacy_page.ctrl_2_li1')}</li>
+                    <li className={classes.liIcon}><span>🚫</span> {t('privacy_page.ctrl_2_li2')}</li>
                 </ul>
 
-                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> Захист даних</h3>
-                <p className="mb-4 text-gray-700 text-[17px]">Ми застосовуємо сучасні заходи безпеки:</p>
+                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> {t('privacy_page.ctrl_3_h3')}</h3>
+                <p className="mb-4 text-gray-700 text-[17px]">{t('privacy_page.ctrl_3_p')}</p>
                 <ul className={classes.ul}>
-                    <li className={classes.liIcon}><span>🔒</span> шифрування даних</li>
-                    <li className={classes.liIcon}><span>🛡️</span> захист серверів</li>
-                    <li className={classes.liIcon}><span>🛂</span> контроль доступу</li>
+                    <li className={classes.liIcon}><span>🔒</span> {t('privacy_page.ctrl_3_li1')}</li>
+                    <li className={classes.liIcon}><span>🛡️</span> {t('privacy_page.ctrl_3_li2')}</li>
+                    <li className={classes.liIcon}><span>🛂</span> {t('privacy_page.ctrl_3_li3')}</li>
                 </ul>
 
-                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> Зміни політики</h3>
-                <p className={classes.p}>Ми залишаємо за собою право змінювати цю Політику. Оновлення публікуються на цій сторінці.</p>
+                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> {t('privacy_page.ctrl_4_h3')}</h3>
+                <p className={classes.p}>{t('privacy_page.ctrl_4_p')}</p>
 
-                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> Контакти</h3>
-                <p className="mb-2 text-gray-700 text-[17px]">Якщо у вас є питання:</p>
+                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> {t('privacy_page.ctrl_5_h3')}</h3>
+                <p className="mb-2 text-gray-700 text-[17px]">{t('privacy_page.ctrl_5_p')}</p>
                 <p className="flex items-center gap-3 text-lg font-medium text-[#2B4B3C]">
                     <span className="text-2xl">📧</span> support@litecook.com
                 </p>
@@ -161,79 +162,80 @@ const PRIVACY_CONTENT = {
         )
     },
     'full': {
-        title: 'Політика конфіденційності',
+        title: t('privacy_page.full_title'),
         content: (
             <>
                 <p className="text-gray-500 font-medium tracking-wide mb-8 uppercase text-sm">
-                    Останнє оновлення: {POLICY_LAST_UPDATED_DATE}
+                    {t('privacy_page.last_update')} {date}
                 </p>
-                <p className={classes.p}>Ласкаво просимо до LITE cook! Ми поважаємо вашу конфіденційність та прагнемо захищати ваші персональні дані. У цій Політиці конфіденційності пояснюється, які дані ми збираємо, як їх використовуємо та як захищаємо.</p>
+                <p className={classes.p}>{t('privacy_page.full_intro')}</p>
 
-                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> 1. Які дані ми збираємо</h3>
-                <p className="mb-4 text-gray-700 text-[17px]">Ми можемо збирати такі типи інформації:</p>
+                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> {t('privacy_page.full_1_h3')}</h3>
+                <p className="mb-4 text-gray-700 text-[17px]">{t('privacy_page.full_1_p')}</p>
                 <ul className={classes.ul}>
-                    <li className={classes.liIcon}><span>👤</span> <div><b>Персональні дані:</b> ім'я, електронна пошта (під час реєстрації)</div></li>
-                    <li className={classes.liIcon}><span>🔐</span> <div><b>Дані облікового запису:</b> логін, пароль (у зашифрованому вигляді)</div></li>
-                    <li className={classes.liIcon}><span>📱</span> <div><b>Технічна інформація:</b> IP-адреса, тип браузера, пристрій</div></li>
-                    <li className={classes.liIcon}><span>🖱️</span> <div><b>Дані використання:</b> переглянуті рецепти, обрані інгредієнти, пошукові запити</div></li>
+                    <li className={classes.liIcon}><span>👤</span> <div><b>{t('privacy_page.full_1_li1_b')}</b>{t('privacy_page.full_1_li1_d')}</div></li>
+                    <li className={classes.liIcon}><span>🔐</span> <div><b>{t('privacy_page.full_1_li2_b')}</b>{t('privacy_page.full_1_li2_d')}</div></li>
+                    <li className={classes.liIcon}><span>📱</span> <div><b>{t('privacy_page.full_1_li3_b')}</b>{t('privacy_page.full_1_li3_d')}</div></li>
+                    <li className={classes.liIcon}><span>🖱️</span> <div><b>{t('privacy_page.full_1_li4_b')}</b>{t('privacy_page.full_1_li4_d')}</div></li>
                 </ul>
 
-                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> 2. Як ми використовуємо ваші дані</h3>
-                <p className="mb-4 text-gray-700 text-[17px]">Ми використовуємо інформацію для:</p>
+                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> {t('privacy_page.full_2_h3')}</h3>
+                <p className="mb-4 text-gray-700 text-[17px]">{t('privacy_page.full_2_p')}</p>
                 <ul className={classes.ul}>
-                    <li className={classes.liIcon}><span>✅</span> створення та керування вашим акаунтом</li>
-                    <li className={classes.liIcon}><span>✅</span> надання персоналізованих рецептів</li>
-                    <li className={classes.liIcon}><span>✅</span> покращення роботи сайту</li>
-                    <li className={classes.liIcon}><span>✅</span> аналізу використання платформи</li>
-                    <li className={classes.liIcon}><span>✅</span> зв'язку з вами (наприклад, для відновлення пароля)</li>
+                    <li className={classes.liIcon}><span>✅</span> {t('privacy_page.full_2_li1')}</li>
+                    <li className={classes.liIcon}><span>✅</span> {t('privacy_page.full_2_li2')}</li>
+                    <li className={classes.liIcon}><span>✅</span> {t('privacy_page.full_2_li3')}</li>
+                    <li className={classes.liIcon}><span>✅</span> {t('privacy_page.full_2_li4')}</li>
+                    <li className={classes.liIcon}><span>✅</span> {t('privacy_page.full_2_li5')}</li>
                 </ul>
 
-                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> 3. Зберігання та захист даних</h3>
-                <p className="mb-4 text-gray-700 text-[17px]">Ми застосовуємо сучасні технічні та організаційні заходи для захисту ваших даних:</p>
+                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> {t('privacy_page.full_3_h3')}</h3>
+                <p className="mb-4 text-gray-700 text-[17px]">{t('privacy_page.full_3_p')}</p>
                 <ul className={classes.ul}>
-                    <li className={classes.liIcon}><span>🔒</span> шифрування паролів</li>
-                    <li className={classes.liIcon}><span>🛡️</span> захист серверів</li>
-                    <li className={classes.liIcon}><span>🛂</span> обмежений доступ до інформації</li>
+                    <li className={classes.liIcon}><span>🔒</span> {t('privacy_page.full_3_li1')}</li>
+                    <li className={classes.liIcon}><span>🛡️</span> {t('privacy_page.full_3_li2')}</li>
+                    <li className={classes.liIcon}><span>🛂</span> {t('privacy_page.full_3_li3')}</li>
                 </ul>
-                <p className={classes.p}>Ми не передаємо ваші персональні дані третім особам без вашої згоди, окрім випадків, передбачених законом.</p>
+                <p className={classes.p}>{t('privacy_page.full_3_p2')}</p>
 
-                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> 4. Cookies</h3>
-                <p className="mb-4 text-gray-700 text-[17px]">Наш сайт використовує файли cookie для:</p>
+                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> {t('privacy_page.full_4_h3')}</h3>
+                <p className="mb-4 text-gray-700 text-[17px]">{t('privacy_page.full_4_p')}</p>
                 <ul className={classes.ul}>
-                    <li className={classes.liIcon}><span>⚙️</span> коректної роботи сайту</li>
-                    <li className={classes.liIcon}><span>🛠️</span> запам'ятовування ваших налаштувань</li>
-                    <li className={classes.liIcon}><span>📊</span> аналітики використання</li>
+                    <li className={classes.liIcon}><span>⚙️</span> {t('privacy_page.full_4_li1')}</li>
+                    <li className={classes.liIcon}><span>🛠️</span> {t('privacy_page.full_4_li2')}</li>
+                    <li className={classes.liIcon}><span>📊</span> {t('privacy_page.full_4_li3')}</li>
                 </ul>
-                <p className={classes.p}>Ви можете змінити налаштування cookie у своєму браузері.</p>
+                <p className={classes.p}>{t('privacy_page.full_4_p2')}</p>
 
-                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> 5. Ваші права</h3>
-                <p className="mb-4 text-gray-700 text-[17px]">Ви маєте право:</p>
+                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> {t('privacy_page.full_5_h3')}</h3>
+                <p className="mb-4 text-gray-700 text-[17px]">{t('privacy_page.full_5_p')}</p>
                 <ul className={classes.ul}>
-                    <li className={classes.liIcon}><span>🔑</span> отримати доступ до своїх даних</li>
-                    <li className={classes.liIcon}><span>✏️</span> змінити або видалити їх</li>
-                    <li className={classes.liIcon}><span>✋</span> відкликати згоду на обробку</li>
+                    <li className={classes.liIcon}><span>🔑</span> {t('privacy_page.full_5_li1')}</li>
+                    <li className={classes.liIcon}><span>✏️</span> {t('privacy_page.full_5_li2')}</li>
+                    <li className={classes.liIcon}><span>✋</span> {t('privacy_page.full_5_li3')}</li>
                 </ul>
-                <p className={classes.p}>Для цього зв'яжіться з нами через контактну інформацію нижче.</p>
+                <p className={classes.p}>{t('privacy_page.full_5_p2')}</p>
 
-                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> 6. Зміни до політики</h3>
-                <p className={classes.p}>Ми можемо оновлювати цю Політику конфіденційності. Усі зміни будуть опубліковані на цій сторінці.</p>
+                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> {t('privacy_page.full_6_h3')}</h3>
+                <p className={classes.p}>{t('privacy_page.full_6_p')}</p>
 
-                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> 7. Контакти</h3>
-                <p className="mb-4 text-gray-700 text-[17px]">Якщо у вас є питання щодо цієї Політики, зв'яжіться з нами:</p>
+                <h3 className={classes.h3}><span className={classes.h3Accent}>~</span> {t('privacy_page.full_7_h3')}</h3>
+                <p className="mb-4 text-gray-700 text-[17px]">{t('privacy_page.full_7_p')}</p>
                 <div className="flex flex-col gap-3">
                     <p className="flex items-center gap-3 text-lg font-medium text-[#2B4B3C]">
                         <span className="text-2xl">📧</span> Email: info@litecook.com
                     </p>
                     <p className="flex items-center gap-3 text-lg font-medium text-[#2B4B3C]">
-                        <span className="text-2xl">🌐</span> Сайт: https://lite-cook.pp.ua/
+                        <span className="text-2xl">🌐</span> {t('privacy_page.full_7_site')} https://lite-cook.pp.ua/
                     </p>
                 </div>
             </>
         )
     }
-};
+});
 
 const PrivacyDetail = () => {
+    const { t } = useTranslation(); // ПІДКЛЮЧЕННЯ ПЕРЕКЛАДУ
     const { section } = useParams();
     const navigate = useNavigate();
 
@@ -241,7 +243,9 @@ const PrivacyDetail = () => {
         window.scrollTo(0, 0);
     }, [section]);
 
-    const pageData = PRIVACY_CONTENT[section] || PRIVACY_CONTENT['full'];
+    // Викликаємо функцію з поточним перекладачем і датою
+    const CONTENT = getPrivacyContent(t, POLICY_LAST_UPDATED_DATE);
+    const pageData = CONTENT[section] || CONTENT['full'];
 
     return (
         <div
@@ -260,7 +264,7 @@ const PrivacyDetail = () => {
                         <polyline points="12 8 8 12 12 16"></polyline>
                         <line x1="16" y1="12" x2="8" y2="12"></line>
                     </svg>
-                    Назад
+                    {t('privacy_page.back_btn')}
                 </button>
             </div>
 

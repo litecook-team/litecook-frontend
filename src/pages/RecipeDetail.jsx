@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next'; // ІМПОРТ ПЕРЕКЛАДУ
 
 import api from '../api';
 import { ENDPOINTS, TOKEN_KEY, API_URL } from '../constants/api';
@@ -19,6 +20,8 @@ const getPluralForm = (number, titles) => {
 };
 
 const RecipeDetail = () => {
+    const { t, i18n } = useTranslation(); // ІНІЦІАЛІЗАЦІЯ ПЕРЕКЛАДУ
+
     const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
@@ -33,12 +36,21 @@ const RecipeDetail = () => {
     // Тепер використовуємо TOKEN_KEY з констант
     const isAuthenticated = !!localStorage.getItem(TOKEN_KEY);
 
+    // === ФІКС: Перезавантажуємо рецепт при зміні мови ===
     useEffect(() => {
         fetchRecipe();
+    }, [id, i18n.language]); // <--- Додали i18n.language сюди
+
+    // Прокрутка вгору лише при першому відкритті сторінки рецепту
+    useEffect(() => {
         window.scrollTo(0, 0);
     }, [id]);
 
     const fetchRecipe = async () => {
+        // Ми не ставимо setLoading(true) тут, щоб екран різко не блимав при зміні мови.
+        // Він блиматиме тільки при першому завантаженні (коли recipe ще null).
+        if (!recipe) setLoading(true);
+
         try {
             // config більше не потрібен, api сам додасть токен!
             const response = await api.get(`${ENDPOINTS.RECIPES}${id}/`);
@@ -56,14 +68,14 @@ const RecipeDetail = () => {
             if (recipe.is_favorited) {
                 await api.delete(`${ENDPOINTS.FAVORITES}${id}/`);
                 setRecipe({ ...recipe, is_favorited: false });
-                showToast("🤍 Видалено з улюблених");
+                showToast(t('recipe_detail_page.toast_fav_removed'));
             } else {
                 await api.post(ENDPOINTS.FAVORITES, { recipe: id });
                 setRecipe({ ...recipe, is_favorited: true });
-                showToast("❤️ Додано в улюблені!");
+                showToast(t('recipe_detail_page.toast_fav_added'));
             }
         } catch (error) {
-            showToast("❌ Помилка синхронізації");
+            showToast(t('recipe_detail_page.toast_fav_error'));
         }
     };
 
@@ -75,9 +87,9 @@ const RecipeDetail = () => {
         try {
             await api.delete(`${ENDPOINTS.WEEKLY_MENU}remove-recipe/${id}/`);
             setRecipe({ ...recipe, is_added_to_menu: false });
-            showToast("🍽️ Видалено з меню");
+            showToast(t('recipe_detail_page.toast_menu_removed'));
         } catch (error) {
-            showToast("❌ Помилка видалення");
+            showToast(t('recipe_detail_page.toast_menu_remove_error'));
         }
     };
 
@@ -90,9 +102,9 @@ const RecipeDetail = () => {
             });
             setRecipe({ ...recipe, is_added_to_menu: true });
             setIsMenuModalOpen(false);
-            showToast("🍲 Рецепт додано до тижневого меню!");
+            showToast(t('recipe_detail_page.toast_menu_added'));
         } catch (error) {
-            showToast("❌ Помилка додавання");
+            showToast(t('recipe_detail_page.toast_menu_add_error'));
         }
     };
 
@@ -109,7 +121,7 @@ const RecipeDetail = () => {
         return `${API_URL}${path}`;
     };
 
-    if (loading) return <div className="min-h-screen bg-[#F6F3F4] flex items-center justify-center text-2xl font-serif">Завантаження...</div>;
+    if (loading) return <div className="min-h-screen bg-[#F6F3F4] flex items-center justify-center text-2xl font-serif">{t('recipe_detail_page.loading')}</div>;
     if (!recipe) return <NotFound />;
 
     return (
@@ -160,7 +172,7 @@ const RecipeDetail = () => {
                                 <polyline points="12 8 8 12 12 16"></polyline>
                                 <line x1="16" y1="12" x2="8" y2="12"></line>
                             </svg>
-                            Назад
+                            {t('recipe_detail_page.back_btn')}
                         </button>
 
                         {/* Кнопка Улюблені */}
@@ -176,7 +188,7 @@ const RecipeDetail = () => {
                                 >
                                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                                 </svg>
-                                {recipe.is_favorited ? 'В улюблених' : 'Додати в улюблені'}
+                                {recipe.is_favorited ? t('recipe_detail_page.in_favorites') : t('recipe_detail_page.add_to_favorites')}
                             </button>
                         )}
                     </div>
@@ -193,7 +205,7 @@ const RecipeDetail = () => {
                                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                             </svg>
                             <span className="text-black font-['El_Messiri'] text-xs sm:text-sm md:text-base lg:text-[26px] leading-none">
-                                РЕЦЕПТ
+                                {t('recipe_detail_page.recipe_tag')}
                             </span>
                         </div>
                     </div>
@@ -209,7 +221,7 @@ const RecipeDetail = () => {
                                 <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
                             </svg>
                             <span className="text-[11px] sm:text-[13px] md:text-base lg:text-lg text-gray-800 leading-tight">
-                                {recipe.cooking_time} {getPluralForm(recipe.cooking_time, ['хвилина', 'хвилини', 'хвилин'])}
+                                {recipe.cooking_time} {getPluralForm(recipe.cooking_time, [t('recipe_detail_page.min_1'), t('recipe_detail_page.min_2'), t('recipe_detail_page.min_5')])}
                             </span>
                         </div>
                         <div className="flex flex-col items-center flex-1">
@@ -217,7 +229,7 @@ const RecipeDetail = () => {
                                 <path d="M17 8h1a4 4 0 1 1 0 8h-1"></path><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"></path><line x1="6" y1="2" x2="6" y2="4"></line><line x1="10" y1="2" x2="10" y2="4"></line><line x1="14" y1="2" x2="14" y2="4"></line>
                             </svg>
                             <span className="text-[11px] sm:text-[13px] md:text-base lg:text-lg text-gray-800 leading-tight">
-                                {recipe.portions} {getPluralForm(recipe.portions, ['порція', 'порції', 'порцій'])}
+                                {recipe.portions} {getPluralForm(recipe.portions, [t('recipe_detail_page.port_1'), t('recipe_detail_page.port_2'), t('recipe_detail_page.port_5')])}
                             </span>
                         </div>
                         <div className="flex flex-col items-center flex-1">
@@ -225,7 +237,7 @@ const RecipeDetail = () => {
                                 <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path>
                             </svg>
                             <span className="text-[11px] sm:text-[13px] md:text-base lg:text-lg text-gray-800 leading-tight">
-                                {recipe.calories} ккал / порція
+                                {recipe.calories} {t('recipe_detail_page.kcal')}
                             </span>
                         </div>
                         <div className="flex flex-col items-center flex-1">
@@ -244,7 +256,7 @@ const RecipeDetail = () => {
                             <svg className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 shrink-0" viewBox="0 0 24 24" fill="none" stroke="#B47231" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M4 12.5C4 12.5 7.5 17 8.5 18C10 14 15 7.5 20 5"></path>
                             </svg>
-                            ІНГРЕДІЄНТИ
+                            {t('recipe_detail_page.ingredients_title')}
                         </h3>
 
                         <ul className="backdrop-blur-md rounded-2xl p-2 sm:p-4 lg:p-3">
@@ -278,12 +290,12 @@ const RecipeDetail = () => {
                                     {recipe.is_added_to_menu ? (
                                         <>
                                             <svg className="w-5 h-5 sm:w-6 sm:h-6 shrink-0" viewBox="0 0 24 24" fill="none" stroke="#B47231" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                            Додано до тижневого меню
+                                            {t('recipe_detail_page.in_menu_btn')}
                                         </>
                                     ) : (
                                         <>
                                             <svg className="w-5 h-5 sm:w-6 sm:h-6 shrink-0" viewBox="0 0 24 24" fill="none" stroke="#B47231" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><circle cx="8" cy="14" r="1.5" fill="#B47231"></circle><circle cx="12" cy="14" r="1.5" fill="#B47231"></circle><circle cx="16" cy="14" r="1.5" fill="#B47231"></circle><circle cx="8" cy="18" r="1.5" fill="#B47231"></circle><circle cx="12" cy="18" r="1.5" fill="#B47231"></circle><circle cx="16" cy="18" r="1.5" fill="#B47231"></circle></svg>
-                                            Додати в тижневе меню
+                                            {t('recipe_detail_page.add_to_menu_btn')}
                                         </>
                                     )}
                                 </button>
@@ -313,41 +325,41 @@ const RecipeDetail = () => {
                                 <div className="w-full h-full bg-transparent min-[1500px]:backdrop-blur-none backdrop-blur-md rounded-[calc(2rem-6px)] p-15 sm:p-15 min-[1840px]:p-6 xl:p-8 font-['Inter']">
 
                                     <h3 className="text-[18px] sm:text-[20px] font-bold font-['Inter'] text-[#B47231] mb-4 sm:mb-6 uppercase text-center tracking-widest mt-2 sm:mt-0">
-                                        ДЕТАЛІ
+                                        {t('recipe_detail_page.details_title')}
                                     </h3>
 
-                                    {/* ЗМІНЕНО: Нова, чиста та красива структура рядків як на вашому фото */}
+                                    {/* Нова, чиста та красива структура рядків як на вашому фото */}
                                     <div className="flex flex-col w-full text-[14px] sm:text-[15px] xl:text-[15px]">
 
                                         <div className="flex justify-between items-start gap-4 py-2 border-b border-gray-400/30">
-                                            <span className="text-gray-900 font-semibold shrink-0">Кухня:</span>
+                                            <span className="text-gray-900 font-semibold shrink-0">{t('recipe_detail_page.det_cuisine')}</span>
                                             <span className="text-gray-900 text-right break-words">{formatArray(recipe.cuisine, DICTIONARIES.cuisine)}</span>
                                         </div>
 
                                         <div className="flex justify-between items-start gap-4 py-3 border-b border-gray-400/30">
-                                            <span className="font-semibold text-gray-900 shrink-0">Прийом їжі:</span>
+                                            <span className="font-semibold text-gray-900 shrink-0">{t('recipe_detail_page.det_meal')}</span>
                                             <span className="text-gray-900 text-right break-words">{formatArray(recipe.meal_times, DICTIONARIES.meal_times)}</span>
                                         </div>
 
                                         <div className="flex justify-between items-start gap-4 py-3 border-b border-gray-400/30">
-                                            <span className="font-semibold text-gray-900 shrink-0">Тип страви:</span>
+                                            <span className="font-semibold text-gray-900 shrink-0">{t('recipe_detail_page.det_dish')}</span>
                                             <span className="text-gray-900 text-right break-words">{formatArray(recipe.dish_types, DICTIONARIES.dish_types)}</span>
                                         </div>
 
                                         <div className="flex justify-between items-start gap-4 py-3 border-b border-gray-400/30">
-                                            <span className="font-semibold text-gray-900 shrink-0">Тип харчування:</span>
+                                            <span className="font-semibold text-gray-900 shrink-0">{t('recipe_detail_page.det_diet')}</span>
                                             <span className="text-gray-900 text-right break-words">{formatArray(recipe.dietary_tags, DICTIONARIES.dietary_tags)}</span>
                                         </div>
 
                                         <div className="flex justify-between items-start gap-4 py-3 border-b border-gray-400/30">
-                                            <span className="font-semibold text-gray-900 shrink-0">Автор:</span>
-                                            <span className="text-gray-900 text-right break-words">{recipe.source || 'Невідомо'}</span>
+                                            <span className="font-semibold text-gray-900 shrink-0">{t('recipe_detail_page.det_author')}</span>
+                                            <span className="text-gray-900 text-right break-words">{recipe.source || t('recipe_detail_page.det_unknown')}</span>
                                         </div>
 
                                         <div className="flex justify-between items-start gap-4 py-3">
-                                            <span className="font-semibold text-gray-900 shrink-0">Додано:</span>
+                                            <span className="font-semibold text-gray-900 shrink-0">{t('recipe_detail_page.det_added')}</span>
                                             <span className="text-gray-900 text-right break-words">
-                                                {recipe.created_at ? new Date(recipe.created_at).toLocaleDateString('uk-UA') : '—'}
+                                                {recipe.created_at ? new Date(recipe.created_at).toLocaleDateString(i18n.language) : '—'}
                                             </span>
                                         </div>
 
@@ -377,7 +389,7 @@ const RecipeDetail = () => {
                                 <div className="w-full h-full bg-transparent min-[1500px]:backdrop-blur-none backdrop-blur-md rounded-[calc(2rem-4px)] p-6 sm:p-8 xl:p-10 flex flex-col items-center min-[1840px]:items-start">
 
                                     <h3 className="text-[18px] sm:text-[20px] lg:text-[22px] font-bold font-['Inter'] text-[#B47231] mb-5 sm:mb-8 uppercase flex items-center justify-center min-[1840px]:justify-start gap-2 sm:gap-3 w-full tracking-widest">
-                                        ПРИГОТУВАННЯ
+                                        {t('recipe_detail_page.prep_title')}
                                     </h3>
 
                                     <div className="space-y-2 sm:space-y-3 lg:space-y-3 w-full">
@@ -409,7 +421,7 @@ const RecipeDetail = () => {
                         {/* Кнопка закриття */}
                         <button
                             onClick={() => setIsMenuModalOpen(false)}
-                            className="absolute top-5 right-5 w-10 h-10 flex items-center justify-center bg-gray-50 rounded-full text-gray-400 hover:text-gray-900 hover:bg-gray-200 hover:scale-105 transition-all shadow-sm"
+                            className="absolute top-5 right-5 w-10 h-10 flex items-center justify-center bg-gray-50 rounded-full text-gray-400 hover:text-gray-900 hover:bg-gray-200 hover:scale-105 transition-all shadow-sm cursor-pointer duration-300 ease-out active:scale-95 group"
                         >
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                         </button>
@@ -428,26 +440,26 @@ const RecipeDetail = () => {
                         </div>
 
                         <h2 className="text-[24px] font-bold font-['El_Messiri'] text-gray-900 mb-1 text-center uppercase tracking-wider">
-                            План тижневого меню
+                            {t('recipe_detail_page.modal_title')}
                         </h2>
-                        <p className="text-center text-sm text-gray-500 mb-8 font-medium">Оберіть час, щоб зберегти цей рецепт</p>
+                        <p className="text-center text-sm text-gray-500 mb-8 font-medium">{t('recipe_detail_page.modal_subtitle')}</p>
 
                         <div className="space-y-6">
 
                             <div className="relative group">
-                                <label className="absolute -top-2.5 left-5 px-2 bg-white text-[12px] font-bold text-gray-400 uppercase tracking-widest transition-colors group-focus-within:text-[#B47231] z-10">День тижня</label>
+                                <label className="absolute -top-2.5 left-5 px-2 bg-white text-[12px] font-bold text-gray-400 uppercase tracking-widest transition-colors group-focus-within:text-[#B47231] z-10">{t('recipe_detail_page.modal_day_label')}</label>
                                 <select
                                     value={menuDay}
                                     onChange={(e) => setMenuDay(e.target.value)}
                                     className="w-full appearance-none bg-transparent border-2 border-gray-200 rounded-[1.5rem] px-5 py-4 outline-none focus:border-[#B47231] text-gray-800 font-semibold text-[15px] transition-all cursor-pointer relative z-0 hover:border-gray-300"
                                 >
-                                    <option value={1}>Понеділок</option>
-                                    <option value={2}>Вівторок</option>
-                                    <option value={3}>Середа</option>
-                                    <option value={4}>Четвер</option>
-                                    <option value={5}>П'ятниця</option>
-                                    <option value={6}>Субота</option>
-                                    <option value={7}>Неділя</option>
+                                    <option value={1}>{t('recipe_detail_page.day_1')}</option>
+                                    <option value={2}>{t('recipe_detail_page.day_2')}</option>
+                                    <option value={3}>{t('recipe_detail_page.day_3')}</option>
+                                    <option value={4}>{t('recipe_detail_page.day_4')}</option>
+                                    <option value={5}>{t('recipe_detail_page.day_5')}</option>
+                                    <option value={6}>{t('recipe_detail_page.day_6')}</option>
+                                    <option value={7}>{t('recipe_detail_page.day_7')}</option>
                                 </select>
                                 <div className="absolute inset-y-0 right-0 flex items-center pr-5 pointer-events-none text-gray-400 group-focus-within:text-[#B47231] transition-colors">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
@@ -456,15 +468,15 @@ const RecipeDetail = () => {
 
                             {/* Вибір Прийому їжі */}
                             <div className="relative group">
-                                <label className="absolute -top-2.5 left-5 px-2 bg-white text-[12px] font-bold text-gray-400 uppercase tracking-widest transition-colors group-focus-within:text-[#B47231] z-10">Прийом їжі</label>
+                                <label className="absolute -top-2.5 left-5 px-2 bg-white text-[12px] font-bold text-gray-400 uppercase tracking-widest transition-colors group-focus-within:text-[#B47231] z-10">{t('recipe_detail_page.modal_meal_label')}</label>
                                 <select
                                     value={menuMeal}
                                     onChange={(e) => setMenuMeal(e.target.value)}
                                     className="w-full appearance-none bg-transparent border-2 border-gray-200 rounded-[1.5rem] px-5 py-4 outline-none focus:border-[#B47231] text-gray-800 font-semibold text-[15px] transition-all cursor-pointer relative z-0 hover:border-gray-300"
                                 >
-                                    <option value="breakfast">Сніданок</option>
-                                    <option value="lunch">Обід</option>
-                                    <option value="dinner">Вечеря</option>
+                                    <option value="breakfast">{t('recipe_detail_page.meal_breakfast')}</option>
+                                    <option value="lunch">{t('recipe_detail_page.meal_lunch')}</option>
+                                    <option value="dinner">{t('recipe_detail_page.meal_dinner')}</option>
                                 </select>
                                 <div className="absolute inset-y-0 right-0 flex items-center pr-5 pointer-events-none text-gray-400 group-focus-within:text-[#B47231] transition-colors">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
@@ -474,10 +486,10 @@ const RecipeDetail = () => {
                             {/* Стилізована кнопка */}
                             <button
                                 onClick={addToMenu}
-                                className="w-full mt-4 bg-[#1A1A1A] text-white py-4 rounded-[1.5rem] font-bold hover:bg-[#B47231] transition-all shadow-lg shadow-black/10 uppercase tracking-wider text-[14px] flex justify-center items-center gap-3 group"
+                                className="w-full mt-4 bg-[#1A1A1A] text-white py-4 rounded-[1.5rem] font-bold hover:bg-[#B47231] transition-all shadow-lg shadow-black/10 uppercase tracking-wider text-[14px] flex justify-center items-center gap-3 cursor-pointer duration-300 ease-out active:scale-95 group"
                             >
                                 <svg className="w-5 h-5 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                                Зберегти в меню
+                                {t('recipe_detail_page.modal_save_btn')}
                             </button>
                         </div>
                     </div>
