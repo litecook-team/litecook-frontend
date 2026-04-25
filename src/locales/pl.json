@@ -491,5 +491,21 @@
     "cat_fish_red": "Czerwona ryba", "cat_fish_white": "Biała ryba", "cat_seafood": "Owoce morza",
     "cat_cheese": "Sery", "cat_dairy": "Nabiał i Jajka", "cat_grains": "Kasze i strączkowe",
     "cat_flour": "Mąka", "cat_nuts": "Orzechy i nasiona", "cat_spices": "Przyprawy"
+  },
+  "favorites_page": {
+    "loading": "Ładowanie...",
+    "toast_removed": "🤍 Usunięto z ulubionych",
+    "toast_error_remove": "❌ Błąd usuwania",
+    "title": "Ulubione przepisy",
+    "empty_text": "Tutaj będą przechowywane Twoje ulubione przepisy. Wybierz przepis na stronie i zbierz swoją osobistą kolekcję kulinarną.",
+    "btn_remove_title": "Usuń z ulubionych",
+    "min_1": "minuta",
+    "min_2": "minuty",
+    "min_5": "minut",
+    "port_1": "porcja",
+    "port_2": "porcje",
+    "port_5": "porcji",
+    "kcal_per_portion": "kcal/porcja",
+    "view_btn": "Zobacz"
   }
 }

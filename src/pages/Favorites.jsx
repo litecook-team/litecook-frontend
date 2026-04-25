@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next'; // ІМПОРТ ПЕРЕКЛАДУ
 import api from '../api';
 import { ENDPOINTS, API_URL } from '../constants/api';
 import { DICTIONARIES } from '../constants/translations';
@@ -16,16 +17,25 @@ const getPluralForm = (number, titles) => {
 };
 
 const Favorites = () => {
+    const { t, i18n } = useTranslation(); // ПІДКЛЮЧЕННЯ ПЕРЕКЛАДУ
+
     const [favorites, setFavorites] = useState([]);
     const [loading, setLoading] = useState(true);
     const [toastMessage, setToastMessage] = useState(null);
 
+    // Завантажуємо дані при відкритті ТА при зміні мови
     useEffect(() => {
         fetchFavorites();
+    }, [i18n.language]);
+
+    // Прокручуємо вгору лише при першому відкритті сторінки
+    useEffect(() => {
         window.scrollTo(0, 0);
     }, []);
 
     const fetchFavorites = async () => {
+        // Показуємо лоадер тільки якщо список ще порожній, щоб не блимало при перемиканні мов
+        if (favorites.length === 0) setLoading(true);
         try {
             const response = await api.get(ENDPOINTS.FAVORITES);
             setFavorites(response.data);
@@ -48,9 +58,9 @@ const Favorites = () => {
                 const id = item.recipe?.id || item.id;
                 return id !== recipeId;
             }));
-            showToast("🤍 Видалено з улюблених");
+            showToast(t('favorites_page.toast_removed'));
         } catch (error) {
-            showToast("❌ Помилка видалення");
+            showToast(t('favorites_page.toast_error_remove'));
         }
     };
 
@@ -61,7 +71,7 @@ const Favorites = () => {
     };
 
     if (loading) {
-        return <div className="min-h-screen bg-[#F6F3F4] flex items-center justify-center text-2xl font-['El_Messiri']">Завантаження...</div>;
+        return <div className="min-h-screen bg-[#F6F3F4] flex items-center justify-center text-2xl font-['El_Messiri']">{t('favorites_page.loading')}</div>;
     }
 
     return (
@@ -80,7 +90,7 @@ const Favorites = () => {
                         <div className="flex items-center gap-3 md:gap-4 mb-10 md:mb-14">
                             <div className="w-4 h-4 md:w-5 md:h-5 bg-[#42705D] shrink-0"></div>
                             <h2 className="text-xl md:text-2xl lg:text-[26px] font-['El_Messiri'] font-bold text-gray-800 tracking-wider uppercase whitespace-nowrap">
-                                Улюблені рецепти
+                                {t('favorites_page.title')}
                             </h2>
                             <div className="flex-grow border-t-[3px] border-gray-400 ml-2"></div>
                         </div>
@@ -97,7 +107,7 @@ const Favorites = () => {
 
                                     {/* ДОДАНО: 2xl:text-[42px] та 2xl:max-w-5xl для пропорційного збільшення тексту */}
                                     <p className="text-2xl sm:text-2xl md:text-[20px] lg:text-[25px] xl:text-[32px] 2xl:text-[42px] font-['El_Messiri'] text-[#1A1A1A] leading-tight mb-4 lg:mb-6 max-w-md md:max-w-sm lg:max-w-lg xl:max-w-4xl 2xl:max-w-5xl">
-                                        Тут будуть зберігатися твої улюблені рецепти. Обирай рецепт на сайті та збирай свою персональну кулінарну колекцію
+                                        {t('favorites_page.empty_text')}
                                     </p>
                                 </div>
 
@@ -116,7 +126,7 @@ const Favorites = () => {
                                         </div>
 
                                         <div className="absolute inset-0 flex items-center justify-center mix-blend-multiply transform -scale-x-100">
-                                             {/* ДОДАНО: 2xl:scale-[1.3] для пропорційного скейлу самого зображення */}
+
                                              <img
                                                 src={avocadoImg}
                                                 alt="Авокадо кухар"
@@ -135,7 +145,7 @@ const Favorites = () => {
                                         <div key={recipe.id} className="flex flex-col relative group">
 
                                             <div className="relative w-full h-64 sm:h-60 md:h-72 rounded-[2rem] overflow-hidden mb-5 shadow-sm">
-                                                {/* ЗМІНЕНО: Зображення тепер клікабельне (обгорнуто в Link) */}
+
                                                 <Link to={`/recipe/${recipe.id}`} className="block w-full h-full">
                                                     <img
                                                         src={getImageUrl(recipe.image)}
@@ -150,7 +160,7 @@ const Favorites = () => {
                                                         removeFavorite(recipe.id);
                                                     }}
                                                     className="absolute top-4 left-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform z-10"
-                                                    title="Видалити з улюблених"
+                                                    title={t('favorites_page.btn_remove_title')}
                                                 >
                                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="#EF4444" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
@@ -172,19 +182,19 @@ const Favorites = () => {
                                                 <div className="flex flex-col items-center flex-1 px-0.5">
                                                     <svg className="mb-1.5 md:mb-2 text-[#B47231] w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                                                     <span className="text-[10px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-medium text-gray-800 leading-tight text-center">
-                                                        {recipe.cooking_time} {getPluralForm(recipe.cooking_time, ['хвилина', 'хвилини', 'хвилин'])}
+                                                        {recipe.cooking_time} {getPluralForm(recipe.cooking_time, [t('favorites_page.min_1'), t('favorites_page.min_2'), t('favorites_page.min_5')])}
                                                     </span>
                                                 </div>
                                                 <div className="flex flex-col items-center flex-1 px-0.5">
                                                     <svg className="mb-1.5 md:mb-2 text-[#B47231] w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0"><path d="M17 8h1a4 4 0 1 1 0 8h-1"></path><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"></path><line x1="6" y1="2" x2="6" y2="4"></line><line x1="10" y1="2" x2="10" y2="4"></line><line x1="14" y1="2" x2="14" y2="4"></line></svg>
                                                     <span className="text-[10px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-medium text-gray-800 leading-tight text-center">
-                                                        {recipe.portions} {getPluralForm(recipe.portions, ['порція', 'порції', 'порцій'])}
+                                                        {recipe.portions} {getPluralForm(recipe.portions, [t('favorites_page.port_1'), t('favorites_page.port_2'), t('favorites_page.port_5')])}
                                                     </span>
                                                 </div>
                                                 <div className="flex flex-col items-center flex-1 px-0.5">
                                                     <svg className="mb-1.5 md:mb-2 text-[#B47231] w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
                                                     <span className="text-[10px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-medium text-gray-800 leading-tight text-center break-words">
-                                                        {recipe.calories} ккал/порція
+                                                        {recipe.calories} {t('favorites_page.kcal_per_portion')}
                                                     </span>
                                                 </div>
                                                 <div className="flex flex-col items-center flex-1 px-0.5">
@@ -201,7 +211,7 @@ const Favorites = () => {
                                                     to={`/recipe/${recipe.id}`}
                                                     className="block w-full py-3 rounded-[20px] border border-gray-400 text-center font-['Inter'] font-medium text-[14px] md:text-[15px] text-[#1A1A1A] hover:bg-[#1A1A1A] hover:text-white hover:border-[#1A1A1A] transition-colors cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group"
                                                 >
-                                                    Переглянути
+                                                    {t('favorites_page.view_btn')}
                                                 </Link>
                                             </div>
                                         </div>

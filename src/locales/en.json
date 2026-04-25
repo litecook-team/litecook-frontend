@@ -491,5 +491,21 @@
     "cat_fish_red": "Red Fish", "cat_fish_white": "White Fish", "cat_seafood": "Seafood",
     "cat_cheese": "Cheeses", "cat_dairy": "Dairy & Eggs", "cat_grains": "Grains & Legumes",
     "cat_flour": "Flour", "cat_nuts": "Nuts & Seeds", "cat_spices": "Spices & Seasonings"
+  },
+  "favorites_page": {
+    "loading": "Loading...",
+    "toast_removed": "🤍 Removed from favorites",
+    "toast_error_remove": "❌ Error removing",
+    "title": "Favorite Recipes",
+    "empty_text": "Your favorite recipes will be stored here. Choose a recipe on the site and collect your personal culinary collection.",
+    "btn_remove_title": "Remove from favorites",
+    "min_1": "minute",
+    "min_2": "minutes",
+    "min_5": "minutes",
+    "port_1": "portion",
+    "port_2": "portions",
+    "port_5": "portions",
+    "kcal_per_portion": "kcal/portion",
+    "view_btn": "View"
   }
 }
