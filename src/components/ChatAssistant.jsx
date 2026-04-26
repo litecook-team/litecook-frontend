@@ -59,7 +59,8 @@ const ChatAssistant = () => {
             setMessages([...newMessages, { role: 'model', text: res.data.reply }]);
         } catch (error) {
             const errorText = error.response?.data?.error || t('ai_chat.error_conn');
-            setMessages([...newMessages, { role: 'model', text: `❌ ${t('ai_chat.error_google')} ${errorText}` }]);
+            // Тепер ми просто виводимо красивий текст, який прийшов з бекенду (з пісочним годинником ⏳)
+            setMessages([...newMessages, { role: 'model', text: errorText }]);
         } finally {
             setIsLoading(false);
         }
