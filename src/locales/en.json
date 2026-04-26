@@ -679,5 +679,20 @@
     "pwd_err_same": "New password cannot match the current one.",
     "pwd_err_wrong": "Current password entered incorrectly.",
     "pwd_err_conn": "A connection error occurred."
+  },
+  "ai_chat": {
+    "title": "LITE cook AI",
+    "title_empty": "I am your culinary guide!",
+    "welcome": "Ask me about site features or ask to find a recipe.",
+    "placeholder": "Type your question...",
+    "clear_tooltip": "Clear chat",
+    "expand_tooltip": "Expand window",
+    "shrink_tooltip": "Shrink window",
+    "confirm_title": "Clear history?",
+    "confirm_desc": "The AI will permanently forget your previous dialog. This action cannot be undone.",
+    "btn_cancel": "Cancel",
+    "btn_clear": "Clear",
+    "error_conn": "Sorry, a connection error occurred.",
+    "error_google": "Error:"
   }
 }

@@ -679,5 +679,20 @@
     "pwd_err_same": "Nowe hasło nie może być takie samo jak obecne.",
     "pwd_err_wrong": "Obecne hasło wprowadzono nieprawidłowo.",
     "pwd_err_conn": "Wystąpił błąd połączenia."
+  },
+  "ai_chat": {
+    "title": "LITE cook AI",
+    "title_empty": "Jestem twoim kulinarnym przewodnikiem!",
+    "welcome": "Zapytaj mnie o funkcje strony lub poproś o znalezienie przepisu.",
+    "placeholder": "Wpisz swoje pytanie...",
+    "clear_tooltip": "Wyczyść czat",
+    "expand_tooltip": "Rozwiń okno",
+    "shrink_tooltip": "Zwiń okno",
+    "confirm_title": "Wyczyścić historię?",
+    "confirm_desc": "AI na zawsze zapomni twój poprzedni dialog. Tej akcji nie można cofnąć.",
+    "btn_cancel": "Anuluj",
+    "btn_clear": "Wyczyść",
+    "error_conn": "Przepraszamy, wystąpił błąd połączenia.",
+    "error_google": "Błąd:"
   }
 }
