@@ -70,6 +70,41 @@ const Home = () => {
         return `${API_URL}${path}`;
     };
 
+    // ================= ДИНАМІЧНІ СТИЛІ ДЛЯ МОДАЛКИ (ЗАЛЕЖНО ВІД МОВИ) =================
+
+    // Функція для обмеження ширини тексту (щоб він не залазив під авокадо)
+    const getTextClasses = (itemNum) => {
+        const base = "text-[13px] lg:text-[15px] text-black font-['Inter'] leading-snug break-words max-[395px]:max-w-full";
+
+        // Для Англійської та Польської мов
+        if (i18n.language === 'en' || i18n.language === 'pl') {
+            if (itemNum === 1) return `${base} max-w-[160px] sm:max-w-[370px] md:max-w-[260px] lg:max-w-[230px]`;
+            if (itemNum === 2) return `${base} max-w-[160px] sm:max-w-[370px] md:max-w-[250px] lg:max-w-[230px]`;
+            if (itemNum === 3) return `${base} max-w-[180px] sm:max-w-[370px] md:max-w-[290px] lg:max-w-[240px]`;
+        }
+
+        // Оригінальні налаштування для УКРАЇНСЬКОЇ мови (нічого не збивається)
+        if (itemNum === 1) return `${base} max-w-[180px] sm:max-w-[340px] md:max-w-[290px] lg:max-w-[257px]`;
+        if (itemNum === 2) return `${base} max-w-[190px] sm:max-w-[340px] md:max-w-[270px] lg:max-w-[258px]`;
+        if (itemNum === 3) return `${base} max-w-[240px] sm:max-w-[340px] md:max-w-[290px] lg:max-w-[265px]`;
+
+        return base;
+    };
+
+    // Функція для розміру та зсуву самого Авокадо
+    const getAvocadoStyles = () => {
+        // Клас max-[430px]:hidden приховає авокадо ТІЛЬКИ на екранах, що менші за 430 пікселів
+        const baseClass = "max-[395px]:hidden absolute top-1/2 -translate-y-1/2 z-10 pointer-events-none";
+
+        // Для Англійської та Польської мов зменшуємо авокадо і зсуваємо його правіше
+        if (i18n.language === 'en' || i18n.language === 'pl') {
+            return `${baseClass} -right-0 sm:-right-4 md:-right-6 lg:-right-8 top-58 sm:top-55 md:top-60 lg:top-78 w-36 sm:w-48 md:w-52 lg:w-64`;
+        }
+        // Оригінальні налаштування для УКРАЇНСЬКОЇ мови
+        return `${baseClass} -right-0 sm:-right-0 md:-right-0 lg:-right-0 top-58 sm:top-60 md:top-60 lg:top-78 w-40 sm:w-52 md:w-55 lg:w-72`;
+    };
+    // =================================================================================
+
     return (
         <div className="w-full min-h-screen font-sans bg-[#F6F3F4] flex flex-col">
 
@@ -328,7 +363,7 @@ const Home = () => {
                         {/* Кнопка закриття */}
                         <button
                             onClick={toggleModal}
-                            className="absolute top-4 right-4 w-8 h-8 border border-gray-400 rounded-full flex items-center justify-center font-bold text-gray-500 hover:text-black hover:border-black transition-colors z-50 bg-white/50 backdrop-blur-sm"
+                            className="absolute top-4 right-4 w-8 h-8 border border-gray-400 rounded-full flex items-center justify-center font-bold text-gray-500 hover:text-black hover:border-black transition-colors z-50 bg-white/50 backdrop-blur-sm cursor-pointer"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                         </button>
@@ -362,7 +397,7 @@ const Home = () => {
                                     <div className="shrink-0 pt-1">
                                         <img src={RestaurantMenuIcon} alt="Icon" className="w-6 h-6 lg:w-7 lg:h-7 object-contain" />
                                     </div>
-                                    <p className="text-[13px] lg:text-[15px] text-black font-['Inter'] leading-snug break-words max-w-[180px] sm:max-w-[340px] md:max-w-[290px] lg:max-w-[257px]">
+                                    <p className={getTextClasses(1)}>
                                         <span className="font-bold">{t('home_page.modal_f1_title')}</span> {t('home_page.modal_f1_d1')} <br className="hidden sm:hidden md:hidden lg:hidden"/>
                                         {t('home_page.modal_f1_d2')} <br className="hidden sm:hidden md:hidden lg:hidden"/>
                                         {t('home_page.modal_f1_d3')} <br className="hidden sm:hidden md:hidden lg:hidden"/>
@@ -376,7 +411,7 @@ const Home = () => {
                                     <div className="shrink-0 pt-1">
                                         <img src={UserMenuMaleIcon} alt="Icon" className="w-6 h-6 lg:w-7 lg:h-7 object-contain" />
                                     </div>
-                                    <p className="text-[13px] lg:text-[15px] text-black font-['Inter'] leading-snug break-words max-w-[190px] sm:max-w-[340px] md:max-w-[270px] lg:max-w-[258px]">
+                                    <p className={getTextClasses(2)}>
                                         <span className="font-bold">{t('home_page.modal_f2_title')}</span> {t('home_page.modal_f2_d1')} <br className="hidden sm:hidden md:hidden lg:hidden"/>
                                         {t('home_page.modal_f2_d2')} <br className="hidden sm:hidden md:hidden lg:hidden"/>
                                         {t('home_page.modal_f2_d3')} <br className="hidden sm:hidden md:hidden lg:hidden"/>
@@ -390,7 +425,7 @@ const Home = () => {
                                     <div className="shrink-0 pt-1">
                                         <img src={IdeaIcon} alt="Icon" className="w-6 h-6 lg:w-7 lg:h-7 object-contain" />
                                     </div>
-                                    <p className="text-[13px] lg:text-[15px] text-black font-['Inter'] leading-snug break-words max-w-[240px] sm:max-w-[340px] md:max-w-[290px] lg:max-w-[265px]">
+                                    <p className={getTextClasses(3)}>
                                         <span className="font-bold">{t('home_page.modal_f3_title')}</span> {t('home_page.modal_f3_d1')} <br className="hidden sm:hidden md:hidden lg:hidden"/>
                                         {t('home_page.modal_f3_d2')} <br className="hidden sm:hidden md:hidden lg:hidden"/>
                                         {t('home_page.modal_f3_d3')} <br className="hidden sm:hidden md:hidden lg:hidden"/>
@@ -405,7 +440,7 @@ const Home = () => {
                             <div className="flex justify-center w-full relative z-20">
                                 <Link
                                     to={isAuthenticated ? "/menu" : "/register"}
-                                    className="px-6 lg:px-8 py-3 bg-transparent border-[1.5px] border-black rounded-[30px] font-['Inter'] text-[13px] lg:text-[15px] text-black hover:bg-black hover:text-white transition-colors w-max font-medium"
+                                    className="px-6 lg:px-8 py-3 bg-transparent border-[1.5px] border-black rounded-[30px] font-['Inter'] text-[13px] lg:text-[15px] text-black hover:bg-black hover:text-white transition-colors w-max font-medium cursor-pointer"
                                     onClick={toggleModal}
                                 >
                                     {t('home_page.modal_btn')}
@@ -419,7 +454,7 @@ const Home = () => {
 
 
                             {/* АВОКАДО */}
-                            <div className="absolute top-1/2 -translate-y-1/2 -right-0 sm:-right-0 md:-right-0 lg:-right-0 top-58 sm:top-60 md:top-60 lg:top-78 w-40 sm:w-52 md:w-55 lg:w-72 z-10 pointer-events-none">
+                            <div className={getAvocadoStyles()}>
                                 <img src={AvatarAvokadoRight} alt="Avocado Chef" className="w-full h-auto object-contain drop-shadow-xl" />
                             </div>
 
