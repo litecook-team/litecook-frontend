@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
-import { useTranslation } from 'react-i18next'; // ФІКС: Додали переклад
+import { useTranslation } from 'react-i18next';
 import api from '../api';
 
 const ChatAssistant = () => {
-    const { t } = useTranslation(); // Ініціалізуємо переклад
+    const { t, i18n } = useTranslation();
 
     const [isOpen, setIsOpen] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
@@ -14,9 +14,45 @@ const ChatAssistant = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [showConfirmClear, setShowConfirmClear] = useState(false);
 
+    // Стан для мікрофона (закоментовано)
+    // const [isListening, setIsListening] = useState(false);
+
     const location = useLocation();
+    const navigate = useNavigate();
     const messagesEndRef = useRef(null);
     const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
+
+    // === ПОКРАЩЕНА ФУНКЦІЯ ОЗВУЧКИ (Без символів та URL) ===
+    const speakText = (text) => {
+        if (!('speechSynthesis' in window)) return;
+        window.speechSynthesis.cancel();
+
+        // 1. Витягуємо текст з посилань: перетворюємо [Назва рецепту](/url) просто на "Назва рецепту"
+        let cleanText = text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+
+        // 2. Видаляємо всі технічні символи Markdown (зірочки, решітки, підкреслення, дужки)
+        cleanText = cleanText.replace(/[*#_`~\[\]()]/g, '').trim();
+
+        if (!cleanText) return;
+
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.lang = i18n.language === 'en' ? 'en-US' : (i18n.language === 'pl' ? 'pl-PL' : 'uk-UA');
+
+        const voices = window.speechSynthesis.getVoices();
+        if (voices.length > 0) {
+            const voice = voices.find(v => v.lang.startsWith(utterance.lang.substring(0, 2)));
+            if (voice) utterance.voice = voice;
+        }
+
+        utterance.rate = 1.0;
+        window.speechSynthesis.speak(utterance);
+    };
+
+    useEffect(() => {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+        }
+    }, []);
 
     useEffect(() => {
         const savedSession = localStorage.getItem('litecook_ai_session');
@@ -40,31 +76,91 @@ const ChatAssistant = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    const sendMessage = async (e) => {
-        e.preventDefault();
-        if (!input.trim()) return;
+    // === ПРАВИЛЬНА АСИНХРОННА ВІДПРАВКА БЕЗ ДУБЛЮВАННЯ ===
+    const triggerMessageSend = async (messageText) => {
+        if (!messageText.trim() || isLoading) return;
 
-        const userMsg = { role: 'user', text: input };
-        const newMessages = [...messages, userMsg];
-        setMessages(newMessages);
         setInput('');
         setIsLoading(true);
 
+        // 1. Оновлюємо інтерфейс локально (показуємо повідомлення юзера)
+        const userMsg = { role: 'user', text: messageText };
+        const updatedMessages = [...messages, userMsg];
+        setMessages(updatedMessages);
+
+        // 2. Відправляємо запит
         try {
             const res = await api.post('/api/ai-chat/', {
-                message: userMsg.text,
+                message: messageText,
                 current_path: location.pathname,
-                history: messages
+                history: messages // відправляємо стару історію
             });
-            setMessages([...newMessages, { role: 'model', text: res.data.reply }]);
+
+            let replyText = res.data.reply;
+
+            // Перевіряємо наявність команди переходу
+            const navRegex = /^\[NAVIGATE:([^\]]+)\]\s*/i;
+            const match = replyText.match(navRegex);
+
+            if (match) {
+                const pathToNavigate = match[1];
+                replyText = replyText.replace(navRegex, '').trim();
+                navigate(pathToNavigate);
+                // setIsOpen(false); // автоматично закриває вікно чату після переходу на іншу сторінку
+            }
+
+            // Додаємо відповідь ШІ
+            setMessages([...updatedMessages, { role: 'model', text: replyText }]);
+
+            // Озвучуємо відповідь (ШІ продовжує розмовляти з нами)
+            setTimeout(() => speakText(replyText), 100);
+
         } catch (error) {
             const errorText = error.response?.data?.error || t('ai_chat.error_conn');
-            // Тепер ми просто виводимо красивий текст, який прийшов з бекенду (з пісочним годинником ⏳)
-            setMessages([...newMessages, { role: 'model', text: errorText }]);
+            setMessages([...updatedMessages, { role: 'model', text: errorText }]);
         } finally {
             setIsLoading(false);
         }
     };
+
+    const sendMessage = (e) => {
+        e.preventDefault();
+        if ('speechSynthesis' in window) window.speechSynthesis.speak(new SpeechSynthesisUtterance(''));
+        triggerMessageSend(input);
+    };
+
+    /* === ЗАКОМЕНТОВАНА ФУНКЦІЯ МІКРОФОНА ===
+    const startListening = () => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert(t('ai_chat.no_mic_support') || "Ваш браузер не підтримує голосовий ввід.");
+            return;
+        }
+
+        if ('speechSynthesis' in window) window.speechSynthesis.speak(new SpeechSynthesisUtterance(''));
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = i18n.language === 'en' ? 'en-US' : (i18n.language === 'pl' ? 'pl-PL' : 'uk-UA');
+        recognition.interimResults = false;
+        recognition.continuous = false;
+
+        recognition.onstart = () => setIsListening(true);
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            setInput(prev => prev + (prev.length > 0 && !prev.endsWith(' ') ? ' ' : '') + transcript);
+        };
+
+        recognition.onerror = (event) => {
+            console.error("Помилка мікрофона:", event.error);
+            setIsListening(false);
+        };
+
+        recognition.onend = () => setIsListening(false);
+
+        recognition.start();
+    };
+    */
 
     const confirmClearChat = () => {
         setMessages([]);
@@ -196,16 +292,30 @@ const ChatAssistant = () => {
                         </div>
                     </div>
 
-                    <form onSubmit={sendMessage} className="p-3 sm:p-4 bg-white border-t border-gray-100 flex gap-2 shrink-0">
+                    <form onSubmit={sendMessage} className="p-3 sm:p-4 bg-white border-t border-gray-100 flex gap-2 shrink-0 items-center">
                         <input
                             type="text"
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
+                            // placeholder={isListening ? "Слухаю вас..." : t('ai_chat.placeholder')} // Закоментовано
                             placeholder={t('ai_chat.placeholder')}
+                            // className={`flex-1 border rounded-full px-5 py-3.5 outline-none text-[15px] font-['Inter'] transition-all shadow-inner ${isListening ? 'bg-red-50 border-red-300 text-red-900 placeholder:text-red-400' : 'bg-gray-50 border-gray-200 text-gray-800 focus:border-[#5B826B] focus:bg-white placeholder:text-gray-400'}`}
                             className="flex-1 bg-gray-50 border border-gray-200 rounded-full px-5 py-3.5 outline-none text-[15px] text-gray-800 font-['Inter'] focus:border-[#5B826B] focus:bg-white transition-all shadow-inner placeholder:text-gray-400"
                         />
+
+                        {/* КНОПКА МІКРОФОНА (ЗАКОМЕНТОВАНО)
+                        <button
+                            type="button"
+                            onClick={startListening}
+                            className={`w-12 h-12 sm:w-14 sm:h-14 shrink-0 rounded-full flex items-center justify-center transition-all shadow-md cursor-pointer active:scale-95 ${isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                            title="Голосовий ввід"
+                        >
+                            <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 1v10M12 1v10m0 0a4 4 0 01-4-4v-4a4 4 0 018 0v4a4 4 0 01-4 4zM5 11v2a7 7 0 0014 0v-2M12 18v4M8 22h8"></path></svg>
+                        </button>
+                        */}
+
                         <button type="submit" disabled={!input.trim() || isLoading} className="w-12 h-12 sm:w-14 sm:h-14 shrink-0 rounded-full bg-[#5B826B] text-white flex items-center justify-center hover:bg-[#42705D] transition-all disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed shadow-md active:scale-95 group cursor-pointer">
-                            <svg className="w-5 h-5 sm:w-6 sm:h-6 ml-1 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                            <svg className="w-5 h-5 sm:w-6 sm:h-6 ml-1 group-hover:-translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
                         </button>
                     </form>
                 </div>
