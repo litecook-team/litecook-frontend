@@ -206,6 +206,31 @@ const Recipes = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    // ================= Scroll to Top Logic =================
+    const [showScrollTop, setShowScrollTop] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            // Показуємо кнопку, якщо проскролили більше 500 пікселів вниз
+            if (window.scrollY > 500) {
+                setShowScrollTop(true);
+            } else {
+                setShowScrollTop(false);
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const scrollToTop = () => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    };
+    // ========================================================
+
     // Перетворюємо рядок "картопля банан, морква" у формат "картопля, банан, морква"
     const formatQueryForBackend = (query) => {
         if (!query) return '';
@@ -1475,6 +1500,27 @@ const Recipes = () => {
                     </div>
                 </div>
             )}
+            {/* ================= КНОПКА SCROLL TO TOP ================= */}
+            <button
+                onClick={scrollToTop}
+                className={`fixed bottom-23 right-7 z-[90] p-4 bg-[#6A907B] text-white rounded-full shadow-[0_8px_25px_rgba(106,144,123,0.4)] backdrop-blur-sm transition-all duration-500 ease-in-out hover:bg-[#5B826B] hover:scale-110 hover:shadow-[0_12px_30px_rgba(106,144,123,0.6)] active:scale-95 flex items-center justify-center group ${
+                    showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16 pointer-events-none'
+                }`}
+                aria-label="Scroll to top"
+            >
+                <svg
+                    className="w-6 h-6 transition-transform duration-300 group-hover:-translate-y-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                >
+                    <path d="M12 19V5M5 12l7-7 7 7" />
+                </svg>
+            </button>
+            {/* ======================================================== */}
         </div>
     );
 };
