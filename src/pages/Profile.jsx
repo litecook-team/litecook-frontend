@@ -194,7 +194,7 @@ const Profile = () => {
         'овочевий бульйон': ['ml', 'l'], 'vegetable broth': ['ml', 'l'], 'bulion warzywny': ['ml', 'l'],
         'сіль': ['g', 'kg'], 'salt': ['g', 'kg'], 'sól': ['g', 'kg'],
         'перець чорний': ['g'], 'black pepper': ['g'], 'czarny pieprz': ['g'],
-        'хліб': ['slice', 'g'], 'bread': ['slice', 'g'], 'chleb': ['slice', 'g'],
+        'хліб': ['slice', 'g', 'kg'], 'bread': ['slice', 'g', 'kg'], 'chleb': ['slice', 'g', 'kg'],
         'кокосове молоко': ['ml', 'l', 'can'], 'coconut milk': ['ml', 'l', 'can'], 'mleko kokosowe': ['ml', 'l', 'can'],
         'томатна паста': ['g', 'tbsp', 'can'], 'tomato paste': ['g', 'tbsp', 'can'], 'koncentrat pomidorowy': ['g', 'tbsp', 'can'],
         'пападам': ['pcs'], 'papadum': ['pcs'],
