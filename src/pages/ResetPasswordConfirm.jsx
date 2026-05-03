@@ -14,6 +14,10 @@ const ResetPasswordConfirm = () => {
     const [message, setMessage] = useState('');
     const [passwordError, setPasswordError] = useState(''); // Для локальних помилок пароля
 
+    // СТЕЙТИ ДЛЯ ПЛАВНОЇ АНІМАЦІЇ
+    const [isMessageVisible, setIsMessageVisible] = useState(false);
+    const [isPasswordErrorVisible, setIsPasswordErrorVisible] = useState(false);
+
     const [showPassword1, setShowPassword1] = useState(false);
     const [showPassword2, setShowPassword2] = useState(false);
 
@@ -21,16 +25,24 @@ const ResetPasswordConfirm = () => {
 
     const showPasswordErrorMessage = (text) => {
         setPasswordError(text);
+        setIsPasswordErrorVisible(true); // Показуємо плавно
         if (pwdErrorTimerRef.current) clearTimeout(pwdErrorTimerRef.current);
-        pwdErrorTimerRef.current = setTimeout(() => setPasswordError(''), 5000);
+        pwdErrorTimerRef.current = setTimeout(() => setIsPasswordErrorVisible(false), 5000); // Ховаємо плавно
     };
 
     const handleChange = (e) => {
-        setPasswords({ ...passwords, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
 
-        // Миттєве очищення помилки при новому вводі
-        setPasswordError('');
-        if (pwdErrorTimerRef.current) clearTimeout(pwdErrorTimerRef.current);
+        // Блокуємо пробіли у паролях
+        if (name === 'new_password1' || name === 'new_password2') {
+            if (value.includes(' ')) return;
+
+            // Миттєво ховаємо помилку при новому вводі
+            setIsPasswordErrorVisible(false);
+            if (pwdErrorTimerRef.current) clearTimeout(pwdErrorTimerRef.current);
+        }
+
+        setPasswords({ ...passwords, [name]: value });
     };
 
     const calculateStrength = (password) => {
@@ -40,7 +52,7 @@ const ResetPasswordConfirm = () => {
         if (/[A-Z]/.test(password) || /[А-ЯІЇЄҐ]/.test(password)) score += 1;
         if (/[a-z]/.test(password) || /[а-яіїєґ]/.test(password)) score += 1;
         if (/[0-9]/.test(password)) score += 1;
-        if (/[^A-Za-z0-9А-Яа-яІіЇїЄєҐґ]/.test(password)) score += 1;
+        if (/[^A-Za-z0-9А-Яа-яІіЇїЄєҐґ\s]/.test(password)) score += 1;
         return score;
     };
 
@@ -77,6 +89,7 @@ const ResetPasswordConfirm = () => {
                 new_password2: passwords.new_password2,
             });
             setMessage(t('reset_password_page.success_msg'));
+            setIsMessageVisible(true);
             setTimeout(() => navigate('/login'), 3000);
         } catch (err) {
             if (err.response && err.response.data) {
@@ -125,18 +138,17 @@ const ResetPasswordConfirm = () => {
                         {t('reset_password_page.title')}
                     </h1>
 
-                    <div className={`transition-all duration-500 overflow-hidden ${message ? 'max-h-24 opacity-100 mb-4' : 'max-h-0 opacity-0 mb-0'}`}>
+                    <div className={`transition-all duration-500 overflow-hidden ${isMessageVisible ? 'max-h-24 opacity-100 mb-4' : 'max-h-0 opacity-0 mb-0'}`}>
                         <div className={`text-xs md:text-[13px] p-3 rounded-lg font-medium border bg-white/80 backdrop-blur-sm inline-block ${message.includes('успішно') || message.includes('success') || message.includes('pomyślnie') ? 'text-green-600 border-green-200' : 'text-red-500 border-red-200'}`}>
                             {message}
                         </div>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        {/* БЛОК ПАРОЛІВ */}
                         <div className="bg-gray-50/50 p-3 -mx-3 rounded-2xl border border-transparent transition-colors duration-300">
 
-                            {/* ЛОКАЛЬНА ПОМИЛКА ПАРОЛЯ */}
-                            <div className={`transition-all duration-500 overflow-hidden ${passwordError ? 'max-h-20 opacity-100 mb-3' : 'max-h-0 opacity-0 -mb-3'}`}>
+                            {/* АНІМОВАНИЙ БЛОК ПОМИЛКИ ПАРОЛЯ */}
+                            <div className={`transition-all duration-500 overflow-hidden ${isPasswordErrorVisible ? 'max-h-20 opacity-100 mb-3' : 'max-h-0 opacity-0 -mb-3'}`}>
                                 <div className="text-red-500 text-[12px] md:text-[13px] font-medium bg-red-50 border border-red-200 px-4 py-2 rounded-xl flex items-center gap-2">
                                     <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                     {passwordError}

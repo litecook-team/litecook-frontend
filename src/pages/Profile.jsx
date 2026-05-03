@@ -113,6 +113,18 @@ const Profile = () => {
         pwdErrorTimerRef.current = setTimeout(() => setPasswordError(''), 5000);
     };
 
+    // Обробник для полів пароля у профілі
+    const handlePasswordInputChange = (e, fieldName) => {
+        const value = e.target.value;
+
+        // Блокуємо введення пробілів
+        if (value.includes(' ')) return;
+
+        setPasswordData(prev => ({...prev, [fieldName]: value}));
+        setPasswordError('');
+        if (pwdErrorTimerRef.current) clearTimeout(pwdErrorTimerRef.current);
+    };
+
     const calculateStrength = (password) => {
         let score = 0;
         if (!password) return 0;
@@ -120,7 +132,7 @@ const Profile = () => {
         if (/[A-Z]/.test(password) || /[А-ЯІЇЄҐ]/.test(password)) score += 1;
         if (/[a-z]/.test(password) || /[а-яіїєґ]/.test(password)) score += 1;
         if (/[0-9]/.test(password)) score += 1;
-        if (/[^A-Za-z0-9А-Яа-яІіЇїЄєҐґ]/.test(password)) score += 1;
+        if (/[^A-Za-z0-9А-Яа-яІіЇїЄєҐґ\s]/.test(password)) score += 1;
         return score;
     };
 
@@ -552,9 +564,29 @@ const Profile = () => {
                 if (data.old_password) {
                     showPasswordErrorMessage(t('profile_page.pwd_err_wrong'));
                 } else if (data.new_password1) {
-                    showPasswordErrorMessage(data.new_password1[0]);
-                } else if (data.non_field_errors) {
-                    showPasswordErrorMessage(data.non_field_errors[0]);
+                    // Django повертає масив рядків. Беремо перший.
+                    const errorMsg = Array.isArray(data.new_password1) ? data.new_password1[0] : data.new_password1;
+                    showPasswordErrorMessage(errorMsg);
+                }
+                else if (data.new_password2) {
+                    const errorMsg = Array.isArray(data.new_password2) ? data.new_password2[0] : data.new_password2;
+                    showPasswordErrorMessage(errorMsg);
+                }
+                // 3. Загальні помилки
+                else if (data.non_field_errors) {
+                    const errorMsg = Array.isArray(data.non_field_errors) ? data.non_field_errors[0] : data.non_field_errors;
+                    showPasswordErrorMessage(errorMsg);
+                }
+                // 4. Fallback для 'detail' (стандартний формат DRF)
+                else if (data.detail) {
+                     showPasswordErrorMessage(data.detail);
+                }
+                // 5. Якщо повернувся просто рядок
+                else if (typeof data === 'string') {
+                    showPasswordErrorMessage(data);
+                }
+                else {
+                    showPasswordErrorMessage(t('profile_page.pwd_err_conn'));
                 }
             } else {
                 showPasswordErrorMessage(t('profile_page.pwd_err_conn'));
@@ -919,81 +951,84 @@ const Profile = () => {
 
                                     <div className="h-px bg-gray-100 w-full my-4 sm:my-6"></div>
 
-                                    <div className="bg-gray-50 rounded-3xl border border-gray-200 overflow-hidden transition-all duration-500">
-                                        <button onClick={() => { if (isPasswordModalOpen) { setPasswordData({ oldPassword: '', newPassword: '', newPasswordConfirm: '' }); setPasswordError(''); } setIsPasswordModalOpen(!isPasswordModalOpen); }} className="w-full flex items-center justify-between p-4 sm:p-5 text-left hover:bg-gray-100 transition-colors focus:outline-none cursor-pointer">
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-colors ${isPasswordModalOpen ? 'bg-[#974F23] text-white' : 'bg-gray-200 text-gray-600'}`}><svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg></div>
-                                                <div>
-                                                    <h3 className="font-bold text-gray-900 text-sm sm:text-base">{t('profile_page.security')}</h3>
-                                                    <p className="text-[10px] sm:text-xs font-medium text-gray-500 mt-0.5">{t('profile_page.change_pwd')}</p>
+                                    {userData?.has_usable_password && (
+                                        <div className="bg-gray-50 rounded-3xl border border-gray-200 overflow-hidden transition-all duration-500">
+                                            <button onClick={() => { if (isPasswordModalOpen) { setPasswordData({ oldPassword: '', newPassword: '', newPasswordConfirm: '' }); setPasswordError(''); } setIsPasswordModalOpen(!isPasswordModalOpen); }} className="w-full flex items-center justify-between p-4 sm:p-5 text-left hover:bg-gray-100 transition-colors focus:outline-none cursor-pointer">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-colors ${isPasswordModalOpen ? 'bg-[#974F23] text-white' : 'bg-gray-200 text-gray-600'}`}><svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg></div>
+                                                    <div>
+                                                        <h3 className="font-bold text-gray-900 text-sm sm:text-base">{t('profile_page.security')}</h3>
+                                                        <p className="text-[10px] sm:text-xs font-medium text-gray-500 mt-0.5">{t('profile_page.change_pwd')}</p>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <svg className={`w-5 h-5 sm:w-6 sm:h-6 text-gray-400 transition-transform duration-300 ${isPasswordModalOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                                        </button>
+                                                <svg className={`w-5 h-5 sm:w-6 sm:h-6 text-gray-400 transition-transform duration-300 ${isPasswordModalOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                            </button>
 
-                                        <div className={`transition-all duration-500 ease-in-out origin-top ${isPasswordModalOpen ? 'max-h-[500px] opacity-100 p-4 sm:p-5 pt-0 border-t border-gray-200' : 'max-h-0 opacity-0 overflow-hidden'}`}>
-                                            {passwordError && (
-                                                <div className="mb-4 mt-4 bg-red-100 border border-red-200 text-red-600 px-3 py-2 sm:px-4 sm:py-3 rounded-xl text-[11px] sm:text-sm font-semibold text-center flex items-center gap-2 leading-tight">
-                                                    <svg className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                                    {passwordError}
-                                                </div>
-                                            )}
+                                            <div className={`transition-all duration-500 ease-in-out origin-top ${isPasswordModalOpen ? 'max-h-[500px] opacity-100 p-4 sm:p-5 pt-0 border-t border-gray-200' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+                                                {passwordError && (
+                                                    <div className="mb-4 mt-4 bg-red-100 border border-red-200 text-red-600 px-3 py-2 sm:px-4 sm:py-3 rounded-xl text-[11px] sm:text-sm font-semibold text-center flex items-center gap-2 leading-tight">
+                                                        <svg className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                        {passwordError}
+                                                    </div>
+                                                )}
 
-                                            <form onSubmit={handlePasswordChange} className="space-y-3 sm:space-y-4 mt-4 relative">
-                                                <div className="relative">
-                                                    <input type={showOldPassword ? "text" : "password"} required placeholder={t('profile_page.old_pwd')} value={passwordData.oldPassword} onChange={(e) => { setPasswordData({...passwordData, oldPassword: e.target.value}); setPasswordError(''); if (pwdErrorTimerRef.current) clearTimeout(pwdErrorTimerRef.current); }} className={`w-full bg-white border rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 outline-none transition-all font-medium text-sm sm:text-base pr-10 ${passwordError ? 'border-red-400 focus:border-red-500' : 'border-gray-300 focus:border-[#974F23] focus:ring-2 focus:ring-[#974F23]/20'}`} />
-                                                    {passwordData.oldPassword.length > 0 && (
-                                                        <button type="button" onClick={() => setShowOldPassword(!showOldPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#974F23]">
-                                                            {showOldPassword ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>}
-                                                        </button>
-                                                    )}
-                                                </div>
-
-                                                <div>
+                                                <form onSubmit={handlePasswordChange} className="space-y-3 sm:space-y-4 mt-4 relative">
+                                                    {/* ... (Тут залишаються ваші інпути пароля без змін) ... */}
                                                     <div className="relative">
-                                                        <input type={showNewPassword ? "text" : "password"} required placeholder={t('profile_page.new_pwd')} value={passwordData.newPassword} onChange={(e) => { setPasswordData({...passwordData, newPassword: e.target.value}); setPasswordError(''); if (pwdErrorTimerRef.current) clearTimeout(pwdErrorTimerRef.current); }} className={`w-full bg-white border rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 outline-none transition-all font-medium text-sm sm:text-base pr-10 ${passwordError ? 'border-red-400 focus:border-red-500' : 'border-gray-300 focus:border-[#974F23] focus:ring-2 focus:ring-[#974F23]/20'}`} />
-                                                        {passwordData.newPassword.length > 0 && (
-                                                            <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#974F23]">
-                                                                {showNewPassword ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>}
+                                                        <input type={showOldPassword ? "text" : "password"} required placeholder={t('profile_page.old_pwd')} value={passwordData.oldPassword} onChange={(e) => handlePasswordInputChange(e, 'oldPassword')} className={`w-full bg-white border rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 outline-none transition-all font-medium text-sm sm:text-base pr-10 ${passwordError ? 'border-red-400 focus:border-red-500' : 'border-gray-300 focus:border-[#974F23] focus:ring-2 focus:ring-[#974F23]/20'}`} />
+                                                        {passwordData.oldPassword.length > 0 && (
+                                                            <button type="button" onClick={() => setShowOldPassword(!showOldPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#974F23]">
+                                                                {showOldPassword ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>}
                                                             </button>
                                                         )}
                                                     </div>
 
-                                                    {passwordData.newPassword && (
-                                                        <div className="mt-2 px-1">
-                                                            <div className="flex gap-1 h-1.5">
-                                                                {[1, 2, 3, 4, 5].map(level => (
-                                                                    <div key={level} className={`w-full rounded-full transition-colors duration-300 ${pwdStrength >= level ? strengthColors[pwdStrength] : 'bg-gray-200'}`} />
-                                                                ))}
-                                                            </div>
-                                                            <div className="flex justify-between items-center mt-1">
-                                                                <span className={`text-[10px] ${strengthColors[pwdStrength].replace('bg-', 'text-')}`}>{strengthLabels[pwdStrength]}</span>
-                                                            </div>
-                                                            <ul className="text-[10px] text-gray-500 mt-1 grid grid-cols-2 gap-1 font-['Inter']">
-                                                                {passwordData.newPassword.length < 8 && (<li><span className="text-gray-400 mr-1">○</span>{t('profile_page.pwd_req_length')}</li>)}
-                                                                {!/[A-ZА-ЯІЇЄҐ]/.test(passwordData.newPassword) && (<li><span className="text-gray-400 mr-1">○</span>{t('profile_page.pwd_req_upper')}</li>)}
-                                                                {!/[0-9]/.test(passwordData.newPassword) && (<li><span className="text-gray-400 mr-1">○</span>{t('profile_page.pwd_req_number')}</li>)}
-                                                                {!/[^A-Za-z0-9А-Яа-яІіЇїЄєҐґ]/.test(passwordData.newPassword) && (<li><span className="text-gray-400 mr-1">○</span>{t('profile_page.pwd_req_special')}</li>)}
-                                                            </ul>
+                                                    <div>
+                                                        <div className="relative">
+                                                            <input type={showNewPassword ? "text" : "password"} required placeholder={t('profile_page.new_pwd')} value={passwordData.newPassword} onChange={(e) => handlePasswordInputChange(e, 'newPassword')} className={`w-full bg-white border rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 outline-none transition-all font-medium text-sm sm:text-base pr-10 ${passwordError ? 'border-red-400 focus:border-red-500' : 'border-gray-300 focus:border-[#974F23] focus:ring-2 focus:ring-[#974F23]/20'}`} />
+                                                            {passwordData.newPassword.length > 0 && (
+                                                                <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#974F23]">
+                                                                    {showNewPassword ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>}
+                                                                </button>
+                                                            )}
                                                         </div>
-                                                    )}
-                                                </div>
 
-                                                <div className="relative">
-                                                    <input type={showConfirmPassword ? "text" : "password"} required placeholder={t('profile_page.confirm_pwd')} value={passwordData.newPasswordConfirm} onChange={(e) => { setPasswordData({...passwordData, newPasswordConfirm: e.target.value}); setPasswordError(''); if (pwdErrorTimerRef.current) clearTimeout(pwdErrorTimerRef.current); }} className={`w-full bg-white border rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 outline-none transition-all font-medium text-sm sm:text-base pr-10 ${passwordError ? 'border-red-400 focus:border-red-500' : 'border-gray-300 focus:border-[#974F23] focus:ring-2 focus:ring-[#974F23]/20'}`} />
-                                                    {passwordData.newPasswordConfirm.length > 0 && (
-                                                        <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#974F23]">
-                                                            {showConfirmPassword ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>}
-                                                        </button>
-                                                    )}
-                                                </div>
+                                                        {passwordData.newPassword && (
+                                                            <div className="mt-2 px-1">
+                                                                <div className="flex gap-1 h-1.5">
+                                                                    {[1, 2, 3, 4, 5].map(level => (
+                                                                        <div key={level} className={`w-full rounded-full transition-colors duration-300 ${pwdStrength >= level ? strengthColors[pwdStrength] : 'bg-gray-200'}`} />
+                                                                    ))}
+                                                                </div>
+                                                                <div className="flex justify-between items-center mt-1">
+                                                                    <span className={`text-[10px] ${strengthColors[pwdStrength].replace('bg-', 'text-')}`}>{strengthLabels[pwdStrength]}</span>
+                                                                </div>
+                                                                <ul className="text-[10px] text-gray-500 mt-1 grid grid-cols-2 gap-1 font-['Inter']">
+                                                                    {passwordData.newPassword.length < 8 && (<li><span className="text-gray-400 mr-1">○</span>{t('profile_page.pwd_req_length')}</li>)}
+                                                                    {!/[A-ZА-ЯІЇЄҐ]/.test(passwordData.newPassword) && (<li><span className="text-gray-400 mr-1">○</span>{t('profile_page.pwd_req_upper')}</li>)}
+                                                                    {!/[0-9]/.test(passwordData.newPassword) && (<li><span className="text-gray-400 mr-1">○</span>{t('profile_page.pwd_req_number')}</li>)}
+                                                                    {!/[^A-Za-z0-9А-Яа-яІіЇїЄєҐґ]/.test(passwordData.newPassword) && (<li><span className="text-gray-400 mr-1">○</span>{t('profile_page.pwd_req_special')}</li>)}
+                                                                </ul>
+                                                            </div>
+                                                        )}
+                                                    </div>
 
-                                                <button type="submit" className="w-full bg-[#974F23] text-white py-2.5 sm:py-3 rounded-xl font-bold hover:bg-[#7a3e1a] transition-colors shadow-md active:scale-95 duration-200 cursor-pointer text-sm sm:text-base mt-2">
-                                                    {t('profile_page.update_pwd_btn')}
-                                                </button>
-                                            </form>
+                                                    <div className="relative">
+                                                        <input type={showConfirmPassword ? "text" : "password"} required placeholder={t('profile_page.confirm_pwd')} value={passwordData.newPasswordConfirm} onChange={(e) => handlePasswordInputChange(e, 'newPasswordConfirm')} className={`w-full bg-white border rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 outline-none transition-all font-medium text-sm sm:text-base pr-10 ${passwordError ? 'border-red-400 focus:border-red-500' : 'border-gray-300 focus:border-[#974F23] focus:ring-2 focus:ring-[#974F23]/20'}`} />
+                                                        {passwordData.newPasswordConfirm.length > 0 && (
+                                                            <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#974F23]">
+                                                                {showConfirmPassword ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>}
+                                                            </button>
+                                                        )}
+                                                    </div>
+
+                                                    <button type="submit" className="w-full bg-[#974F23] text-white py-2.5 sm:py-3 rounded-xl font-bold hover:bg-[#7a3e1a] transition-colors shadow-md active:scale-95 duration-200 cursor-pointer text-sm sm:text-base mt-2">
+                                                        {t('profile_page.update_pwd_btn')}
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
                             </div>
 

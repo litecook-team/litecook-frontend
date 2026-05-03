@@ -5,10 +5,14 @@ import { useGoogleLogin } from '@react-oauth/google';
 import { useTranslation } from 'react-i18next'; // ІМПОРТ ПЕРЕКЛАДУ
 import FacebookLogin from '@greatsumini/react-facebook-login';
 import authBg from '../assets/auth/registration.jpg';
+import ReCAPTCHA from "react-google-recaptcha";
 
 const Register = () => {
-    const { t } = useTranslation(); // ІНІЦІАЛІЗАЦІЯ ПЕРЕКЛАДУ
+    const { t, i18n } = useTranslation(); // ІНІЦІАЛІЗАЦІЯ ПЕРЕКЛАДУ
 
+    // const [captchaToken, setCaptchaToken] = useState(null);
+
+    const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         first_name: '', email: '', password1: '', password2: ''
@@ -18,6 +22,9 @@ const Register = () => {
     const [message, setMessage] = useState({ text: '', type: '' });
     const [passwordError, setPasswordError] = useState('');
 
+    const [isMessageVisible, setIsMessageVisible] = useState(false);
+    const [isPasswordErrorVisible, setIsPasswordErrorVisible] = useState(false);
+
     const [showTerms, setShowTerms] = useState(false);
     const [showPassword1, setShowPassword1] = useState(false);
     const [showPassword2, setShowPassword2] = useState(false);
@@ -25,38 +32,65 @@ const Register = () => {
     const errorTimerRef = useRef(null);
     const pwdErrorTimerRef = useRef(null);
 
+    // Створюємо посилання на компонент reCAPTCHA
+    const recaptchaRef = useRef();
+
     const showGlobalMessage = (text, type) => {
         setMessage({ text, type });
+        setIsMessageVisible(true); // Показуємо повідомлення
+
         if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
-        errorTimerRef.current = setTimeout(() => setMessage({ text: '', type: '' }), 5000);
+        errorTimerRef.current = setTimeout(() => {
+            setIsMessageVisible(false); // Ховаємо повідомлення (запускаємо анімацію)
+            // НЕ очищаємо текст одразу, щоб він залишався видимим під час згортання
+        }, 5000);
     };
 
     const showPasswordErrorMessage = (text) => {
         setPasswordError(text);
+        setIsPasswordErrorVisible(true);
         if (pwdErrorTimerRef.current) clearTimeout(pwdErrorTimerRef.current);
-        pwdErrorTimerRef.current = setTimeout(() => setPasswordError(''), 5000);
+        pwdErrorTimerRef.current = setTimeout(() => setIsPasswordErrorVisible(false), 5000);
     };
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+        let { name, value } = e.target;
 
+        // ЗМІНЕНО: Блокуємо введення пробілів для полів пароля
         if (name === 'password1' || name === 'password2') {
+            if (value.includes(' ')) return; // Ігноруємо ввід, якщо є пробіл
+
             setPasswordError('');
+            setIsPasswordErrorVisible(false); // Використовуємо новий стейт видимості
             if (pwdErrorTimerRef.current) clearTimeout(pwdErrorTimerRef.current);
         }
+
+        if (name === 'first_name') {
+            // 1. Видаляємо пробіли на самому початку
+            // 2. Замінюємо два і більше пробілів підряд на один єдиний пробіл
+            value = value.replace(/^\s+/, '').replace(/\s{2,}/g, ' ');
+        }
+
+        setFormData({ ...formData, [name]: value });
     };
 
     const validateEmail = (email) => {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        // Сучасний галузевий стандарт регулярного виразу для пошти
+        // Дозволяє літери, цифри, крапки, +, -, але жорстко контролює доменну зону
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
         if (!emailRegex.test(email)) return t('register_page.error_email_format');
+
         const domain = email.split('@')[1].toLowerCase();
+
         const ruDomains = ['.ru', '.su', '.рф', 'yandex', 'mail.ru', 'bk.ru', 'inbox.ru', 'list.ru'];
         if (ruDomains.some(ru => domain.endsWith(ru) || domain.includes(ru))) {
             return t('register_page.error_email_ru');
         }
+
         const blockedTypos = ['gmail.co', 'gmail.c', 'gmai.com', 'gmal.com', 'ukr.ne', 'yahoo.c', 'yaho.com'];
         if (blockedTypos.includes(domain)) return t('register_page.error_email_typo');
+
         return '';
     };
 
@@ -67,7 +101,8 @@ const Register = () => {
         if (/[A-Z]/.test(password) || /[А-ЯІЇЄҐ]/.test(password)) score += 1;
         if (/[a-z]/.test(password) || /[а-яіїєґ]/.test(password)) score += 1;
         if (/[0-9]/.test(password)) score += 1;
-        if (/[^A-Za-z0-9А-Яа-яІіЇїЄєҐґ]/.test(password)) score += 1;
+        // Додано \s всередину [^...], щоб пробіл НЕ рахувався спецсимволом
+        if (/[^A-Za-z0-9А-Яа-яІіЇїЄєҐґ\s]/.test(password)) score += 1;
         return score;
     };
 
@@ -80,6 +115,12 @@ const Register = () => {
         e.preventDefault();
         setMessage({ text: '', type: '' });
         setPasswordError('');
+
+        if (!formData.first_name || formData.first_name.trim() === '') {
+            // Використовуємо існуючу функцію для глобальних помилок
+            showGlobalMessage(t('register_page.error_name_empty') || "Будь ласка, введіть ваше ім'я", 'error');
+            return;
+        }
 
         if (formData.password1.length < 8) {
             showPasswordErrorMessage(t('register_page.error_length'));
@@ -101,6 +142,11 @@ const Register = () => {
             return;
         }
 
+        // if (!captchaToken) {
+        //     showGlobalMessage(t('register_page.error_captcha'), 'error');
+        //     return;
+        // }
+
         const emailError = validateEmail(formData.email);
         if (emailError) {
             showGlobalMessage(emailError, 'error');
@@ -108,10 +154,41 @@ const Register = () => {
         }
 
         try {
-            const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/registration/`, formData);
-            setMessage({ text: t('register_page.success_msg'), type: 'success' });
+            // === НОВА ЛОГІКА INVISIBLE reCAPTCHA ===
+            // Просимо Google перевірити користувача саме в момент натискання кнопки
+            const token = await recaptchaRef.current.executeAsync();
+
+            // Якщо Google з якихось причин не повернув токен (користувач закрив вікно з картинками тощо)
+            if (!token) {
+                 showGlobalMessage(t('register_page.error_captcha'), 'error');
+                 if (recaptchaRef.current) recaptchaRef.current.reset();
+                 return;
+            }
+
+            // ✅ ВМИКАЄМО ЗАВАНТАЖЕННЯ ОСЬ ТУТ!
+            // Токен успішно отримано, екран розвиднівся, тепер блокуємо кнопку "Обробка..."
+            // і відправляємо дані на сервер.
+            setIsLoading(true);
+
+            // captcha_token до даних, які летять на сервер
+            const payloadData = {
+                ...formData,
+                captcha_token: token
+            };
+
+            const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/registration/`, payloadData);
+            showGlobalMessage(t('register_page.success_msg'), 'success');
             setFormData({ first_name: '', email: '', password1: '', password2: '' });
+
+            // Важливо: Скидаємо каптчу після успішної реєстрації, щоб її можна було використати знову, якщо треба
+            if (recaptchaRef.current) recaptchaRef.current.reset();
+            setIsLoading(false); // ВИМИКАЄМО ПІСЛЯ УСПІХУ
         } catch (err) {
+            // Важливо: Скидаємо каптчу при помилці (наприклад, пошта вже існує),
+            // щоб користувач міг виправити помилку і надіслати форму знову
+            if (recaptchaRef.current) recaptchaRef.current.reset();
+            setIsLoading(false); // ВИМИКАЄМО ПІСЛЯ ПОМИЛКИ
+
             if (err.response) {
                 if (err.response.status === 429) {
                     showGlobalMessage(t('register_page.error_too_many'), 'error');
@@ -119,7 +196,23 @@ const Register = () => {
                 }
                 if (err.response.data) {
                     if (err.response.data.email) {
-                        showGlobalMessage(t('register_page.error_exists'), 'error');
+                        // Читаємо реальний текст помилки від бекенду
+                        const backendError = Array.isArray(err.response.data.email)
+                            ? err.response.data.email[0]
+                            : err.response.data.email;
+
+                        // Якщо бекенд скаржиться на формат (містить слово "коректн" або "valid")
+                        if (backendError.toLowerCase().includes('коректн') || backendError.toLowerCase().includes('valid')) {
+                            showGlobalMessage(t('register_page.error_email_format'), 'error');
+                        } else {
+                            // Інакше пошта дійсно зайнята
+                            showGlobalMessage(t('register_page.error_exists'), 'error');
+                        }
+                    } else if (err.response.data.first_name) {
+                        const nameError = Array.isArray(err.response.data.first_name)
+                            ? err.response.data.first_name[0]
+                            : err.response.data.first_name;
+                        showGlobalMessage(nameError, 'error');
                     } else if (err.response.data.password1) {
                         showPasswordErrorMessage(err.response.data.password1[0]);
                     } else if (err.response.data.password) {
@@ -142,7 +235,7 @@ const Register = () => {
                 const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/social/google/`, { access_token: tokenResponse.access_token });
                 localStorage.setItem('access_token', res.data.access);
                 navigate('/');
-            } catch (err) { setMessage({ text: t('register_page.error_server'), type: 'error' }); }
+            } catch (err) { showGlobalMessage(t('register_page.error_server'), 'error'); }
         }
     });
 
@@ -163,6 +256,12 @@ const Register = () => {
                 {t('register_page.back_btn')}
             </Link>
 
+            <style>{`
+                .grecaptcha-badge { 
+                    visibility: hidden !important; 
+                }
+            `}</style>
+
             <div className="flex flex-col items-center w-full max-w-[700px] z-10 pt-12 md:pt-0">
 
                 <div className="text-5xl sm:text-6xl lg:text-7xl xl:text-[80px] font-['El_Messiri'] text-[#1A1A1A] mb-8 md:mb-12 tracking-wide lg:tracking-[0.15em] whitespace-nowrap w-max pl-[0.05em] lg:pl-[0.15em] drop-shadow-sm text-center">
@@ -175,7 +274,7 @@ const Register = () => {
                         {t('register_page.title')}
                     </h1>
 
-                    <div className={`transition-all duration-500 overflow-hidden ${message.text ? 'max-h-24 opacity-100 mb-4' : 'max-h-0 opacity-0 mb-0'}`}>
+                    <div className={`transition-all duration-500 overflow-hidden ${isMessageVisible ? 'max-h-24 opacity-100 mb-4' : 'max-h-0 opacity-0 mb-0'}`}>
                         <div className={`text-xs md:text-[13px] p-3 rounded-lg font-medium border bg-white/80 backdrop-blur-sm inline-block ${message.type === 'error' ? 'text-red-500 border-red-200' : 'text-green-600 border-green-200'}`}>
                             {message.text}
                         </div>
@@ -193,7 +292,7 @@ const Register = () => {
 
                         <div className="bg-gray-50/50 p-3 -mx-3 rounded-2xl border border-transparent transition-colors duration-300">
 
-                            <div className={`transition-all duration-500 overflow-hidden ${passwordError ? 'max-h-20 opacity-100 mb-3' : 'max-h-0 opacity-0 -mb-3'}`}>
+                            <div className={`transition-all duration-500 overflow-hidden ${isPasswordErrorVisible ? 'max-h-20 opacity-100 mb-3' : 'max-h-0 opacity-0 -mb-3'}`}>
                                 <div className="text-red-500 text-[12px] md:text-[13px] font-medium bg-red-50 border border-red-200 px-4 py-2 rounded-xl flex items-center gap-2">
                                     <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                     {passwordError}
@@ -244,7 +343,7 @@ const Register = () => {
                             </div>
                         </div>
 
-                        <div className="flex items-start pl-4 pt-2">
+                        <div className="flex items-start pl-4 pt-0">
                             <div className="flex items-center h-5">
                                 <input type="checkbox" id="terms" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="w-4 h-4 text-[#42705D] bg-gray-100 border-gray-300 rounded focus:ring-[#42705D] cursor-pointer shrink-0" />
                             </div>
@@ -256,9 +355,17 @@ const Register = () => {
                             </div>
                         </div>
 
-                        <button type="submit" className="w-full bg-[#1A1A1A] text-white font-['El_Messiri'] font-medium rounded-full py-3 md:py-2.5 hover:bg-gray-800 transition mt-4 text-base md:text-lg shadow-md cursor-pointer transition-all duration-300 ease-out active:scale-95 group">
-                            {t('register_page.register_btn')}
+                        <button
+                            type="submit"
+                            disabled={isLoading} // Блокуємо кнопку від повторних кліків
+                            className={`w-full bg-[#1A1A1A] text-white font-['El_Messiri'] font-medium rounded-full py-3 md:py-2.5 hover:bg-gray-800 transition mt-1 text-base md:text-lg shadow-md cursor-pointer transition-all duration-300 ease-out active:scale-95 group ${isLoading ? 'opacity-70 cursor-wait' : ''}`}
+                        >
+                            {isLoading ? 'Обробка...' : t('register_page.register_btn')}
                         </button>
+
+                        <p className="text-[10px] text-gray-400 text-center mt-0 font-['Inter'] leading-tight">
+                            {t('register_page.captcha_notice')} <a href="https://policies.google.com/privacy" className="text-blue-500 hover:underline" target="_blank" rel="noopener noreferrer">Privacy Policy</a> {t('register_page.and')} <a href="https://policies.google.com/terms" className="text-blue-500 hover:underline" target="_blank" rel="noopener noreferrer">Terms of Service</a> apply.
+                        </p>
                     </form>
 
                     <div className="flex items-center my-5 md:my-6">
@@ -302,6 +409,15 @@ const Register = () => {
                     </div>
                 )}
             </div>
+            <ReCAPTCHA
+                ref={recaptchaRef}
+                sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY_2}
+                size="invisible"
+                badge="bottomright"
+                hl={i18n.language === 'en' ? 'en' : i18n.language === 'pl' ? 'pl' : 'uk'}
+                onErrored={() => recaptchaRef.current && recaptchaRef.current.reset()}
+                onExpired={() => recaptchaRef.current && recaptchaRef.current.reset()}
+            />
         </div>
     );
 };

@@ -11,9 +11,13 @@ const ResetPassword = () => {
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
 
+    // СТЕЙТИ ДЛЯ ПЛАВНОЇ АНІМАЦІЇ
+    const [isMessageVisible, setIsMessageVisible] = useState(false);
+    const [isErrorVisible, setIsErrorVisible] = useState(false);
+
     // Використовуємо надійну валідацію, що і при реєстрації
     const validateEmail = (email) => {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         if (!emailRegex.test(email)) {
             return t('forgot_password_page.error_email_format');
         }
@@ -36,31 +40,30 @@ const ResetPassword = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setMessage('');
-        setError('');
+
+        // Ховаємо попередні повідомлення перед новим запитом
+        setIsMessageVisible(false);
+        setIsErrorVisible(false);
 
         // 1. Валідація на фронтенді
         const emailError = validateEmail(email);
         if (emailError) {
             setError(emailError);
+            setIsErrorVisible(true); // Показуємо помилку
             return;
         }
 
         try {
-            // Якщо бекенд знаходить пошту і все добре, він має повернути успішну відповідь
             await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/password/reset/`, { email });
             setMessage(t('forgot_password_page.success_msg'));
+            setIsMessageVisible(true); // Показуємо успіх
             setEmail('');
         } catch (err) {
-            // 2. Обробка помилок від бекенда (бекенд повертає 400 з текстом)
             let errorMsg = t('forgot_password_page.error_server');
 
             if (err.response && err.response.data) {
                 const data = err.response.data;
-
-                // Бекенд тепер викидає ValidationError для 'email'
                 if (data.email) {
-                    // drf повертає помилки у вигляді масиву: {"email": ["текст помилки"]}
                     errorMsg = Array.isArray(data.email) ? data.email[0] : data.email;
                 } else if (data.detail) {
                     errorMsg = data.detail;
@@ -70,6 +73,7 @@ const ResetPassword = () => {
             }
 
             setError(errorMsg);
+            setIsErrorVisible(true); // Показуємо помилку
         }
     };
 
@@ -101,17 +105,19 @@ const ResetPassword = () => {
                         {t('forgot_password_page.title')}
                     </h1>
 
-                    {message && (
-                        <div className="text-xs md:text-[13px] mb-4 p-3 rounded-lg font-medium border bg-white/90 backdrop-blur-sm shadow-sm inline-block text-green-700 border-green-200">
+                    {/* АНІМОВАНИЙ БЛОК УСПІХУ */}
+                    <div className={`transition-all duration-500 overflow-hidden ${isMessageVisible ? 'max-h-24 opacity-100 mb-4' : 'max-h-0 opacity-0 mb-0'}`}>
+                        <div className="text-xs md:text-[13px] p-3 rounded-lg font-medium border bg-white/90 backdrop-blur-sm shadow-sm inline-block text-green-700 border-green-200">
                             {message}
                         </div>
-                    )}
+                    </div>
 
-                    {error && (
-                        <div className="text-xs md:text-[13px] mb-4 p-3 rounded-lg font-medium border bg-white/90 backdrop-blur-sm shadow-sm inline-block text-red-600 border-red-200">
+                    {/* АНІМОВАНИЙ БЛОК ПОМИЛКИ */}
+                    <div className={`transition-all duration-500 overflow-hidden ${isErrorVisible ? 'max-h-24 opacity-100 mb-4' : 'max-h-0 opacity-0 mb-0'}`}>
+                        <div className="text-xs md:text-[13px] p-3 rounded-lg font-medium border bg-white/90 backdrop-blur-sm shadow-sm inline-block text-red-600 border-red-200">
                             {error}
                         </div>
-                    )}
+                    </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
