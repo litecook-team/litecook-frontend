@@ -98,6 +98,12 @@ const Recipes = () => {
     const inputRef = useRef(null);
     const suggestionsRef = useRef(null);
 
+    // === НОВІ СТАНИ ТА REFS ДЛЯ НАВІГАЦІЇ КЛАВІАТУРОЮ ===
+    const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
+    const suggestionListContainerRef = useRef(null);
+    const suggestionItemRefs = useRef([]);
+    // ====================================================
+
     // Стан, який фіксує, чи БУЛО натиснуто кнопку пошуку з якимось фільтром
     const [hasActiveFilters, setHasActiveFilters] = useState(() => loadStateFromStorage('hasActiveFilters', false));
 
@@ -222,6 +228,20 @@ const Recipes = () => {
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
+
+    // === ЕФЕКТ ДЛЯ АВТОМАТИЧНОГО СКРОЛУ ПРИ НАВІГАЦІЇ СТРІЛКАМИ ===
+    useEffect(() => {
+        if (activeSuggestionIndex >= 0 && suggestionItemRefs.current[activeSuggestionIndex]) {
+            const activeItem = suggestionItemRefs.current[activeSuggestionIndex];
+
+            if (!activeItem) return;
+
+            activeItem.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+            });
+        }
+    }, [activeSuggestionIndex]);
 
     const scrollToTop = () => {
         window.scrollTo({
@@ -515,6 +535,7 @@ const Recipes = () => {
 
         setSearchQuery(capitalizeSearch(newQuery));
         setShowSuggestions(false);
+        setActiveSuggestionIndex(-1);
         if (inputRef.current) inputRef.current.focus();
     };
 
@@ -526,6 +547,7 @@ const Recipes = () => {
         // 1. Очищаємо помилку відразу
         setDuplicateError(null);
         setEmptyIngredientsError(false); // Скидаємо помилку пустого вводу при ручному вводі
+        setActiveSuggestionIndex(-1);
 
         // 2. Смарт-перевірка на дублікати при ручному вводі
         // Розбиваємо ТІЛЬКИ по комах
@@ -543,6 +565,38 @@ const Recipes = () => {
 
             const foundIng = allIngredients.find(ing => ing.name.toLowerCase() === duplicatedWord);
             showError('duplicate', foundIng ? foundIng.name : capitalizeSearch(duplicatedWord));
+        }
+    };
+
+    // === ОБРОБНИК КЛАВІАТУРИ ДЛЯ ІНПУТУ ПОШУКУ ІНГРЕДІЄНТІВ ===
+    const handleSearchKeyDown = (e) => {
+        // Якщо підказки закриті, дозволяємо Enter виконувати звичайний пошук (fetchRecipes)
+        if (!showSuggestions || suggestedIngredients.length === 0) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                fetchRecipes();
+            }
+            return;
+        }
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setActiveSuggestionIndex(prev =>
+                prev < suggestedIngredients.length - 1 ? prev + 1 : prev
+            );
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setActiveSuggestionIndex(prev => (prev > 0 ? prev - 1 : 0));
+        } else if (e.key === 'Enter') {
+            e.preventDefault(); // Зупиняємо стандартний сабміт/пошук
+            if (activeSuggestionIndex >= 0 && activeSuggestionIndex < suggestedIngredients.length) {
+                handleAddIngredientToSearch(suggestedIngredients[activeSuggestionIndex].name);
+            } else {
+                fetchRecipes(); // Якщо нічого не вибрано, але підказки відкриті - робимо запит
+            }
+        } else if (e.key === 'Escape') {
+            setShowSuggestions(false);
+            setActiveSuggestionIndex(-1);
         }
     };
 
@@ -704,7 +758,7 @@ const Recipes = () => {
                                                 value={searchQuery}
                                                 onChange={handleInputChange}
                                                 onFocus={() => setShowSuggestions(true)}
-                                                onKeyDown={(e) => e.key === 'Enter' && fetchRecipes()}
+                                                onKeyDown={handleSearchKeyDown}
                                                 placeholder={t('recipes_page.placeholder_ingredients')}
                                                 className={`w-full bg-white border-2 rounded-xl px-5 py-4 pl-12 pr-10 outline-none transition-colors text-gray-800 font-medium font-['Inter'] ${
                                                     (duplicateError || emptyIngredientsError)
@@ -714,13 +768,14 @@ const Recipes = () => {
                                             />
                                             <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
 
-                                            {/* Кнопка очищення (хрестик), якщо є текст */}
+                                            {/* Кнопка очищення */}
                                             {searchQuery && (
                                                 <button
                                                     onClick={() => {
                                                         setSearchQuery('');
                                                         setDuplicateError(null);
                                                         setEmptyIngredientsError(false);
+                                                        setActiveSuggestionIndex(-1);
                                                         if (inputRef.current) inputRef.current.focus();
                                                     }}
                                                     className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
@@ -734,12 +789,19 @@ const Recipes = () => {
 
                                     {/* Випадаючий список підказок */}
                                     {showSuggestions && suggestedIngredients.length > 0 && (
-                                        <ul className="absolute top-[105%] left-0 w-full mt-1 bg-white border border-gray-200 rounded-2xl shadow-xl max-h-60 overflow-y-auto py-2 custom-scrollbar z-50 font-['Inter']">
-                                            {suggestedIngredients.map(ing => (
+                                        <ul
+                                            ref={suggestionListContainerRef}
+                                            className="absolute top-[105%] left-0 w-full mt-1 bg-white border border-gray-200 rounded-2xl shadow-xl max-h-60 overflow-y-auto py-2 custom-scrollbar z-50 font-['Inter']"
+                                        >
+                                            {suggestedIngredients.map((ing, index) => (
                                                 <li
                                                     key={ing.id}
+                                                    ref={el => suggestionItemRefs.current[index] = el}
                                                     onClick={() => handleAddIngredientToSearch(ing.name)}
-                                                    className="flex items-center gap-4 px-5 py-2.5 hover:bg-[#F6F7FB] cursor-pointer transition-colors border-b border-gray-50 last:border-0"
+                                                    onMouseEnter={() => setActiveSuggestionIndex(index)}
+                                                    className={`flex items-center gap-4 px-5 py-2.5 cursor-pointer transition-colors border-b border-gray-50 last:border-0 ${
+                                                        index === activeSuggestionIndex ? 'bg-[#8FBC8F]' : 'bg-transparent'
+                                                    }`}
                                                 >
                                                     {ing.image ? (
                                                         <img src={getImageUrl(ing.image)} className="w-8 h-8 rounded-full object-cover shadow-sm bg-gray-100" alt="" />

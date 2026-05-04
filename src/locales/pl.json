@@ -682,7 +682,9 @@
     "pwd_err_match": "Nowe hasła nie są identyczne.",
     "pwd_err_same": "Nowe hasło nie może być takie samo jak obecne.",
     "pwd_err_wrong": "Obecne hasło wprowadzono nieprawidłowo.",
-    "pwd_err_conn": "Wystąpił błąd połączenia."
+    "pwd_err_conn": "Wystąpił błąd połączenia.",
+    "confirm_delete_all_title": "Oczyścić lodówkę?",
+    "confirm_delete_all_desc": "Czy na pewno chcesz usunąć wszystkie produkty ze swojej listy? Tej akcji nie można cofnąć."
   },
   "ai_chat": {
     "title": "LITE cook AI",

@@ -682,7 +682,9 @@
     "pwd_err_match": "New passwords do not match.",
     "pwd_err_same": "New password cannot match the current one.",
     "pwd_err_wrong": "Current password entered incorrectly.",
-    "pwd_err_conn": "A connection error occurred."
+    "pwd_err_conn": "A connection error occurred.",
+    "confirm_delete_all_title": "Clear the fridge?",
+    "confirm_delete_all_desc": "Are you sure you want to delete all products from your list? This action cannot be undone."
   },
   "ai_chat": {
     "title": "LITE cook AI",

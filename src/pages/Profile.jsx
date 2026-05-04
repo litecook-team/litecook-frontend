@@ -84,6 +84,7 @@ const Profile = () => {
     const [allergySearch, setAllergySearch] = useState('');
     const [fridgeSearch, setFridgeSearch] = useState('');
     const [isFridgeDropdownOpen, setIsFridgeDropdownOpen] = useState(false);
+    const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
     const [isDeleteAvatarModalOpen, setIsDeleteAvatarModalOpen] = useState(false);
 
     const [activeAdviceModal, setActiveAdviceModal] = useState(null);
@@ -106,6 +107,11 @@ const Profile = () => {
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const pwdErrorTimerRef = useRef(null);
+
+    const [isClearInventoryModalOpen, setIsClearInventoryModalOpen] = useState(false);
+
+    const fridgeListContainerRef = useRef(null);
+    const fridgeItemRefs = useRef([]);
 
     const showPasswordErrorMessage = (text) => {
         setPasswordError(text);
@@ -144,6 +150,25 @@ const Profile = () => {
         fetchData();
         window.scrollTo(0, 0);
     }, [navigate, i18n.language]);
+
+    // ЕФЕКТ ДЛЯ АВТОМАТИЧНОГО СКРОЛУ ПРИ НАВІГАЦІЇ СТРІЛКАМИ
+    useEffect(() => {
+        if (activeSuggestionIndex >= 0 && fridgeItemRefs.current[activeSuggestionIndex]) {
+            const activeItem = fridgeItemRefs.current[activeSuggestionIndex];
+
+            // Якщо елемент не знайдено в DOM, перериваємо
+            if (!activeItem) return;
+
+            // Використовуємо нативний метод браузера для плавного скролу.
+            // block: 'nearest' означає: якщо елемент вже видно, не скролити.
+            // Якщо він нижче - проскролити вниз рівно настільки, щоб його стало видно знизу.
+            // Якщо він вище - проскролити вгору рівно настільки, щоб його стало видно зверху.
+            activeItem.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+            });
+        }
+    }, [activeSuggestionIndex]);
 
     const fetchData = async () => {
         try {
@@ -196,9 +221,11 @@ const Profile = () => {
     const EXACT_UNIT_MATCH = {
         'яйця': ['pcs'], 'eggs': ['pcs'], 'jajka': ['pcs'],
         'перепелині яйця': ['pcs'], 'quail eggs': ['pcs'], 'jajka przepiórcze': ['pcs'],
-        'лимон': ['pcs', 'g'], 'lemon': ['pcs', 'g'], 'cytryna': ['pcs', 'g'],
-        'лайм': ['pcs', 'g'], 'lime': ['pcs', 'g'], 'limonka': ['pcs', 'g'],
-        'авокадо': ['pcs', 'g'], 'avocado': ['pcs', 'g'], 'awokado': ['pcs', 'g'],
+        'лимон': ['pcs', 'g', 'slice'], 'lemon': ['pcs', 'g', 'slice'], 'cytryna': ['pcs', 'g', 'slice'],
+        'лайм': ['pcs', 'g', 'slice'], 'lime': ['pcs', 'g', 'slice'], 'limonka': ['pcs', 'g', 'slice'],
+        'хліб': ['slice', 'g', 'kg', 'pcs'], 'bread': ['slice', 'g', 'kg', 'pcs'], 'chleb': ['slice', 'g', 'kg', 'pcs'],
+        'мед': ['g', 'kg', 'tsp', 'tbsp', 'ml', 'l'], 'honey': ['g', 'kg', 'tsp', 'tbsp', 'ml', 'l'], 'miód': ['g', 'kg', 'tsp', 'tbsp', 'ml', 'l'],
+        'авокадо': ['pcs', 'g', 'kg'], 'avocado': ['pcs', 'g', 'kg'], 'awokado': ['pcs', 'g', 'kg'],
         'банан': ['pcs', 'g'], 'banana': ['pcs', 'g'], 'banan': ['pcs', 'g'],
         'часник': ['g', 'kg', 'clove'], 'garlic': ['g', 'kg', 'clove'], 'czosnek': ['g', 'kg', 'clove'],
         'вода': ['ml', 'l'], 'water': ['ml', 'l'], 'woda': ['ml', 'l'],
@@ -206,7 +233,6 @@ const Profile = () => {
         'овочевий бульйон': ['ml', 'l'], 'vegetable broth': ['ml', 'l'], 'bulion warzywny': ['ml', 'l'],
         'сіль': ['g', 'kg'], 'salt': ['g', 'kg'], 'sól': ['g', 'kg'],
         'перець чорний': ['g'], 'black pepper': ['g'], 'czarny pieprz': ['g'],
-        'хліб': ['slice', 'g', 'kg'], 'bread': ['slice', 'g', 'kg'], 'chleb': ['slice', 'g', 'kg'],
         'кокосове молоко': ['ml', 'l', 'can'], 'coconut milk': ['ml', 'l', 'can'], 'mleko kokosowe': ['ml', 'l', 'can'],
         'томатна паста': ['g', 'tbsp', 'can'], 'tomato paste': ['g', 'tbsp', 'can'], 'koncentrat pomidorowy': ['g', 'tbsp', 'can'],
         'пападам': ['pcs'], 'papadum': ['pcs'],
@@ -215,6 +241,7 @@ const Profile = () => {
         'темний шоколад': ['g', 'pcs'], 'dark chocolate': ['g', 'pcs'], 'ciemna czekolada': ['g', 'pcs'],
         'розпушувач': ['g', 'tsp'], 'baking powder': ['g', 'tsp'], 'proszek do pieczenia': ['g', 'tsp'],
         'желатин': ['g', 'tsp'], 'gelatin': ['g', 'tsp'], 'żelatyna': ['g', 'tsp'],
+        'мигдальне молоко': ['ml', 'l'], 'almond milk': ['ml', 'l'], 'mleko migdałowe': ['ml', 'l'],
     };
 
     const showToast = (message) => {
@@ -233,6 +260,7 @@ const Profile = () => {
         setFridgeSearch('');
         setEditingInventoryId(null);
         setIsFridgeDropdownOpen(false);
+        setActiveSuggestionIndex(-1);
         setAllergySearch('');
         setNewAllergy('');
         setNewDiet('');
@@ -263,6 +291,7 @@ const Profile = () => {
         setIsFridgeDropdownOpen(false);
         setEditingInventoryId(null);
         setInventoryMessage(null);
+        setActiveSuggestionIndex(-1);
     };
 
     const showInventoryMessage = (type, text, duration = 4000) => {
@@ -461,9 +490,29 @@ const Profile = () => {
 
         } catch (err) {
             if (err.response && err.response.data) {
-                 showInventoryMessage('error', `Помилка: ${JSON.stringify(err.response.data)}`, 5000);
+                const data = err.response.data;
+                let errorMessage = t('profile_page.toast_err_general'); // fallback
+
+                // Розумний парсинг помилок від Django DRF
+                if (data.amount && Array.isArray(data.amount)) {
+                    errorMessage = data.amount[0];
+                } else if (data.ingredient && Array.isArray(data.ingredient)) {
+                    errorMessage = data.ingredient[0];
+                } else if (data.detail) {
+                    errorMessage = data.detail;
+                } else if (typeof data === 'string') {
+                    errorMessage = data;
+                } else {
+                    // Якщо помилка прийшла в іншому полі, беремо перше-ліпше
+                    const firstKey = Object.keys(data)[0];
+                    if (firstKey && Array.isArray(data[firstKey])) {
+                        errorMessage = data[firstKey][0];
+                    }
+                }
+
+                showInventoryMessage('error', errorMessage, 5000);
             } else {
-                 showInventoryMessage('error', t('profile_page.toast_err_general'), 4000);
+                showInventoryMessage('error', t('profile_page.toast_err_general'), 4000);
             }
         }
     };
@@ -484,7 +533,7 @@ const Profile = () => {
             showToast(t('profile_page.toast_already_in_list'));
         } else {
             setEditingInventoryId(null);
-            setNewFridgeItem({ ingredient: ing.id, amount: '', unit: 'g' });
+            setNewFridgeItem({ ingredient: ing.id, amount: '', unit: getDefaultUnit(ing) });
         }
     };
 
@@ -613,6 +662,58 @@ const Profile = () => {
         }
 
         return num.toFixed(1).replace(/\.0$/, '');
+    };
+
+    // Функція для красивого відображення в інвентарі
+    const formatInventoryDisplay = (amount, unit) => {
+        if (amount === null || amount === undefined) return '';
+        let num = parseFloat(amount);
+        let displayUnit = unit;
+
+        // Конвертація
+        if (unit === 'g' && num >= 1000) {
+            num = num / 1000;
+            displayUnit = 'kg';
+        } else if (unit === 'ml' && num >= 1000) {
+            num = num / 1000;
+            displayUnit = 'l';
+        }
+
+        // Прибираємо зайві нулі (1.00 -> 1, 1.50 -> 1.5)
+        const numStr = Number.isInteger(num) ? num.toString() : num.toFixed(2).replace(/\.?0+$/, '');
+
+        // Беремо правильний переклад одиниці
+        let unitStr = DICTIONARIES.units[displayUnit] || displayUnit;
+        if (Array.isArray(unitStr)) unitStr = unitStr[0];
+
+        return `${numStr} ${unitStr}`;
+    };
+
+    const handleFridgeSearchKeyDown = (e) => {
+        const filteredIngredients = availableFridgeIngredients.filter(i =>
+            i.name.toLowerCase().includes(fridgeSearch.toLowerCase())
+        ).slice(0, 20);
+
+        if (!isFridgeDropdownOpen || filteredIngredients.length === 0) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault(); // Запобігає прокручуванню сторінки
+            setActiveSuggestionIndex(prev =>
+                prev < filteredIngredients.length - 1 ? prev + 1 : prev
+            );
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setActiveSuggestionIndex(prev => (prev > 0 ? prev - 1 : 0));
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (activeSuggestionIndex >= 0 && activeSuggestionIndex < filteredIngredients.length) {
+                handleSelectFridgeIngredient(filteredIngredients[activeSuggestionIndex]);
+                setActiveSuggestionIndex(-1); // Скидаємо індекс після вибору
+            }
+        } else if (e.key === 'Escape') {
+            setIsFridgeDropdownOpen(false);
+            setActiveSuggestionIndex(-1);
+        }
     };
 
     if (loading) return <div className="min-h-screen flex items-center justify-center text-2xl font-['El_Messiri'] text-gray-800">{t('profile_page.loading')}</div>;
@@ -1238,10 +1339,20 @@ const Profile = () => {
                                         <div className="flex-1">
                                             <div className="flex items-center gap-4 mb-1">
                                                 <h2 className="text-2xl sm:text-3xl font-bold font-['El_Messiri'] text-gray-900 leading-tight">{t('profile_page.inv_title')}</h2>
-                                                {safeInventory.length > 0 && (<button onClick={clearAllInventory} className="hidden sm:flex text-xs font-bold text-red-500 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors cursor-pointer active:scale-95">{t('profile_page.clear_all')}</button>)}
+                                                {safeInventory.length > 0 && (<button
+                                                    onClick={() => setIsClearInventoryModalOpen(true)}
+                                                    className="hidden sm:flex text-xs font-bold text-red-500 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors cursor-pointer active:scale-95"
+                                                >
+                                                    {t('profile_page.clear_all')}
+                                                </button>)}
                                             </div>
                                             <p className="hidden sm:block text-gray-500 font-medium font-['Inter'] text-sm sm:text-base">{t('profile_page.inv_desc')}</p>
-                                            {safeInventory.length > 0 && (<button onClick={clearAllInventory} className="sm:hidden mt-1 text-xs font-bold text-red-500 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors cursor-pointer active:scale-95 inline-block">{t('profile_page.clear_all_count', { count: safeInventory.length })}</button>)}
+                                            {safeInventory.length > 0 && (<button
+                                                onClick={() => setIsClearInventoryModalOpen(true)}
+                                                className="sm:hidden mt-1 text-xs font-bold text-red-500 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors cursor-pointer active:scale-95 inline-block"
+                                            >
+                                                {t('profile_page.clear_all_count', { count: safeInventory.length })}
+                                            </button>)}
                                         </div>
                                     </div>
                                     <button onClick={() => { setIsInventoryModalOpen(false); resetInventoryForm(); }} className="w-10 h-10 flex items-center justify-center bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-500 rounded-full transition-all cursor-pointer shrink-0 ml-2"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"></path></svg></button>
@@ -1251,12 +1362,25 @@ const Profile = () => {
                                     <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2 bg-gray-50 border border-gray-200 p-2 md:pl-4 rounded-2xl w-full focus-within:border-cyan-400 focus-within:ring-2 focus-within:ring-cyan-100 transition-all relative">
                                         <div className="flex items-center gap-2 w-full md:flex-1 relative">
                                             <svg className="w-5 h-5 text-gray-400 shrink-0 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                                            <input type="text" placeholder={t('profile_page.inv_search_placeholder')} value={fridgeSearch} onChange={(e) => { setFridgeSearch(e.target.value); setIsFridgeDropdownOpen(true); setNewFridgeItem({...newFridgeItem, ingredient: ''}); }} onFocus={() => setIsFridgeDropdownOpen(true)} className="w-full bg-transparent outline-none text-gray-800 font-medium py-2 px-2 sm:px-0 pr-8" />
+                                            <input
+                                                type="text"
+                                                placeholder={t('profile_page.inv_search_placeholder')}
+                                                value={fridgeSearch}
+                                                onChange={(e) => {
+                                                    setFridgeSearch(e.target.value);
+                                                    setIsFridgeDropdownOpen(true);
+                                                    setNewFridgeItem({...newFridgeItem, ingredient: ''});
+                                                    setActiveSuggestionIndex(-1); // Скидаємо індекс при введенні тексту
+                                                }}
+                                                onFocus={() => setIsFridgeDropdownOpen(true)}
+                                                onKeyDown={handleFridgeSearchKeyDown}
+                                                className="w-full bg-transparent outline-none text-gray-800 font-medium py-2 px-2 sm:px-0 pr-8"
+                                            />
                                             {fridgeSearch && (<button onClick={() => { setFridgeSearch(''); setNewFridgeItem({ ingredient: '', amount: '', unit: 'g' }); setIsFridgeDropdownOpen(false); if (editingInventoryId) { resetInventoryForm(); } }} className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors cursor-pointer active:scale-95"><svg className="w-4 h-4 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg></button>)}
                                         </div>
                                         <div className="hidden md:block h-8 w-px bg-gray-300 mx-2"></div>
                                         <div className="flex items-center gap-2 w-full md:w-auto shrink-0 border-t border-gray-200 md:border-t-0 pt-2 md:pt-0">
-                                            <input type="number" min="0" step="0.1" placeholder={t('profile_page.inv_amount_placeholder')} value={newFridgeItem.amount} onChange={(e) => { let val = e.target.value; if (val === '' || /^[0-9]*[.,]?[0-9]{0,1}$/.test(val)) { setNewFridgeItem({...newFridgeItem, amount: val.replace(',', '.')}); } }} className="w-1/2 md:w-24 bg-transparent outline-none text-gray-800 font-bold text-center py-2 border-b-2 border-gray-300 md:border-transparent focus:border-cyan-400 transition-colors placeholder:font-normal" />
+                                            <input type="number" min="0" step="0.1" placeholder={t('profile_page.inv_amount_placeholder')} value={newFridgeItem.amount} onChange={(e) => { let val = e.target.value; if (val === '' || /^[0-9]{0,4}[.,]?[0-9]{0,1}$/.test(val)) { setNewFridgeItem({...newFridgeItem, amount: val.replace(',', '.')}); } }} className="w-1/2 md:w-24 bg-transparent outline-none text-gray-800 font-bold text-center py-2 border-b-2 border-gray-300 md:border-transparent focus:border-cyan-400 transition-colors placeholder:font-normal" />
                                             <select value={newFridgeItem.unit} onChange={(e) => setNewFridgeItem({...newFridgeItem, unit: e.target.value})} className="w-1/2 md:w-28 bg-transparent outline-none text-gray-800 font-semibold py-2 cursor-pointer border-b-2 border-gray-300 md:border-transparent focus:border-cyan-400">
                                                 {(() => {
                                                     const selectedIng = availableFridgeIngredients.find(i => i.id === newFridgeItem.ingredient);
@@ -1274,10 +1398,28 @@ const Profile = () => {
                                             </select>
                                         </div>
                                         {isFridgeDropdownOpen && fridgeSearch && (
-                                            <ul className="absolute top-[105%] left-0 w-full mt-1 bg-white border border-gray-200 rounded-2xl shadow-2xl max-h-48 sm:max-h-60 overflow-y-auto py-2 z-50">
-                                                {availableFridgeIngredients.filter(i => i.name.toLowerCase().includes(fridgeSearch.toLowerCase())).slice(0, 20).map(ing => (
-                                                        <li key={ing.id} onClick={() => handleSelectFridgeIngredient(ing)} className="flex items-center gap-3 px-4 py-3 hover:bg-cyan-50 cursor-pointer border-b border-gray-50 last:border-0 transition-colors">
-                                                            <div className="w-8 h-8 rounded-full bg-gray-100 overflow-hidden shrink-0 border border-gray-100">{ing.image ? <img src={getImageUrl(ing.image)} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">•</div>}</div>
+                                            <ul
+                                                ref={fridgeListContainerRef}
+                                                className="absolute top-[105%] left-0 w-full mt-1 bg-white border border-gray-200 rounded-2xl shadow-2xl max-h-48 sm:max-h-60 overflow-y-auto py-2 z-50 custom-scrollbar"
+                                            >
+                                                {availableFridgeIngredients.filter(i => i.name.toLowerCase().includes(fridgeSearch.toLowerCase())).slice(0, 20).map((ing, index) => (
+                                                        <li
+                                                            key={ing.id}
+                                                            ref={el => fridgeItemRefs.current[index] = el}
+                                                            onClick={() => {
+                                                                handleSelectFridgeIngredient(ing);
+                                                                setActiveSuggestionIndex(-1);
+                                                            }}
+                                                            // 1. Синхронізуємо мишку
+                                                            onMouseEnter={() => setActiveSuggestionIndex(index)}
+                                                            // 2. Прибираємо CSS hover
+                                                            className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-gray-50 last:border-0 transition-colors ${
+                                                                index === activeSuggestionIndex ? 'bg-[#AFEEEE]' : 'bg-transparent'
+                                                            }`}
+                                                        >
+                                                            <div className="w-8 h-8 rounded-full bg-gray-100 overflow-hidden shrink-0 border border-gray-100">
+                                                                {ing.image ? <img src={getImageUrl(ing.image)} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">•</div>}
+                                                            </div>
                                                             <span className="font-semibold text-gray-800">{ing.name}</span>
                                                         </li>
                                                 ))}
@@ -1323,8 +1465,7 @@ const Profile = () => {
                                                 <div className="flex-1 min-w-0">
                                                     <h4 className="font-bold text-gray-900 text-[14px] sm:text-base truncate" title={item.ingredient_name}>{item.ingredient_name}</h4>
                                                     <span className="inline-block mt-1 text-cyan-800 font-bold text-xs sm:text-sm bg-cyan-100/50 px-2 py-0.5 rounded-lg border border-cyan-100/50">
-                                                        {item.amount ? `${formatDisplayAmount(item.amount, item.unit)} ` : ''}
-                                                        {DICTIONARIES.units[item.unit] ? (Array.isArray(DICTIONARIES.units[item.unit]) ? DICTIONARIES.units[item.unit][0] : DICTIONARIES.units[item.unit]) : item.unit}
+                                                        {formatInventoryDisplay(item.amount, item.unit)}
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center gap-1 sm:gap-2 shrink-0">
@@ -1335,6 +1476,41 @@ const Profile = () => {
                                         ))}
                                     </div>
                                 )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+                {/* ================= МОДАЛКА ПІДТВЕРДЖЕННЯ ОЧИЩЕННЯ ХОЛОДИЛЬНИКА ================= */}
+                {isClearInventoryModalOpen && (
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-opacity duration-300" onClick={() => setIsClearInventoryModalOpen(false)}>
+                        <div className="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl p-8 flex flex-col items-center text-center relative animate-scaleIn" onClick={(e) => e.stopPropagation()}>
+
+                            <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-br from-red-100 to-white opacity-50 rounded-t-[2rem] pointer-events-none"></div>
+
+                            <div className="w-20 h-20 bg-red-50 border-4 border-white rounded-full flex items-center justify-center mb-4 shadow-lg text-red-500 relative z-10 transform hover:rotate-12 transition-transform duration-300">
+                                <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </div>
+
+                            <h3 className="text-2xl font-bold font-['El_Messiri'] text-gray-900 mb-2 relative z-10">
+                                {t('profile_page.confirm_delete_all_title')}
+                            </h3>
+                            <p className="text-gray-500 font-medium mb-8 text-sm relative z-10 leading-relaxed">
+                                {t('profile_page.confirm_delete_all_desc')}
+                            </p>
+
+                            <div className="flex gap-3 w-full relative z-10">
+                                <button onClick={() => setIsClearInventoryModalOpen(false)} className="flex-1 bg-gray-100 text-gray-700 py-3.5 rounded-2xl font-bold hover:bg-gray-200 transition-colors cursor-pointer active:scale-95 duration-200">
+                                    {t('profile_page.cancel')}
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        clearAllInventory();
+                                        setIsClearInventoryModalOpen(false);
+                                    }}
+                                    className="flex-1 bg-red-500 text-white py-3.5 rounded-2xl font-bold hover:bg-red-600 transition-colors cursor-pointer shadow-[0_8px_20px_rgba(239,68,68,0.2)] active:scale-95 duration-200"
+                                >
+                                    {t('profile_page.delete_btn')}
+                                </button>
                             </div>
                         </div>
                     </div>

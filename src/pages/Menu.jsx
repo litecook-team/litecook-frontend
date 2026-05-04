@@ -66,6 +66,12 @@ const Menu = () => {
     const inputRef = useRef(null);
     const suggestionsRef = useRef(null);
 
+    // === СТАНИ ТА REFS ДЛЯ НАВІГАЦІЇ КЛАВІАТУРОЮ ===
+    const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
+    const suggestionListContainerRef = useRef(null);
+    const suggestionItemRefs = useRef([]);
+    // ====================================================
+
     const [modalError, setModalError] = useState(null)
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [exportEmail, setExportEmail] = useState('');
@@ -120,6 +126,20 @@ const Menu = () => {
         setShoppingList(null);
         setActiveListScope(null);
     }, [activeDay]);
+
+    // === ЕФЕКТ ДЛЯ АВТОМАТИЧНОГО СКРОЛУ ПРИ НАВІГАЦІЇ СТРІЛКАМИ ===
+    useEffect(() => {
+        if (activeSuggestionIndex >= 0 && suggestionItemRefs.current[activeSuggestionIndex]) {
+            const activeItem = suggestionItemRefs.current[activeSuggestionIndex];
+
+            if (!activeItem) return;
+
+            activeItem.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+            });
+        }
+    }, [activeSuggestionIndex]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -256,6 +276,7 @@ const Menu = () => {
         setSearchQuery('');
         setModalError(null);
         setIsAddModalOpen(true);
+        setActiveSuggestionIndex(-1);
     };
 
     const getImageUrl = (path) => {
@@ -461,6 +482,7 @@ const Menu = () => {
         }
         setSearchQuery(capitalizeSearch(newQuery));
         setShowSuggestions(false);
+        setActiveSuggestionIndex(-1);
         if (inputRef.current) inputRef.current.focus();
     };
 
@@ -468,6 +490,7 @@ const Menu = () => {
         setSearchQuery(formatCapitalization(e.target.value));
         setShowSuggestions(true);
         setDuplicateError(null);
+        setActiveSuggestionIndex(-1);
 
         const terms = e.target.value.toLowerCase().split(',').map(t => t.trim()).filter(Boolean);
         if (terms.length < 2) return;
@@ -478,6 +501,29 @@ const Menu = () => {
             const duplicatedWord = duplicates[0];
             const foundIng = allIngredients.find(ing => ing.name.toLowerCase() === duplicatedWord);
             setDuplicateError(foundIng ? foundIng.name : capitalizeFirstLetter(duplicatedWord));
+        }
+    };
+
+    // === ОБРОБНИК КЛАВІАТУРИ ДЛЯ ІНПУТУ ПОШУКУ ІНГРЕДІЄНТІВ ===
+    const handleSearchKeyDown = (e) => {
+        if (!showSuggestions || suggestedIngredients.length === 0) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setActiveSuggestionIndex(prev =>
+                prev < suggestedIngredients.length - 1 ? prev + 1 : prev
+            );
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setActiveSuggestionIndex(prev => (prev > 0 ? prev - 1 : 0));
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (activeSuggestionIndex >= 0 && activeSuggestionIndex < suggestedIngredients.length) {
+                handleAddIngredientToSearch(suggestedIngredients[activeSuggestionIndex].name);
+            }
+        } else if (e.key === 'Escape') {
+            setShowSuggestions(false);
+            setActiveSuggestionIndex(-1);
         }
     };
 
@@ -833,6 +879,7 @@ const Menu = () => {
                                         value={searchQuery}
                                         onChange={handleInputChange}
                                         onFocus={() => setShowSuggestions(true)}
+                                        onKeyDown={handleSearchKeyDown}
                                         className={`w-full bg-white border-2 rounded-xl px-5 py-3.5 sm:py-4 pl-12 pr-10 outline-none transition-colors text-gray-800 font-medium font-['Inter'] ${
                                             (modalError || duplicateError) 
                                             ? 'border-red-300 focus:border-red-500 bg-red-50/50 text-red-900 placeholder-red-300' 
@@ -857,12 +904,21 @@ const Menu = () => {
                             </div>
 
                             {showSuggestions && suggestedIngredients.length > 0 && (
-                                <ul className="absolute top-[105%] left-0 w-full mt-1 bg-white border border-gray-200 rounded-2xl shadow-xl max-h-60 overflow-y-auto py-2 custom-scrollbar z-50 font-['Inter']">
-                                    {suggestedIngredients.map(ing => (
+                                <ul
+                                    ref={suggestionListContainerRef}
+                                    className="absolute top-[105%] left-0 w-full mt-1 bg-white border border-gray-200 rounded-2xl shadow-xl max-h-60 overflow-y-auto py-2 custom-scrollbar z-50 font-['Inter']"
+                                >
+                                    {suggestedIngredients.map((ing, index) => (
                                         <li
                                             key={ing.id}
+                                            ref={el => suggestionItemRefs.current[index] = el}
                                             onClick={() => handleAddIngredientToSearch(ing.name)}
-                                            className="flex items-center gap-4 px-5 py-2.5 hover:bg-[#F6F7FB] cursor-pointer transition-colors border-b border-gray-50 last:border-0"
+                                            // 1. ДОДАЄМО: Мишка тепер теж змінює "активний індекс" при наведенні
+                                            onMouseEnter={() => setActiveSuggestionIndex(index)}
+                                            // 2. ЗМІНЕНО: Прибираємо CSS hover, залишаємо підсвітку ТІЛЬКИ через стан
+                                            className={`flex items-center gap-4 px-5 py-2.5 cursor-pointer transition-colors border-b border-gray-50 last:border-0 ${
+                                                index === activeSuggestionIndex ? 'bg-[#F5F5DC]' : 'bg-transparent'
+                                            }`}
                                         >
                                             {ing.image ? (
                                                 <img src={getImageUrl(ing.image)} className="w-8 h-8 rounded-full object-cover shadow-sm bg-gray-100" alt="" />

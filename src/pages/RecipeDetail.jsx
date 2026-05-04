@@ -322,7 +322,7 @@ const RecipeDetail = () => {
                                 />
 
                                 {/* Внутрішній блок Деталей (ПРОЗОРИЙ) */}
-                                <div className="w-full h-full bg-transparent min-[1500px]:backdrop-blur-none backdrop-blur-md rounded-[calc(2rem-6px)] p-15 sm:p-15 min-[1840px]:p-6 xl:p-8 font-['Inter']">
+                                <div className="w-full h-full bg-transparent min-[1500px]:backdrop-blur-none backdrop-blur-md rounded-[calc(2rem-6px)] p-6 sm:p-8 lg:p-10 min-[1840px]:p-6 xl:p-8 font-['Inter']">
 
                                     <h3 className="text-[18px] sm:text-[20px] font-bold font-['Inter'] text-[#B47231] mb-4 sm:mb-6 uppercase text-center tracking-widest mt-2 sm:mt-0">
                                         {t('recipe_detail_page.details_title')}
@@ -331,34 +331,34 @@ const RecipeDetail = () => {
                                     {/* Нова, чиста та красива структура рядків як на вашому фото */}
                                     <div className="flex flex-col w-full text-[14px] sm:text-[15px] xl:text-[15px]">
 
-                                        <div className="flex justify-between items-start gap-4 py-2 border-b border-gray-400/30">
-                                            <span className="text-gray-900 font-semibold shrink-0">{t('recipe_detail_page.det_cuisine')}</span>
-                                            <span className="text-gray-900 text-right break-words">{formatArray(recipe.cuisine, DICTIONARIES.cuisine)}</span>
+                                        <div className="flex justify-between items-start gap-2 sm:gap-4 py-2 border-b border-gray-400/30">
+                                            <span className="text-gray-900 font-semibold shrink-0 max-w-[40%]">{t('recipe_detail_page.det_cuisine')}</span>
+                                            <span className="text-gray-900 text-right break-words flex-1 ml-2">{formatArray(recipe.cuisine, DICTIONARIES.cuisine)}</span>
                                         </div>
 
-                                        <div className="flex justify-between items-start gap-4 py-3 border-b border-gray-400/30">
-                                            <span className="font-semibold text-gray-900 shrink-0">{t('recipe_detail_page.det_meal')}</span>
-                                            <span className="text-gray-900 text-right break-words">{formatArray(recipe.meal_times, DICTIONARIES.meal_times)}</span>
+                                        <div className="flex justify-between items-start gap-2 sm:gap-4 py-3 border-b border-gray-400/30">
+                                            <span className="font-semibold text-gray-900 shrink-0 max-w-[40%]">{t('recipe_detail_page.det_meal')}</span>
+                                            <span className="text-gray-900 text-right break-words flex-1 ml-2">{formatArray(recipe.meal_times, DICTIONARIES.meal_times)}</span>
                                         </div>
 
-                                        <div className="flex justify-between items-start gap-4 py-3 border-b border-gray-400/30">
-                                            <span className="font-semibold text-gray-900 shrink-0">{t('recipe_detail_page.det_dish')}</span>
-                                            <span className="text-gray-900 text-right break-words">{formatArray(recipe.dish_types, DICTIONARIES.dish_types)}</span>
+                                        <div className="flex justify-between items-start gap-2 sm:gap-4 py-3 border-b border-gray-400/30">
+                                            <span className="font-semibold text-gray-900 shrink-0 max-w-[40%]">{t('recipe_detail_page.det_dish')}</span>
+                                            <span className="text-gray-900 text-right break-words flex-1 ml-2">{formatArray(recipe.dish_types, DICTIONARIES.dish_types)}</span>
                                         </div>
 
-                                        <div className="flex justify-between items-start gap-4 py-3 border-b border-gray-400/30">
-                                            <span className="font-semibold text-gray-900 shrink-0">{t('recipe_detail_page.det_diet')}</span>
-                                            <span className="text-gray-900 text-right break-words">{formatArray(recipe.dietary_tags, DICTIONARIES.dietary_tags)}</span>
+                                        <div className="flex justify-between items-start gap-2 sm:gap-4 py-3 border-b border-gray-400/30">
+                                            <span className="font-semibold text-gray-900 shrink-0 max-w-[40%]">{t('recipe_detail_page.det_diet')}</span>
+                                            <span className="text-gray-900 text-right break-words flex-1 ml-2">{formatArray(recipe.dietary_tags, DICTIONARIES.dietary_tags)}</span>
                                         </div>
 
-                                        <div className="flex justify-between items-start gap-4 py-3 border-b border-gray-400/30">
-                                            <span className="font-semibold text-gray-900 shrink-0">{t('recipe_detail_page.det_author')}</span>
-                                            <span className="text-gray-900 text-right break-words">{recipe.source || t('recipe_detail_page.det_unknown')}</span>
+                                        <div className="flex justify-between items-start gap-2 sm:gap-4 py-3 border-b border-gray-400/30">
+                                            <span className="font-semibold text-gray-900 shrink-0 max-w-[40%]">{t('recipe_detail_page.det_author')}</span>
+                                            <span className="text-gray-900 text-right break-words flex-1 ml-2">{recipe.source || t('recipe_detail_page.det_unknown')}</span>
                                         </div>
 
-                                        <div className="flex justify-between items-start gap-4 py-3">
-                                            <span className="font-semibold text-gray-900 shrink-0">{t('recipe_detail_page.det_added')}</span>
-                                            <span className="text-gray-900 text-right break-words">
+                                        <div className="flex justify-between items-start gap-2 sm:gap-4 py-3">
+                                            <span className="font-semibold text-gray-900 shrink-0 max-w-[40%]">{t('recipe_detail_page.det_added')}</span>
+                                            <span className="text-gray-900 text-right break-words flex-1 ml-2">
                                                 {recipe.created_at ? new Date(recipe.created_at).toLocaleDateString(i18n.language) : '—'}
                                             </span>
                                         </div>
