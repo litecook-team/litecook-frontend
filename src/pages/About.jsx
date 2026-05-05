@@ -40,7 +40,7 @@ const About = () => {
                             {t('about_page.subtitle')}
                         </h2>
 
-                        <div className="border-t border-[#974F23] w-full max-w-[400px] mb-8"></div>
+                        <div className="border-t border-[#974F23] w-full mb-8"></div>
 
                         <p className="font-bold text-[#1A1A1A] text-lg md:text-xl mb-6 leading-snug">
                             {t('about_page.desc_1')}
@@ -94,18 +94,18 @@ const About = () => {
                             {t('about_page.how_it_works_title')}
                         </h3>
 
-                        <div className="flex justify-between items-start mb-10 w-full max-w-[600px] mx-auto lg:bottom-6 relative z-20">
-                            <div className="flex flex-col items-center gap-4 text-center">
-                                <svg className="w-10 h-10 text-[#974F23]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="1.5"/><path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2"/></svg>
-                                <span className="text-sm md:text-base font-semibold text-gray-800">{t('about_page.icon_1_text')}</span>
+                        <div className="flex justify-between gap-2 sm:gap-4 items-start mb-10 w-full max-w-[600px] mx-auto lg:bottom-6 relative z-20">
+                            <div className="flex flex-col items-center gap-3 sm:gap-4 text-center flex-1 min-w-0">
+                                <svg className="w-8 h-8 sm:w-10 sm:h-10 text-[#974F23]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="1.5"/><path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2"/></svg>
+                                <span className="text-[12px] sm:text-sm md:text-base font-semibold text-gray-800 break-words leading-tight">{t('about_page.icon_1_text')}</span>
                             </div>
-                            <div className="flex flex-col items-center gap-4 text-center">
-                                <svg className="w-10 h-10 text-[#974F23]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8zM6 4V2m4 2V2m4 2V2"/></svg>
-                                <span className="text-sm md:text-base font-semibold text-gray-800">{t('about_page.icon_2_text')}</span>
+                            <div className="flex flex-col items-center gap-3 sm:gap-4 text-center flex-1 min-w-0">
+                                <svg className="w-8 h-8 sm:w-10 sm:h-10 text-[#974F23]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8zM6 4V2m4 2V2m4 2V2"/></svg>
+                                <span className="text-[12px] sm:text-sm md:text-base font-semibold text-gray-800 break-words leading-tight">{t('about_page.icon_2_text')}</span>
                             </div>
-                            <div className="flex flex-col items-center gap-4 text-center">
-                                <svg className="w-10 h-10 text-[#974F23]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" strokeWidth="1.5"/><path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707"/></svg>
-                                <span className="text-sm md:text-base font-semibold text-gray-800">{t('about_page.icon_3_text')}</span>
+                            <div className="flex flex-col items-center gap-3 sm:gap-4 text-center flex-1 min-w-0">
+                                <svg className="w-8 h-8 sm:w-10 sm:h-10 text-[#974F23]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" strokeWidth="1.5"/><path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707"/></svg>
+                                <span className="text-[12px] sm:text-sm md:text-base font-semibold text-gray-800 break-words leading-tight">{t('about_page.icon_3_text')}</span>
                             </div>
                         </div>
 
