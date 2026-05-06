@@ -46,6 +46,8 @@
     "error_email_ru": "Rejestracja ze skrzynek pocztowych państwa-terrorysty jest zabroniona!",
     "error_email_typo": "Wygląda na to, że popełniłeś błąd w domenie e-mail.",
     "error_captcha": "Proszę potwierdzić, że nie jesteś robotem.",
+    "error_email_empty": "Proszę wprowadzić adres e-mail.",
+    "error_password_empty": "Proszę wprowadzić hasło.",
     "captcha_notice": "Ta strona jest chroniona przez reCAPTCHA, obowiązują",
     "and": "oraz",
     "success_msg": "Rejestracja zakończona sukcesem! Wysłaliśmy e-mail na Twoją skrzynkę.",
@@ -90,6 +92,11 @@
     "error_server": "Błąd połączenia z serwerem. Spróbuj ponownie później.",
     "error_google": "Błąd autoryzacji Google",
     "error_facebook": "Błąd autoryzacji Facebook",
+    "error_email_empty": "Proszę wprowadzić swój adres e-mail.",
+    "error_password_empty": "Proszę wprowadzić swoje hasło.",
+    "error_email_format": "Proszę wprowadzić poprawny adres e-mail (np. name@example.com).",
+    "error_email_ru": "Podana skrzynka pocztowa należy do państwa-terrorysty. Nasz serwis nie obsługuje takich adresów.",
+    "error_email_typo": "Wygląda na to, że popełniłeś błąd w domenie e-mail. Proszę sprawdź poprawność.",
     "back_btn": "Wróć"
   },
   "forgot_password_page": {
@@ -104,7 +111,8 @@
     "error_server": "Wystąpił błąd podczas wysyłania żądania. Spróbuj ponownie później.",
     "error_email_format": "Proszę wprowadzić poprawny adres e-mail (np. name@example.com).",
     "error_email_ru": "Podana skrzynka pocztowa należy do państwa-terrorysty. Nasz serwis nie obsługuje takich adresów.",
-    "error_email_typo": "Wygląda na to, że popełniłeś błąd w domenie e-mail. Proszę sprawdź poprawność."
+    "error_email_typo": "Wygląda na to, że popełniłeś błąd w domenie e-mail. Proszę sprawdź poprawność.",
+    "error_email_empty": "Proszę wprowadzić swój adres e-mail."
   },
   "reset_password_page": {
     "title": "Nowe hasło",

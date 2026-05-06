@@ -10,9 +10,12 @@ const Login = () => {
     const { t } = useTranslation(); // ІНІЦІАЛІЗАЦІЯ ПЕРЕКЛАДУ
 
     const [formData, setFormData] = useState({ email: '', password: '' });
-    // --- НОВА ЛОГІКА ДЛЯ ПЛАВНОЇ АНІМАЦІЇ ПОМИЛОК ---
-    const [errorText, setErrorText] = useState(''); // Зберігає сам текст
-    const [isErrorVisible, setIsErrorVisible] = useState(false); // Керує анімацією (відкрито/закрито)
+    // СТЕЙТИ ДЛЯ ПЛАВНОЇ АНІМАЦІЇ ПОМИЛОК
+    const [errorText, setErrorText] = useState('');
+    const [isErrorVisible, setIsErrorVisible] = useState(false);
+
+    // НОВИЙ СТЕЙТ: Визначає, яке саме поле має світитися червоним
+    const [errorField, setErrorField] = useState(null);
 
     // (показати/сховати пароль)
     const [showPassword, setShowPassword] = useState(false);
@@ -22,7 +25,6 @@ const Login = () => {
 
     // Зберігаємо таймери
     const errorTimerRef = useRef(null);
-    const hideAnimRef = useRef(null);
 
     // При завантаженні сторінки перевіряємо, чи є збережена пошта
     useEffect(() => {
@@ -33,32 +35,66 @@ const Login = () => {
         }
     }, []);
 
-    // Допоміжна функція для показу помилки на 5 секунд
-    const showErrorMessage = (text) => {
-        setErrorText(text); // Спочатку ставимо текст
-        setIsErrorVisible(true); // Потім плавно відкриваємо блок
+    // Оновлена функція тепер приймає параметр field
+    const showErrorMessage = (text, field = null) => {
+        setErrorText(text);
+        setIsErrorVisible(true);
+        setErrorField(field);
 
         if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
-        errorTimerRef.current = setTimeout(() => hideError(), 5000);
+        errorTimerRef.current = setTimeout(() => {
+            setIsErrorVisible(false);
+        }, 5000);
     };
 
-    // Функція плавного приховування
-    const hideError = () => {
-        setIsErrorVisible(false); // Запускаємо плавну анімацію зникнення
+    // Надійна валідація формату пошти
+    const validateEmail = (email) => {
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (!emailRegex.test(email)) {
+            return t('login_page.error_email_format');
+        }
 
-        // Чекаємо 500мс (поки відпрацює CSS transition), і тільки потім видаляємо текст
-        if (hideAnimRef.current) clearTimeout(hideAnimRef.current);
-        hideAnimRef.current = setTimeout(() => setErrorText(''), 500);
+        const domain = email.split('@')[1].toLowerCase();
+
+        const ruDomains = ['.ru', '.su', '.рф', 'yandex', 'mail.ru', 'bk.ru', 'inbox.ru', 'list.ru'];
+        if (ruDomains.some(ru => domain.endsWith(ru) || domain.includes(ru))) {
+            return t('login_page.error_email_ru');
+        }
+
+        const blockedTypos = ['gmail.co', 'gmail.c', 'gmai.com', 'gmal.com', 'ukr.ne', 'yahoo.c', 'yaho.com'];
+        if (blockedTypos.includes(domain)) {
+            return t('login_page.error_email_typo');
+        }
+
+        return '';
     };
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        let { name, value } = e.target;
 
-        // СУЧАСНИЙ UX: Якщо блок видимий, плавно ховаємо його при вводі
-        if (isErrorVisible) {
-            hideError();
-            if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+        // 1. Логіка для EMAIL
+        if (name === 'email') {
+            const cleanValue = value.replace(/\s/g, '').toLowerCase();
+            value = cleanValue;
+
+            setTimeout(() => {
+                if (e.target && e.target.value !== cleanValue) {
+                    e.target.value = cleanValue;
+                }
+            }, 0);
         }
+
+        // 2. Логіка для ПАРОЛЯ
+        if (name === 'password') {
+            if (value.includes(' ')) return; // Блокуємо пробіли
+        }
+
+        setFormData({ ...formData, [name]: value });
+
+        // МИТТЄВО ховаємо помилку при введенні будь-якого символу
+        setIsErrorVisible(false);
+        setErrorField(null);
+        if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
     };
 
     // Допоміжна функція для збереження даних сеансу
@@ -84,13 +120,37 @@ const Login = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        hideError(); // Ховаємо старі помилки при новій спробі
+
+        // Ховаємо попередні повідомлення
+        setIsErrorVisible(false);
+        setErrorField(null);
+        if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+
+        // ПОСЛІДОВНІ ПЕРЕВІРКИ
+
+        // 1. Перевірка порожнього email
+        if (!formData.email.trim()) {
+            showErrorMessage(t('login_page.error_email_empty'), 'email');
+            return;
+        }
+
+        // 2. Валідація формату пошти
+        const emailError = validateEmail(formData.email);
+        if (emailError) {
+            showErrorMessage(emailError, 'email');
+            return;
+        }
+
+        // 3. Перевірка порожнього пароля
+        if (!formData.password.trim()) {
+            showErrorMessage(t('login_page.error_password_empty'), 'password');
+            return;
+        }
 
         try {
             const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login/`, formData);
             saveAuthData(response.data);
 
-            // Зберігаємо або видаляємо email для майбутніх входів
             if (rememberMe) {
                 localStorage.setItem('saved_email', formData.email);
             } else {
@@ -99,6 +159,9 @@ const Login = () => {
 
             window.location.href = '/';
         } catch (err) {
+            // Загальні помилки з сервера (невірний пароль тощо) стосуються обох полів або загального стану,
+            // тому ми не передаємо конкретний field для підсвітки, а просто показуємо повідомлення.
+            // За бажанням ви можете передати 'password' або 'email'.
             if (err.response && err.response.data && err.response.data.non_field_errors) {
                 const serverMsg = err.response.data.non_field_errors[0].toLowerCase();
                 if (serverMsg.includes('verif') || serverMsg.includes('підтверджен')) {
@@ -156,14 +219,15 @@ const Login = () => {
 
                     <h1 className="text-2xl md:text-4xl font-['El_Messiri'] font-bold mb-6 text-[#1A1A1A] text-center md:text-left">{t('login_page.title')}</h1>
 
-                    {/* АНІМОВАНИЙ БЛОК ПОМИЛКИ */}
-                    <div className={`transition-all duration-500 overflow-hidden ${isErrorVisible ? 'max-h-24 opacity-100 mb-4' : 'max-h-0 opacity-0 mb-0'}`}>
-                        <div className="text-xs md:text-[13px] p-3 rounded-lg font-medium border bg-white/80 backdrop-blur-sm inline-block text-red-500 border-red-200">
-                            {errorText}
-                        </div>
-                    </div>
+                    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
 
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                        {/* АНІМОВАНИЙ БЛОК ПОМИЛКИ */}
+                        <div className={`transition-all duration-500 overflow-hidden w-full ${isErrorVisible ? 'max-h-24 opacity-100 mb-2' : 'max-h-0 opacity-0 mb-0'}`}>
+                            <div className="w-full text-xs md:text-[13px] p-3 rounded-lg font-medium border bg-white/90 backdrop-blur-sm shadow-sm text-red-600 border-red-200">
+                                {errorText}
+                            </div>
+                        </div>
+
                         <div>
                             <label className="inline-block text-sm md:text-base font-semibold font-['El_Messiri'] text-gray-800 mb-1 ml-4">{t('login_page.email_label')}</label>
                             <input
@@ -171,12 +235,21 @@ const Login = () => {
                                 name="email"
                                 value={formData.email}
                                 onChange={handleChange}
+                                onKeyDown={(e) => {
+                                    if (e.key === ' ') e.preventDefault();
+                                }}
                                 required
                                 autoComplete="username"
                                 placeholder={t('login_page.email_placeholder')}
-                                className={`w-full px-5 font-['El_Messiri'] py-3 md:py-2.5 rounded-full border focus:outline-none transition text-base md:text-lg text-gray-700 bg-white ${isErrorVisible ? 'border-red-400 focus:border-red-500' : 'border-gray-300 focus:border-[#42705D]'}`}
+                                className={`w-full px-5 font-['El_Messiri'] py-3 md:py-2.5 rounded-full border focus:outline-none transition-colors duration-300 text-base md:text-lg text-gray-700 ${
+                                    // Перевіряємо, чи помилка стосується email
+                                    isErrorVisible && errorField === 'email'
+                                        ? 'border-red-500 focus:border-red-600 bg-red-50/30' 
+                                        : 'border-gray-300 focus:border-[#42705D] bg-white'
+                                }`}
                             />
                         </div>
+
                         {/* === БЛОК ПАРОЛЯ З ОКОМ === */}
                         <div>
                             <label className="inline-block text-sm md:text-base font-semibold font-['El_Messiri'] text-gray-800 mb-1 ml-4">{t('login_page.password_label')}</label>
@@ -189,7 +262,12 @@ const Login = () => {
                                     required
                                     autoComplete="current-password"
                                     placeholder={t('login_page.password_placeholder')}
-                                    className={`w-full px-5 py-3 md:py-2.5 font-['El_Messiri'] rounded-full border focus:outline-none transition text-base md:text-lg text-gray-700 bg-white pr-12 ${isErrorVisible ? 'border-red-400 focus:border-red-500' : 'border-gray-300 focus:border-[#42705D]'}`}
+                                    className={`w-full px-5 py-3 md:py-2.5 font-['El_Messiri'] rounded-full border focus:outline-none transition-colors duration-300 text-base md:text-lg text-gray-700 pr-12 ${
+                                        // Перевіряємо, чи помилка стосується password
+                                        isErrorVisible && errorField === 'password'
+                                            ? 'border-red-500 focus:border-red-600 bg-red-50/30' 
+                                            : 'border-gray-300 focus:border-[#42705D] bg-white'
+                                    }`}
                                 />
                                 {formData.password.length > 0 && (
                                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#42705D] transition-colors focus:outline-none">

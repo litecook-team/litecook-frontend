@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { useTranslation } from 'react-i18next'; // ІМПОРТ ПЕРЕКЛАДУ
+import { useTranslation } from 'react-i18next';
 import authBg from '../assets/auth/exit.jpg';
 
 const ResetPassword = () => {
@@ -44,6 +44,13 @@ const ResetPassword = () => {
         // Ховаємо попередні повідомлення перед новим запитом
         setIsMessageVisible(false);
         setIsErrorVisible(false);
+
+        // Спочатку перевіряємо, чи поле взагалі не порожнє (замість браузерної підказки)
+        if (!email.trim()) {
+            setError(t('forgot_password_page.error_email_empty'));
+            setIsErrorVisible(true);
+            return;
+        }
 
         // 1. Валідація на фронтенді
         const emailError = validateEmail(email);
@@ -113,22 +120,44 @@ const ResetPassword = () => {
                     </div>
 
                     {/* АНІМОВАНИЙ БЛОК ПОМИЛКИ */}
-                    <div className={`transition-all duration-500 overflow-hidden ${isErrorVisible ? 'max-h-24 opacity-100 mb-4' : 'max-h-0 opacity-0 mb-0'}`}>
+                    <div className={`transition-all duration-500 overflow-hidden ${isErrorVisible ? 'max-h-24 opacity-100 mb-4' : 'max-h-0 opacity-0 mb-2'}`}>
                         <div className="text-xs md:text-[13px] p-3 rounded-lg font-medium border bg-white/90 backdrop-blur-sm shadow-sm inline-block text-red-600 border-red-200">
                             {error}
                         </div>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
                         <div>
                             <label className="inline-block text-sm md:text-base font-semibold font-['El_Messiri'] text-gray-800 mb-1 ml-4">{t('forgot_password_page.subtitle')}</label>
                             <input
                                 type="email"
                                 value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                onChange={(e) => {
+                                    const cleanValue = e.target.value.replace(/\s/g, '').toLowerCase();
+                                    setEmail(cleanValue);
+
+                                    // Як тільки користувач починає щось вводити, миттєво ховаємо всі помилки
+                                    setIsErrorVisible(false);
+                                    setIsMessageVisible(false);
+
+                                    setTimeout(() => {
+                                        if (e.target && e.target.value !== cleanValue) {
+                                            e.target.value = cleanValue;
+                                        }
+                                    }, 0);
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === ' ') e.preventDefault();
+                                }}
                                 required
                                 placeholder={t('forgot_password_page.email_placeholder')}
-                                className="w-full px-5 font-['El_Messiri'] py-3 md:py-2.5 rounded-full border border-gray-300 focus:outline-none focus:border-[#42705D] transition text-base md:text-lg text-gray-700 bg-white"
+                                className={`w-full px-5 font-['El_Messiri'] py-3 md:py-2.5 rounded-full border focus:outline-none transition-colors duration-300 text-base md:text-lg text-gray-700 bg-white ${
+                                    isErrorVisible 
+                                        ? 'border-red-500 focus:border-red-600 bg-red-50/30' // Червоний бордер при помилці
+                                        : isMessageVisible 
+                                            ? 'border-green-500 focus:border-green-600 bg-green-50/30' // Зелений бордер при успіху
+                                            : 'border-gray-300 focus:border-[#42705D]' // Стандартний бордер
+                                }`}
                             />
                         </div>
 

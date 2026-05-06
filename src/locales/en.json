@@ -46,6 +46,8 @@
     "error_email_ru": "Registration from terrorist state mailboxes is prohibited!",
     "error_email_typo": "It looks like you made a typo in the email domain.",
     "error_captcha": "Please confirm that you are not a robot.",
+    "error_email_empty": "Please enter your email address.",
+    "error_password_empty": "Please enter a password.",
     "captcha_notice": "This site is protected by reCAPTCHA and the Google",
     "and": "and",
     "success_msg": "Registration successful! We sent an email to your inbox.",
@@ -90,6 +92,11 @@
     "error_server": "Server connection error. Please try again later.",
     "error_google": "Google authorization error",
     "error_facebook": "Facebook authorization error",
+    "error_email_empty": "Please enter your email address.",
+    "error_password_empty": "Please enter your password.",
+    "error_email_format": "Please enter a valid email address (e.g., name@example.com).",
+    "error_email_ru": "The specified mailbox belongs to a terrorist state. Our service does not support such addresses.",
+    "error_email_typo": "It looks like you made a typo in the email domain. Please check for correctness.",
     "back_btn": "Back"
   },
   "forgot_password_page": {
@@ -104,7 +111,8 @@
     "error_server": "An error occurred while sending the request. Please try again later.",
     "error_email_format": "Please enter a valid email address (e.g., name@example.com).",
     "error_email_ru": "The specified mailbox belongs to a terrorist state. Our service does not support such addresses.",
-    "error_email_typo": "It looks like you made a typo in the email domain. Please check for correctness."
+    "error_email_typo": "It looks like you made a typo in the email domain. Please check for correctness.",
+    "error_email_empty": "Please enter your email address."
   },
   "reset_password_page": {
     "title": "New Password",
