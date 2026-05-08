@@ -42,10 +42,10 @@ const Register = () => {
         setIsMessageVisible(true);
         setErrorField(field);
 
-        if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
-        errorTimerRef.current = setTimeout(() => {
-            setIsMessageVisible(false);
-        }, 5000);
+        // if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+        // errorTimerRef.current = setTimeout(() => {
+        //     setIsMessageVisible(false);
+        // }, 5000);
     };
 
     // Оновлена функція тепер приймає назву поля
@@ -254,7 +254,7 @@ const Register = () => {
     });
 
     return (
-        <div className="flex-grow w-full flex justify-center md:justify-end items-center p-4 py-16 sm:p-6 md:py-24 md:pr-10 lg:pr-24 xl:pr-32 relative bg-white bg-cover bg-no-repeat bg-center md:bg-left"
+        <div className="flex-grow w-full flex justify-center md:justify-end items-center p-4 py-16 sm:p-6 md:py-24 md:pr-10 lg:pr-24 xl:pr-32 relative bg-white bg-cover bg-no-repeat bg-top md:bg-left-top"
              style={{ backgroundImage: `url(${authBg})` }}>
 
             <Link to="/" className="absolute top-6 left-4 sm:left-6 md:top-10 md:left-10 flex items-center px-6 sm:px-10 py-2 bg-white text-gray-800 rounded-[30px] border border-black hover:bg-[#1A1A1A] hover:text-white hover:border-transparent hover:shadow-md transition font-['Inter'] font-medium text-[13px] sm:text-[14px] lg:text-[15px] shadow-lg z-20 gap-2 cursor-pointer transition-all duration-300 ease-out active:scale-95 group">
