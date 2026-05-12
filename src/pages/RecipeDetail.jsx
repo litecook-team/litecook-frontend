@@ -36,7 +36,7 @@ const RecipeDetail = () => {
     // Тепер використовуємо TOKEN_KEY з констант
     const isAuthenticated = !!localStorage.getItem(TOKEN_KEY);
 
-    // === ФІКС: Перезавантажуємо рецепт при зміні мови ===
+    // === Перезавантажуємо рецепт при зміні мови ===
     useEffect(() => {
         fetchRecipe();
     }, [id, i18n.language]); // <--- Додали i18n.language сюди
@@ -307,7 +307,6 @@ const RecipeDetail = () => {
                 {/* БЛОК 4 та 5: ПРИГОТУВАННЯ І ДЕТАЛІ */}
                 <div className="order-3 lg:col-span-8 lg:col-start-1 w-full px-4 pl-5 sm:px-6 sm:pl-8 lg:px-16 lg:pl-[72px] pt-10 sm:pt-12 lg:pt-16 pb-10 sm:pb-12">
 
-                    {/* Контейнер завжди flex-col-reverse (Деталі знизу), ПОКИ не досягне 1840px. */}
                     <div className="flex flex-col-reverse min-[1840px]:flex-row items-start w-full gap-12 sm:gap-16 min-[1840px]:gap-8 xl:gap-12">
 
                         {/* Блок 5: Деталі рецепту */}

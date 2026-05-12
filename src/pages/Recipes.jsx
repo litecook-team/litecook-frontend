@@ -317,7 +317,7 @@ const Recipes = () => {
             if (overrideParams === 'clear') {
                 setMatchedIngredientIds([]);
             } else if (overrideParams === 'reload_same_url') {
-                // ФІКС: Якщо ми просто перезавантажуємо сторінку після повернення,
+                // Якщо ми просто перезавантажуємо сторінку після повернення,
                 // беремо вже збережені ID інгредієнтів (вони не залежать від мови),
                 // замість того, щоб шукати їх заново за текстом попередньої мови.
                 currentMatchedIds = matchedIngredientIds;

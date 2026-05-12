@@ -8,7 +8,7 @@ import avokado_avatar from '../assets/global/avokado_avatar.png';
 
 const Header = () => {
     const { t, i18n } = useTranslation(); // ПІДКЛЮЧЕННЯ ПЕРЕКЛАДУ
-    // === ФІКС: Відрізаємо регіон (напр. 'uk-UA' стає 'uk') ===
+    // === Відрізаємо регіон (напр. 'uk-UA' стає 'uk') ===
     const currentLang = i18n.language ? i18n.language.split('-')[0] : 'uk';
 
     const navigate = useNavigate();

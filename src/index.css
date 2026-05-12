@@ -5,10 +5,10 @@
     /* Ваші існуючі кольори */
     --color-lite-green: #e6f4ea;
 
-    /* ДОДАНО: Створюємо змінну для нашої анімації */
+    /* Створюємо змінну для нашої анімації */
     --animate-shimmer: shimmer 1.5s infinite;
 
-    /* ДОДАНО: Описуємо саму логіку руху анімації (keyframes) */
+    /* Описуємо саму логіку руху анімації (keyframes) */
     @keyframes shimmer {
         100% { transform: translateX(100%); }
     }
