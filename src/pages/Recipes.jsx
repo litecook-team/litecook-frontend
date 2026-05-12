@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next'; // ІМПОРТ ПЕРЕКЛАДУ
 
@@ -182,44 +182,52 @@ const Recipes = () => {
 
     // ЛОГІКА ОЧИЩЕННЯ ТА ПЕРЕЗАВАНТАЖЕННЯ РЕЦЕПТІВ (При зміні мови - перезавантажуємо!)
     useEffect(() => {
-        const isFromRecipeDetail = location.state?.fromRecipe === true;
+        const savedScroll = sessionStorage.getItem('recipe_scroll_position');
+        const hasSavedScroll = savedScroll !== null;
         const hasInitialTab = location.state?.initialTab !== undefined;
 
-        if (isFromRecipeDetail && loadStateFromStorage('recipes', []).length > 0) {
+        // Якщо є збережений скрол (ми повернулися з рецепту) І є завантажені рецепти
+        if (hasSavedScroll && loadStateFromStorage('recipes', []).length > 0) {
             fetchRecipes(false, lastQueryUrl ? 'reload_same_url' : null);
-            // Якщо ми повернулися з рецепту - НЕ СКРОЛИМО вгору!
         } else if (hasInitialTab) {
             clearAllFiltersStorageOnly();
             setActiveTab(location.state.initialTab);
             setTimeout(() => fetchRecipes(false, 'clear'), 0);
-            window.scrollTo(0, 0); // Тільки якщо новий захід
         } else {
             clearAllFiltersStorageOnly();
             setActiveTab('ingredients');
             setTimeout(() => fetchRecipes(false, 'clear'), 0);
-            window.scrollTo(0, 0); // Тільки якщо новий захід
         }
     }, [location.state, i18n.language]);
 
     // === ВІДНОВЛЕННЯ ПОЗИЦІЇ СКРОЛУ ПІСЛЯ ПОВЕРНЕННЯ ===
-    useEffect(() => {
-        const isFromRecipeDetail = location.state?.fromRecipe === true;
+    useLayoutEffect(() => {
+        const savedScroll = sessionStorage.getItem('recipe_scroll_position');
 
-        // Чекаємо, поки loading закінчиться і рецепти відмалюються
-        if (isFromRecipeDetail && !loading && recipes.length > 0) {
-            const savedScroll = sessionStorage.getItem('recipe_scroll_position');
-            if (savedScroll !== null) {
-                // Використовуємо крихітну затримку, щоб браузер встиг побудувати DOM-дерево карток
-                setTimeout(() => {
-                    window.scrollTo({
-                        top: parseInt(savedScroll, 10),
-                        behavior: 'instant' // Робимо 'instant' щоб не було видимого стрибка
-                    });
-                    sessionStorage.removeItem('recipe_scroll_position'); // Очищаємо пам'ять
-                }, 100);
-            }
+        // Відновлюємо скрол тільки якщо закінчилось завантаження і є рецепти
+        if (!loading && recipes.length > 0 && savedScroll !== null) {
+            const scrollPos = parseInt(savedScroll, 10);
+
+            // Нативний метод для миттєвого скролу без анімацій
+            window.scrollTo({
+                top: scrollPos,
+                left: 0,
+                behavior: 'instant'
+            });
+
+            // Страховка на випадок, якщо картинки змінили висоту сторінки
+            const timeoutId = setTimeout(() => {
+                 window.scrollTo({
+                    top: scrollPos,
+                    left: 0,
+                    behavior: 'instant'
+                });
+                sessionStorage.removeItem('recipe_scroll_position');
+            }, 50);
+
+            return () => clearTimeout(timeoutId);
         }
-    }, [loading, recipes.length, location.state]);
+    }, [loading, recipes.length, visibleCount]);
 
     // Закриття підказок при кліку поза ними
     useEffect(() => {
