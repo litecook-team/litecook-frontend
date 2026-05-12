@@ -913,9 +913,7 @@ const Menu = () => {
                                             key={ing.id}
                                             ref={el => suggestionItemRefs.current[index] = el}
                                             onClick={() => handleAddIngredientToSearch(ing.name)}
-                                            // 1. ДОДАЄМО: Мишка тепер теж змінює "активний індекс" при наведенні
                                             onMouseEnter={() => setActiveSuggestionIndex(index)}
-                                            // 2. ЗМІНЕНО: Прибираємо CSS hover, залишаємо підсвітку ТІЛЬКИ через стан
                                             className={`flex items-center gap-4 px-5 py-2.5 cursor-pointer transition-colors border-b border-gray-50 last:border-0 ${
                                                 index === activeSuggestionIndex ? 'bg-[#F5F5DC]' : 'bg-transparent'
                                             }`}
