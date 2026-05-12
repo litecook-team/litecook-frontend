@@ -186,19 +186,40 @@ const Recipes = () => {
         const hasInitialTab = location.state?.initialTab !== undefined;
 
         if (isFromRecipeDetail && loadStateFromStorage('recipes', []).length > 0) {
-            // Перезавантажуємо примусово, щоб отримати нову мову, але не скидаємо фільтри
             fetchRecipes(false, lastQueryUrl ? 'reload_same_url' : null);
+            // Якщо ми повернулися з рецепту - НЕ СКРОЛИМО вгору!
         } else if (hasInitialTab) {
             clearAllFiltersStorageOnly();
             setActiveTab(location.state.initialTab);
             setTimeout(() => fetchRecipes(false, 'clear'), 0);
+            window.scrollTo(0, 0); // Тільки якщо новий захід
         } else {
             clearAllFiltersStorageOnly();
             setActiveTab('ingredients');
             setTimeout(() => fetchRecipes(false, 'clear'), 0);
+            window.scrollTo(0, 0); // Тільки якщо новий захід
         }
-        window.scrollTo(0, 0);
-    }, [location.state, i18n.language]); // РЕАГУЄ НА ЗМІНУ МОВИ
+    }, [location.state, i18n.language]);
+
+    // === ВІДНОВЛЕННЯ ПОЗИЦІЇ СКРОЛУ ПІСЛЯ ПОВЕРНЕННЯ ===
+    useEffect(() => {
+        const isFromRecipeDetail = location.state?.fromRecipe === true;
+
+        // Чекаємо, поки loading закінчиться і рецепти відмалюються
+        if (isFromRecipeDetail && !loading && recipes.length > 0) {
+            const savedScroll = sessionStorage.getItem('recipe_scroll_position');
+            if (savedScroll !== null) {
+                // Використовуємо крихітну затримку, щоб браузер встиг побудувати DOM-дерево карток
+                setTimeout(() => {
+                    window.scrollTo({
+                        top: parseInt(savedScroll, 10),
+                        behavior: 'instant' // Робимо 'instant' щоб не було видимого стрибка
+                    });
+                    sessionStorage.removeItem('recipe_scroll_position'); // Очищаємо пам'ять
+                }, 100);
+            }
+        }
+    }, [loading, recipes.length, location.state]);
 
     // Закриття підказок при кліку поза ними
     useEffect(() => {
@@ -390,7 +411,10 @@ const Recipes = () => {
                 if (updatedRecipe) setSelectedRecipeForModal(updatedRecipe);
             }
 
-            setVisibleCount(6);
+            // Скидаємо до 6 ТІЛЬКИ якщо це новий пошук, а не повернення назад!
+            if (overrideParams !== 'reload_same_url') {
+                setVisibleCount(6);
+            }
             setShowSuggestions(false);
             setLastQueryUrl(url);
 
@@ -1285,6 +1309,7 @@ const Recipes = () => {
                                         to={`/recipe/${recipe.id}`}
                                         state={{ fromRecipesPage: true }}
                                         key={recipe.id}
+                                        onClick={() => sessionStorage.setItem('recipe_scroll_position', window.scrollY)}
                                         className="flex flex-col relative group block w-full h-full cursor-pointer transition-all duration-300 ease-out active:scale-99 group"
                                     >
 
