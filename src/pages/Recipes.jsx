@@ -661,17 +661,21 @@ const Recipes = () => {
     };
 
     const handleShare = async (e, recipeId, title, description) => {
-        e.preventDefault();
-        e.stopPropagation();
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
 
         const shareUrl = `${window.location.origin}/recipe/${recipeId}`;
 
-        // Формуємо красивий текст, який буде гарно виглядати у повідомленні
-        const shareText = `🍳 Спробуй цей рецепт: ${title}\n\n${description}\n\nДивитись повністю: `;
+        // Використовуємо переклади для формування красивого тексту
+        const msgTitle = t('recipe_detail_page.share_msg_title', { title: title });
+        const msgLink = t('recipe_detail_page.share_msg_link');
+
+        const shareText = `${msgTitle}\n\n${description ? description + '\n\n' : ''}${msgLink} `;
 
         if (navigator.share) {
             try {
-                // Відправляємо красивий текст РАЗОМ із посиланням
                 await navigator.share({
                     title: title,
                     text: shareText,
@@ -686,7 +690,8 @@ const Recipes = () => {
                 await navigator.clipboard.writeText(`${shareText}${shareUrl}`);
                 showToast(t('recipe_detail_page.copied_to_clipboard') || 'Посилання скопійовано!');
             } catch (err) {
-                showToast('Не вдалося скопіювати посилання');
+                // Використовуємо переклад для помилки
+                showToast(t('recipe_detail_page.toast_share_error') || 'Не вдалося скопіювати посилання');
             }
         }
     };

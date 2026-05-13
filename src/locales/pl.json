@@ -417,6 +417,9 @@
     "meal_dinner": "Kolacja",
     "share": "Udostępnij",
     "copied_to_clipboard": "Link skopiowany do schowka!",
+    "share_msg_title": "🍳 Wypróbuj ten przepis: {{title}}",
+    "share_msg_link": "Zobacz pełny przepis tutaj:",
+    "toast_share_error": "❌ Nie udało się skopiować linku",
     "modal_save_btn": "Zapisz w menu"
   },
   "recipes_page": {

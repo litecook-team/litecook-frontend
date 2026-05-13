@@ -417,6 +417,9 @@
     "meal_dinner": "Dinner",
     "share": "Share",
     "copied_to_clipboard": "Link copied to clipboard!",
+    "share_msg_title": "🍳 Try this recipe: {{title}}",
+    "share_msg_link": "See full recipe here:",
+    "toast_share_error": "❌ Failed to copy link",
     "modal_save_btn": "Save to menu"
   },
   "recipes_page": {

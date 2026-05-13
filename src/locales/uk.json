@@ -422,6 +422,9 @@
     "meal_dinner": "Вечеря",
     "share": "Поділитися",
     "copied_to_clipboard": "Посилання скопійовано!",
+    "share_msg_title": "🍳 Спробуй цей рецепт: {{title}}",
+    "share_msg_link": "Дивитись повністю:",
+    "toast_share_error": "❌ Не вдалося скопіювати посилання",
     "modal_save_btn": "Зберегти в меню"
   },
   "recipes_page": {
