@@ -661,24 +661,29 @@ const Recipes = () => {
     };
 
     const handleShare = async (e, recipeId, title, description) => {
-        e.preventDefault(); // Запобігаємо переходу по посиланню
+        e.preventDefault();
+        e.stopPropagation();
+
         const shareUrl = `${window.location.origin}/recipe/${recipeId}`;
+
+        // Формуємо красивий текст, який буде гарно виглядати у повідомленні
+        const shareText = `🍳 Спробуй цей рецепт: ${title}\n\n${description}\n\nДивитись повністю: `;
 
         if (navigator.share) {
             try {
+                // Відправляємо красивий текст РАЗОМ із посиланням
                 await navigator.share({
                     title: title,
-                    text: description,
+                    text: shareText,
                     url: shareUrl,
                 });
             } catch (err) {
                 console.log('Помилка Share API або скасовано користувачем', err);
             }
         } else {
-            // Fallback: копіюємо посилання в буфер обміну
+            // Для ПК: копіюємо в буфер обміну красиве повідомлення
             try {
-                await navigator.clipboard.writeText(shareUrl);
-                // Використовуємо вашу існуючу функцію showToast
+                await navigator.clipboard.writeText(`${shareText}${shareUrl}`);
                 showToast(t('recipe_detail_page.copied_to_clipboard') || 'Посилання скопійовано!');
             } catch (err) {
                 showToast('Не вдалося скопіювати посилання');
