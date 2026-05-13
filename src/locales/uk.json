@@ -420,6 +420,8 @@
     "meal_breakfast": "Сніданок",
     "meal_lunch": "Обід",
     "meal_dinner": "Вечеря",
+    "share": "Поділитися",
+    "copied_to_clipboard": "Посилання скопійовано!",
     "modal_save_btn": "Зберегти в меню"
   },
   "recipes_page": {

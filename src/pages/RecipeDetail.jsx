@@ -46,6 +46,18 @@ const RecipeDetail = () => {
         window.scrollTo(0, 0);
     }, [id]);
 
+    // Змінюємо заголовок вкладки браузера, коли рецепт завантажився
+    useEffect(() => {
+        if (recipe) {
+            document.title = `${recipe.title} | LITE cook`;
+        }
+
+        // Коли користувач йде зі сторінки рецепту, повертаємо стандартний заголовок
+        return () => {
+            document.title = 'LITE cook';
+        };
+    }, [recipe]);
+
     const fetchRecipe = async () => {
         // Ми не ставимо setLoading(true) тут, щоб екран різко не блимав при зміні мови.
         // Він блиматиме тільки при першому завантаженні (коли recipe ще null).
@@ -121,6 +133,32 @@ const RecipeDetail = () => {
         return `${API_URL}${path}`;
     };
 
+    const handleShare = async (e, recipeId, title, description) => {
+        e.preventDefault(); // Запобігаємо переходу по посиланню
+        const shareUrl = `${window.location.origin}/recipe/${recipeId}`;
+
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: title,
+                    text: description,
+                    url: shareUrl,
+                });
+            } catch (err) {
+                console.log('Помилка Share API або скасовано користувачем', err);
+            }
+        } else {
+            // Fallback: копіюємо посилання в буфер обміну
+            try {
+                await navigator.clipboard.writeText(shareUrl);
+                // Використовуємо вашу існуючу функцію showToast
+                showToast(t('recipe_detail_page.copied_to_clipboard') || 'Посилання скопійовано!');
+            } catch (err) {
+                showToast('Не вдалося скопіювати посилання');
+            }
+        }
+    };
+
     if (loading) return <div className="min-h-screen bg-[#F6F3F4] flex items-center justify-center text-2xl font-serif">{t('recipe_detail_page.loading')}</div>;
     if (!recipe) return <NotFound />;
 
@@ -152,6 +190,21 @@ const RecipeDetail = () => {
                              alt={recipe.title}
                              className="w-full h-full object-cover"
                         />
+
+                        {/* Кнопка Поділитися */}
+                        <button
+                            onClick={(e) => handleShare(e, recipe.id, recipe.title, recipe.description)}
+                            className="absolute top-6 right-6 lg:top-10 lg:right-10 w-10 h-10 sm:w-12 sm:h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-[0_8px_20px_rgba(0,0,0,0.08)] hover:scale-110 hover:bg-white text-gray-800 transition-all z-10 cursor-pointer duration-300 ease-out active:scale-95 group"
+                            title={t('recipe_detail_page.share') || 'Поділитися'}
+                        >
+                            <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="18" cy="5" r="3"></circle>
+                                <circle cx="6" cy="12" r="3"></circle>
+                                <circle cx="18" cy="19" r="3"></circle>
+                                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                            </svg>
+                        </button>
 
                         {/* Кнопка Назад */}
                         <button

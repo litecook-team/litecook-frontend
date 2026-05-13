@@ -415,6 +415,8 @@
     "meal_breakfast": "Breakfast",
     "meal_lunch": "Lunch",
     "meal_dinner": "Dinner",
+    "share": "Share",
+    "copied_to_clipboard": "Link copied to clipboard!",
     "modal_save_btn": "Save to menu"
   },
   "recipes_page": {

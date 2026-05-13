@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next'; // ІМПОРТ ПЕРЕКЛАДУ
 
 import api from '../api';
@@ -51,6 +51,7 @@ const Recipes = () => {
 
     const isAuthenticated = !!localStorage.getItem(TOKEN_KEY) || !!sessionStorage.getItem(TOKEN_KEY);
     const location = useLocation(); // для розуміння, чи ми щойно зайшли на сторінку
+    const navigate = useNavigate(); // ДОДАНО: ініціалізація navigate для переходів
 
     // Функція для безпечного читання з sessionStorage
     const loadStateFromStorage = (key, defaultValue) => {
@@ -657,6 +658,32 @@ const Recipes = () => {
         const numAmount = parseFloat(amount);
         const unitData = DICTIONARIES.units[unit];
         return `${numAmount} ${Array.isArray(unitData) ? getPluralForm(numAmount, unitData) : (unitData || unit)}`;
+    };
+
+    const handleShare = async (e, recipeId, title, description) => {
+        e.preventDefault(); // Запобігаємо переходу по посиланню
+        const shareUrl = `${window.location.origin}/recipe/${recipeId}`;
+
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: title,
+                    text: description,
+                    url: shareUrl,
+                });
+            } catch (err) {
+                console.log('Помилка Share API або скасовано користувачем', err);
+            }
+        } else {
+            // Fallback: копіюємо посилання в буфер обміну
+            try {
+                await navigator.clipboard.writeText(shareUrl);
+                // Використовуємо вашу існуючу функцію showToast
+                showToast(t('recipe_detail_page.copied_to_clipboard') || 'Посилання скопійовано!');
+            } catch (err) {
+                showToast('Не вдалося скопіювати посилання');
+            }
+        }
     };
 
     return (
@@ -1312,121 +1339,159 @@ const Recipes = () => {
                     ) : (
                         <>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-12 md:gap-x-10 lg:gap-x-14 md:gap-y-16">
-                                {recipes.slice(0, visibleCount).map((recipe) => (
-                                    <Link
-                                        to={`/recipe/${recipe.id}`}
-                                        state={{ fromRecipesPage: true }}
-                                        key={recipe.id}
-                                        onClick={() => sessionStorage.setItem('recipe_scroll_position', window.scrollY)}
-                                        className="flex flex-col relative group block w-full h-full cursor-pointer transition-all duration-300 ease-out active:scale-99 group"
-                                    >
+                                {recipes.slice(0, visibleCount).map((recipe) => {
+                                    // Винесемо загальну логіку переходу в окрему функцію для зручності
+                                    const handleNavigateToRecipe = () => {
+                                        sessionStorage.setItem('recipe_scroll_position', window.scrollY);
+                                        navigate(`/recipe/${recipe.id}`, { state: { fromRecipesPage: true } });
+                                    };
 
-                                        <div className="relative w-full h-64 sm:h-60 md:h-72 rounded-[2rem] overflow-hidden mb-5 shadow-sm">
-                                            <img
-                                                src={getImageUrl(recipe.image || recipe.image_url)}
-                                                alt={recipe.title}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                                            />
+                                    return (
+                                        <div
+                                            key={recipe.id}
+                                            className="flex flex-col relative group w-full h-full transition-all duration-300 ease-out"
+                                        >
+                                            <div className="relative w-full h-64 sm:h-60 md:h-72 rounded-[2rem] overflow-hidden mb-5 shadow-sm">
+                                                {/* Клікабельне фото */}
+                                                <img
+                                                    src={getImageUrl(recipe.image || recipe.image_url)}
+                                                    alt={recipe.title}
+                                                    onClick={handleNavigateToRecipe}
+                                                    className="w-full h-full object-cover cursor-pointer group-hover:scale-105 transition-transform duration-700 active:scale-[0.98]"
+                                                />
 
-                                            {/* Кнопка "Улюблені" показується ТІЛЬКИ авторизованим користувачам */}
-                                            {isAuthenticated && (
-                                                <button
-                                                    onClick={(e) => toggleFavorite(e, recipe)}
-                                                    className="absolute top-4 left-4 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform z-10 cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group"
-                                                    title={recipe.is_favorited ? "Видалити з улюблених" : "Додати в улюблені"}
-                                                >
-                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill={recipe.is_favorited ? "#EF4444" : "none"} stroke={recipe.is_favorited ? "#EF4444" : "#9CA3AF"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                                                    </svg>
-                                                </button>
-                                            )}
-
-                                            {/* Стильний компактний бейджик */}
-                                            {recipe.match_count > 0 && recipe.total_count > 0 && (
+                                                {/* Кнопка "Поділитися" показується ЗАВЖДИ */}
                                                 <button
                                                     onClick={(e) => {
-                                                        e.preventDefault(); // Запобігає переходу на сторінку рецепту
-                                                        setSelectedRecipeForModal(recipe);
+                                                        e.preventDefault();
+                                                        e.stopPropagation(); // Зупиняє "провалювання" кліку на картинку
+                                                        handleShare(e, recipe.id, recipe.title, recipe.description);
                                                     }}
-                                                    className="absolute top-3 right-3 bg-[#FDFBF7]/85 backdrop-blur-md font-['Inter'] rounded-2xl p-1.5 sm:p-1.5 shadow-[0_8px_20px_rgba(0,0,0,0.08)] z-10 flex flex-col items-center min-w-[50px] sm:min-w-[60px] transform origin-top-right cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out hover:scale-105 hover:-translate-y-1 hover:shadow-[0_12px_25px_rgba(180,114,49,0.15)] active:scale-95 group"
+                                                    className="absolute top-4 left-4 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform z-20 cursor-pointer text-gray-700 hover:text-black shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group"
+                                                    title={t('recipe_detail_page.share') || 'Поділитися'}
                                                 >
-                                                    {/* Інформація про те, скільки всього */}
-                                                    <div className="w-full border-b border-gray-200/80 pb-1 mb-1 text-center pt-0.5">
-                                                        <div className="flex items-center justify-center gap-1">
-                                                            <span className="text-[15px] sm:text-[17px] font-black text-[#1A1A1A] leading-none">{recipe.total_count}</span>
-                                                            <svg className="w-4 h-4 sm:w-4.5 sm:h-4.5" viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                                                                <path d="M4 14c-2-3 2-6 4-3 1-2 4-1 3 2-2 3-5 4-7 1z" fill="#DCE8D9" stroke="#5B826B" strokeWidth="1.2" />
-                                                                <path d="M20 12c1-2-2-5-4-3-1-2-4-1-3 2 2 3 5 4 7 1z" fill="#DCE8D9" stroke="#5B826B" strokeWidth="1.2" />
-                                                                <ellipse cx="8" cy="14" rx="3.5" ry="4.5" fill="#FFEAA7" stroke="#D9A05B" strokeWidth="1.2" />
-                                                                <path d="M8 9.5l-1.5-3.5 1.5 2 1-3 1 3 1.5-2L10 9.5" fill="#DCE8D9" stroke="#5B826B" strokeWidth="1" />
-                                                                <path d="M5.5 12.5l5 3M9.5 12.5l-3 3" stroke="#D9A05B" strokeWidth="1" opacity="0.6" />
-                                                                <path d="M12 18c5 3 9 1 10-4-1 1-4 1-6 0-3-1-4-3-4-5 0 3-1 6 0 9z" fill="#FCE7A1" stroke="#D9B44A" strokeWidth="1.2" />
-                                                                <circle cx="13" cy="17" r="4" fill="#FFB4A2" stroke="#E56B55" strokeWidth="1.2" />
-                                                                <path d="M13 13v1.5M12 14h2" stroke="#5B826B" strokeWidth="1.2" />
-                                                            </svg>
-                                                        </div>
-                                                        <div className="text-[7px] sm:text-[8px] uppercase tracking-widest text-gray-500 font-bold mt-1 leading-tight">{t('recipes_page.total')}</div>
-                                                    </div>
-
-                                                    {/* Інформація про те, що Є У МЕНЕ */}
-                                                    <div className="w-full border-b border-gray-200/80 pb-1 mb-1 text-center">
-                                                        <div className="flex items-center justify-center gap-1">
-                                                            <span className="text-[15px] sm:text-[17px] font-black text-[#5B826B] leading-none">{recipe.match_count}</span>
-                                                            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#5B826B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                                        </div>
-                                                        <div className="text-[7px] sm:text-[8px] uppercase tracking-tight sm:tracking-normal text-gray-500 font-bold mt-1 leading-none">{t('recipes_page.in_stock')}</div>
-                                                    </div>
-
-                                                    {/* Інформація про те, чого НЕ ВИСТАЧАЄ (Докупити) */}
-                                                    <div className="w-full text-center pb-0.5">
-                                                        <div className="flex items-center justify-center gap-1">
-                                                            <span className="text-[15px] sm:text-[17px] font-black text-[#B47231] leading-none">{recipe.total_count - recipe.match_count}</span>
-                                                            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#B47231]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path><line x1="16" y1="10" x2="16" y2="14"></line><line x1="14" y1="12" x2="18" y2="12"></line></svg>
-                                                        </div>
-                                                        <div className="text-[7px] sm:text-[8px] uppercase tracking-wide text-gray-500 font-bold mt-1 leading-none">{t('recipes_page.to_buy')}</div>
-                                                    </div>
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <circle cx="18" cy="5" r="3"></circle>
+                                                        <circle cx="6" cy="12" r="3"></circle>
+                                                        <circle cx="18" cy="19" r="3"></circle>
+                                                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                                                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                                                    </svg>
                                                 </button>
-                                            )}
-                                        </div>
 
-                                        <h3 className="text-center font-['El_Messiri'] font-bold text-[#1A1A1A] text-base sm:text-lg md:text-xl lg:text-2xl uppercase px-2 line-clamp-2 min-h-[48px] md:min-h-[56px] flex items-center justify-center group-hover:text-[#5B826B] transition-colors">
-                                            {recipe.title}
-                                        </h3>
+                                                {/* Кнопка "Улюблені" показується ТІЛЬКИ авторизованим користувачам */}
+                                                {isAuthenticated && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation(); // Зупиняє "провалювання" кліку
+                                                            toggleFavorite(e, recipe);
+                                                        }}
+                                                        className="absolute top-16 left-4 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform z-20 cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out active:scale-95 group"
+                                                        title={recipe.is_favorited ? "Видалити з улюблених" : "Додати в улюблені"}
+                                                    >
+                                                        <svg width="20" height="20" viewBox="0 0 24 24" fill={recipe.is_favorited ? "#EF4444" : "none"} stroke={recipe.is_favorited ? "#EF4444" : "#9CA3AF"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                                        </svg>
+                                                    </button>
+                                                )}
 
-                                        <div className="flex justify-between items-start mt-3 mb-6 px-1 font-['El_Messiri'] w-full">
-                                            <div className="flex flex-col items-center flex-1 px-0.5">
-                                                <svg className="mb-1.5 md:mb-2 text-[#B47231] w-9 h-9 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                                                <span className="text-[14px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-medium text-gray-800 leading-tight text-center">
-                                                    {recipe.cooking_time} {getPluralForm(recipe.cooking_time, [t('recipes_page.min_short_1'), t('recipes_page.min_short_2'), t('recipes_page.min_short_5')])}
-                                                </span>
+                                                {/* Стильний компактний бейджик */}
+                                                {recipe.match_count > 0 && recipe.total_count > 0 && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation(); // Зупиняє "провалювання" кліку
+                                                            setSelectedRecipeForModal(recipe);
+                                                        }}
+                                                        className="absolute top-4 right-4 bg-[#FDFBF7]/85 backdrop-blur-md font-['Inter'] rounded-2xl p-1.5 sm:p-1.5 shadow-[0_8px_20px_rgba(0,0,0,0.08)] z-20 flex flex-col items-center min-w-[50px] sm:min-w-[60px] transform origin-bottom-right cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out hover:scale-105 hover:-translate-y-1 hover:shadow-[0_12px_25px_rgba(180,114,49,0.15)] active:scale-95 group"
+                                                    >
+                                                        {/* Інформація про те, скільки всього */}
+                                                        <div className="w-full border-b border-gray-200/80 pb-1 mb-1 text-center pt-0.5">
+                                                            <div className="flex items-center justify-center gap-1">
+                                                                <span className="text-[15px] sm:text-[17px] font-black text-[#1A1A1A] leading-none">{recipe.total_count}</span>
+                                                                <svg className="w-4 h-4 sm:w-4.5 sm:h-4.5" viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                                                                    <path d="M4 14c-2-3 2-6 4-3 1-2 4-1 3 2-2 3-5 4-7 1z" fill="#DCE8D9" stroke="#5B826B" strokeWidth="1.2" />
+                                                                    <path d="M20 12c1-2-2-5-4-3-1-2-4-1-3 2 2 3 5 4 7 1z" fill="#DCE8D9" stroke="#5B826B" strokeWidth="1.2" />
+                                                                    <ellipse cx="8" cy="14" rx="3.5" ry="4.5" fill="#FFEAA7" stroke="#D9A05B" strokeWidth="1.2" />
+                                                                    <path d="M8 9.5l-1.5-3.5 1.5 2 1-3 1 3 1.5-2L10 9.5" fill="#DCE8D9" stroke="#5B826B" strokeWidth="1" />
+                                                                    <path d="M5.5 12.5l5 3M9.5 12.5l-3 3" stroke="#D9A05B" strokeWidth="1" opacity="0.6" />
+                                                                    <path d="M12 18c5 3 9 1 10-4-1 1-4 1-6 0-3-1-4-3-4-5 0 3-1 6 0 9z" fill="#FCE7A1" stroke="#D9B44A" strokeWidth="1.2" />
+                                                                    <circle cx="13" cy="17" r="4" fill="#FFB4A2" stroke="#E56B55" strokeWidth="1.2" />
+                                                                    <path d="M13 13v1.5M12 14h2" stroke="#5B826B" strokeWidth="1.2" />
+                                                                </svg>
+                                                            </div>
+                                                            <div className="text-[7px] sm:text-[8px] uppercase tracking-widest text-gray-500 font-bold mt-1 leading-tight">{t('recipes_page.total')}</div>
+                                                        </div>
+
+                                                        {/* Інформація про те, що Є У МЕНЕ */}
+                                                        <div className="w-full border-b border-gray-200/80 pb-1 mb-1 text-center">
+                                                            <div className="flex items-center justify-center gap-1">
+                                                                <span className="text-[15px] sm:text-[17px] font-black text-[#5B826B] leading-none">{recipe.match_count}</span>
+                                                                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#5B826B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                            </div>
+                                                            <div className="text-[7px] sm:text-[8px] uppercase tracking-tight sm:tracking-normal text-gray-500 font-bold mt-1 leading-none">{t('recipes_page.in_stock')}</div>
+                                                        </div>
+
+                                                        {/* Інформація про те, чого НЕ ВИСТАЧАЄ (Докупити) */}
+                                                        <div className="w-full text-center pb-0.5">
+                                                            <div className="flex items-center justify-center gap-1">
+                                                                <span className="text-[15px] sm:text-[17px] font-black text-[#B47231] leading-none">{recipe.total_count - recipe.match_count}</span>
+                                                                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#B47231]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path><line x1="16" y1="10" x2="16" y2="14"></line><line x1="14" y1="12" x2="18" y2="12"></line></svg>
+                                                            </div>
+                                                            <div className="text-[7px] sm:text-[8px] uppercase tracking-wide text-gray-500 font-bold mt-1 leading-none">{t('recipes_page.to_buy')}</div>
+                                                        </div>
+                                                    </button>
+                                                )}
                                             </div>
-                                            <div className="flex flex-col items-center flex-1 px-0.5">
-                                                <svg className="mb-1.5 md:mb-2 text-[#B47231] w-9 h-9 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0"><path d="M17 8h1a4 4 0 1 1 0 8h-1"></path><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"></path><line x1="6" y1="2" x2="6" y2="4"></line><line x1="10" y1="2" x2="10" y2="4"></line><line x1="14" y1="2" x2="14" y2="4"></line></svg>
-                                                <span className="text-[14px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-medium text-gray-800 leading-tight text-center">
-                                                    {recipe.portions || 1} {getPluralForm(recipe.portions || 1, [t('recipes_page.port_1'), t('recipes_page.port_2'), t('recipes_page.port_5')])}
-                                                </span>
+
+                                            {/* Клікабельна назва */}
+                                            <h3
+                                                onClick={handleNavigateToRecipe}
+                                                className="text-center font-['El_Messiri'] font-bold text-[#1A1A1A] text-base sm:text-lg md:text-xl lg:text-2xl uppercase px-2 line-clamp-2 min-h-[48px] md:min-h-[56px] flex items-center justify-center cursor-pointer hover:text-[#5B826B] active:scale-[0.98] transition-all"
+                                            >
+                                                {recipe.title}
+                                            </h3>
+
+                                            <div className="flex justify-between items-start mt-3 mb-6 px-1 font-['El_Messiri'] w-full">
+                                                <div className="flex flex-col items-center flex-1 px-0.5">
+                                                    <svg className="mb-1.5 md:mb-2 text-[#B47231] w-9 h-9 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                                    <span className="text-[14px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-medium text-gray-800 leading-tight text-center">
+                                                        {recipe.cooking_time} {getPluralForm(recipe.cooking_time, [t('recipes_page.min_short_1'), t('recipes_page.min_short_2'), t('recipes_page.min_short_5')])}
+                                                    </span>
+                                                </div>
+                                                <div className="flex flex-col items-center flex-1 px-0.5">
+                                                    <svg className="mb-1.5 md:mb-2 text-[#B47231] w-9 h-9 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0"><path d="M17 8h1a4 4 0 1 1 0 8h-1"></path><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"></path><line x1="6" y1="2" x2="6" y2="4"></line><line x1="10" y1="2" x2="10" y2="4"></line><line x1="14" y1="2" x2="14" y2="4"></line></svg>
+                                                    <span className="text-[14px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-medium text-gray-800 leading-tight text-center">
+                                                        {recipe.portions || 1} {getPluralForm(recipe.portions || 1, [t('recipes_page.port_1'), t('recipes_page.port_2'), t('recipes_page.port_5')])}
+                                                    </span>
+                                                </div>
+                                                <div className="flex flex-col items-center flex-1 px-0.5">
+                                                    <svg className="mb-1.5 md:mb-2 text-[#B47231] w-9 h-9 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
+                                                    <span className="text-[14px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-medium text-gray-800 leading-tight text-center break-words">
+                                                        {recipe.calories} {t('recipes_page.kcal_per_portion')}
+                                                    </span>
+                                                </div>
+                                                <div className="flex flex-col items-center flex-1 px-0.5">
+                                                    <svg className="mb-1.5 md:mb-2 text-[#B47231] w-9 h-9 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                                                    <span className="text-[14px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-medium text-gray-800 leading-tight text-center break-words">
+                                                        {DICTIONARIES.difficulty[recipe.difficulty] || recipe.difficulty}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div className="flex flex-col items-center flex-1 px-0.5">
-                                                <svg className="mb-1.5 md:mb-2 text-[#B47231] w-9 h-9 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
-                                                <span className="text-[14px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-medium text-gray-800 leading-tight text-center break-words">
-                                                    {recipe.calories} {t('recipes_page.kcal_per_portion')}
-                                                </span>
-                                            </div>
-                                            <div className="flex flex-col items-center flex-1 px-0.5">
-                                                <svg className="mb-1.5 md:mb-2 text-[#B47231] w-9 h-9 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-                                                <span className="text-[14px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-medium text-gray-800 leading-tight text-center break-words">
-                                                    {DICTIONARIES.difficulty[recipe.difficulty] || recipe.difficulty}
-                                                </span>
+
+                                            <div className="mt-auto">
+                                                {/* Клікабельна нижня кнопка */}
+                                                <div
+                                                    onClick={handleNavigateToRecipe}
+                                                    className="block w-full py-3 rounded-[20px] border border-gray-400 text-center font-['Inter'] font-medium text-[14px] md:text-[15px] text-[#1A1A1A] cursor-pointer hover:bg-[#1A1A1A] hover:text-white hover:border-[#1A1A1A] active:scale-[0.98] transition-all"
+                                                >
+                                                    {t('recipes_page.view_btn')}
+                                                </div>
                                             </div>
                                         </div>
-
-                                        <div className="mt-auto">
-                                            <div className="block w-full py-3 rounded-[20px] border border-gray-400 text-center font-['Inter'] font-medium text-[14px] md:text-[15px] text-[#1A1A1A] group-hover:bg-[#1A1A1A] group-hover:text-white group-hover:border-[#1A1A1A] transition-colors">
-                                                {t('recipes_page.view_btn')}
-                                            </div>
-                                        </div>
-                                    </Link>
-                                ))}
+                                    );
+                                })}
                             </div>
 
                             {/* КНОПКА "ПОКАЗАТИ ЩЕ" */}
