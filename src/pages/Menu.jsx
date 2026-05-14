@@ -8,6 +8,11 @@ import { DICTIONARIES } from '../constants/translations';
 import { pdf } from '@react-pdf/renderer';
 import ShoppingListPDF from '../components/ShoppingListPDF';
 
+import { Buffer } from 'buffer';
+if (typeof window !== 'undefined' && !window.Buffer) {
+    window.Buffer = Buffer;
+}
+
 const getPluralForm = (number, titles) => {
     const n = Math.abs(number) % 100;
     const n1 = n % 10;
