@@ -72,6 +72,9 @@ const Menu = () => {
     const inputRef = useRef(null);
     const suggestionsRef = useRef(null);
 
+    // Кеш для миттєвого завантаження списку рецептів
+    const cachedDefaultRecipesRef = useRef([]);
+
     // === СТАНИ ТА REFS ДЛЯ НАВІГАЦІЇ КЛАВІАТУРОЮ ===
     const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
     const suggestionListContainerRef = useRef(null);
@@ -96,6 +99,11 @@ const Menu = () => {
     useEffect(() => {
         fetchMenu();
         fetchIngredients();
+
+        // Фонове презавантаження бази рецептів для миттєвого відкриття модалки
+        api.get(ENDPOINTS.RECIPES).then(res => {
+            cachedDefaultRecipesRef.current = res.data.results || res.data;
+        }).catch(() => {});
 
         // Якщо список продуктів вже згенерований на екрані - миттєво його перегенеруємо новою мовою
         if (activeListScope) {
@@ -192,6 +200,16 @@ const Menu = () => {
         if (!isAddModalOpen) return;
 
         const fetchSearchedRecipes = async () => {
+            // ОПТИМІЗАЦІЯ: Якщо пошук порожній і ми ВЖЕ маємо завантажені рецепти в кеші
+            if (searchQuery.trim() === '' && cachedDefaultRecipesRef.current.length > 0) {
+                // Миттєво генеруємо 10 випадкових рецептів з кешу і виводимо без загрузки
+                const randomRecipes = [...cachedDefaultRecipesRef.current].sort(() => 0.5 - Math.random()).slice(0, 10);
+                setAllFetchedRecipes(randomRecipes);
+                setVisibleRecipeCount(10);
+                setIsSearching(false);
+                return;
+            }
+
             setIsSearching(true);
             setModalError(null);
             try {
@@ -211,7 +229,9 @@ const Menu = () => {
                 let recipesData = response.data.results ? response.data.results : response.data;
 
                 if (!hasSearchQuery && recipesData.length > 0) {
-                    recipesData = recipesData.sort(() => 0.5 - Math.random()).slice(0, 10);
+                    // Зберігаємо оригінальний список в кеш для наступних відкриттів
+                    cachedDefaultRecipesRef.current = recipesData;
+                    recipesData = [...recipesData].sort(() => 0.5 - Math.random()).slice(0, 10);
                 }
 
                 setAllFetchedRecipes(recipesData);
@@ -223,8 +243,14 @@ const Menu = () => {
             }
         };
 
-        const timeoutId = setTimeout(fetchSearchedRecipes, 400);
-        return () => clearTimeout(timeoutId);
+        // ОПТИМІЗАЦІЯ: Якщо пошук порожній, завантажуємо миттєво без затримки
+        if (searchQuery.trim() === '') {
+             fetchSearchedRecipes();
+        } else {
+             // Зменшено затримку для швидшого пошуку
+             const timeoutId = setTimeout(fetchSearchedRecipes, 300);
+             return () => clearTimeout(timeoutId);
+        }
     }, [searchQuery, isAddModalOpen, i18n.language]);
 
     const availableRecipes = allFetchedRecipes.slice(0, visibleRecipeCount);
@@ -376,11 +402,12 @@ const Menu = () => {
 
                 // ЗАВЖДИ показуємо запаси холодильника, якщо вони є (бекенд вже вирахував скільки треба показати)
                 if (item.already_have > 0) {
+                    const safeHave = Number.isInteger(item.already_have) ? item.already_have : Number(item.already_have).toFixed(1);
                     const actualUnit = item.inventory_unit || 'g';
                     let unitTranslation = DICTIONARIES.units[actualUnit] || actualUnit;
                     if (Array.isArray(unitTranslation)) unitTranslation = unitTranslation[0];
 
-                    amountStr += ` ${t('menu_page.already_have', { amount: item.already_have, unit: unitTranslation })}`;
+                    amountStr += ` ${t('menu_page.already_have', { amount: safeHave, unit: unitTranslation })}`;
                 }
                 return {
                     name: capitalizeFirstLetter(item.ingredient_name),
@@ -438,9 +465,8 @@ const Menu = () => {
         }
     };
 
-    const formatIngredientAmount = (amount, unitKey, abstractCount = 0, abstractUnit = 'taste') => {
+    const formatIngredientAmount = (displayRequired, unitKey, abstractCount = 0, abstractUnit = 'taste') => {
         let baseStr = '';
-        const numAmount = parseFloat(amount);
 
         // 1. Формуємо абстрактну частину ("за смаком (9 страв)")
         let abstractPart = '';
@@ -462,7 +488,8 @@ const Menu = () => {
         }
 
         // 2. Якщо є конкретні грами
-        if (amount !== null && amount !== undefined && numAmount > 0) {
+        if (displayRequired !== null && displayRequired !== undefined) {
+            const numAmount = parseFloat(displayRequired);
             const unitData = DICTIONARIES.units[unitKey];
             const concreteStr = `${numAmount} ${Array.isArray(unitData) ? getPluralForm(numAmount, unitData) : (unitData || unitKey)}`;
 
