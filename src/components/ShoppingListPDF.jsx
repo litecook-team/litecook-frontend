@@ -28,9 +28,9 @@ const styles = StyleSheet.create({
     image: { width: 24, height: 24, borderRadius: 12, marginRight: 10, objectFit: 'cover' },
     dotPlaceholder: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#F3F4F6', marginRight: 10, textAlign: 'center', fontSize: 14, color: '#D1D5DB', paddingTop: 2 },
 
-    textContainer: { flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    itemName: { fontSize: 11, fontWeight: 'normal', color: '#1F2937', flexShrink: 1, paddingRight: 5 },
-    itemAmount: { fontSize: 11, fontWeight: 'bold', color: '#B47231' },
+    textContainer: { flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+    itemName: { fontSize: 11, fontWeight: 'normal', color: '#1F2937', width: '45%', paddingRight: 5, marginTop: 1 },
+    itemAmount: { fontSize: 11, fontWeight: 'bold', color: '#B47231', width: '55%', textAlign: 'right' },
 
     footer: { marginTop: 'auto', borderTopWidth: 1, borderTopColor: '#E5E7EB', paddingTop: 15, textAlign: 'center', fontSize: 9, color: '#9CA3AF' }
 });

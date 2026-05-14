@@ -588,7 +588,10 @@
     "min_short_1": "min", "min_short_2": "min", "min_short_5": "min",
     "min_1": "minuta", "min_2": "minuty", "min_5": "minut",
     "port_1": "porcja", "port_2": "porcje", "port_5": "porcji",
-    "kcal_per_portion": "kcal/porcja"
+    "kcal_per_portion": "kcal/porcja",
+    "dish_1": "danie",
+    "dish_2": "dania",
+    "dish_5": "dań"
   },
   "profile_page": {
     "loading": "Ładowanie profilu...",

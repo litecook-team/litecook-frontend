@@ -361,16 +361,23 @@ const Menu = () => {
             }
 
             const formattedList = listToExport.map(item => {
-                let amountStr = formatIngredientAmount(item.to_buy !== undefined ? item.to_buy : item.required_amount, item.unit);
-                if (item.required_amount === null && item.already_have > 0) {
-                    const safeHave = Math.round(item.already_have);
+                let amountStr = formatIngredientAmount(
+                    item.to_buy, // Беремо ТОЧНО те, що сказав бекенд (без undefined перевірок)
+                    item.unit,
+                    item.abstract_count,
+                    item.abstract_unit
+                );
+
+                // ЗАВЖДИ показуємо запаси холодильника, якщо вони є (бекенд вже вирахував скільки треба показати)
+                if (item.already_have > 0) {
                     const actualUnit = item.inventory_unit || 'g';
                     let unitTranslation = DICTIONARIES.units[actualUnit] || actualUnit;
                     if (Array.isArray(unitTranslation)) unitTranslation = unitTranslation[0];
-                    amountStr += ` ${t('menu_page.already_have', { amount: safeHave, unit: unitTranslation })}`;
+
+                    amountStr += ` ${t('menu_page.already_have', { amount: item.already_have, unit: unitTranslation })}`;
                 }
                 return {
-                    name: capitalizeFirstLetter(item.ingredient_name), // Чистий код без пошуку по масиву
+                    name: capitalizeFirstLetter(item.ingredient_name),
                     amount: amountStr,
                     image: getImageUrl(item.ingredient_image)
                 };
@@ -425,20 +432,51 @@ const Menu = () => {
         }
     };
 
-    const formatIngredientAmount = (amount, unitKey) => {
-        if (amount === null || parseFloat(amount) === 0) {
-            const unitTranslation = DICTIONARIES.units[unitKey];
-            if (['taste', 'garnish', 'frying'].includes(unitKey)) {
-                 return unitTranslation;
-            }
-            return `за потребою / 1 ${Array.isArray(unitTranslation) ? unitTranslation[0] : unitTranslation}`;
-        }
+    const formatIngredientAmount = (amount, unitKey, abstractCount = 0, abstractUnit = 'taste') => {
+        let baseStr = '';
         const numAmount = parseFloat(amount);
-        const unitData = DICTIONARIES.units[unitKey];
-        if (Array.isArray(unitData)) {
-            return `${numAmount} ${getPluralForm(numAmount, unitData)}`;
+
+        // 1. Формуємо абстрактну частину ("за смаком (9 страв)")
+        let abstractPart = '';
+        if (abstractCount > 0) {
+            const absTr = DICTIONARIES.units[abstractUnit] || abstractUnit;
+            const absStr = Array.isArray(absTr) ? absTr[0] : absTr;
+
+            let dishesStr = '';
+            if (abstractCount > 1) {
+                // Додаємо fallback, якщо переклади ще не встигли підтягнутися
+                const dishWord = getPluralForm(abstractCount, [
+                    t('menu_page.dish_1') || 'страва',
+                    t('menu_page.dish_2') || 'страви',
+                    t('menu_page.dish_5') || 'страв'
+                ]);
+                dishesStr = ` (${abstractCount} ${dishWord})`;
+            }
+            abstractPart = `${absStr}${dishesStr}`;
         }
-        return `${numAmount} ${unitData || unitKey}`;
+
+        // 2. Якщо є конкретні грами
+        if (amount !== null && amount !== undefined && numAmount > 0) {
+            const unitData = DICTIONARIES.units[unitKey];
+            const concreteStr = `${numAmount} ${Array.isArray(unitData) ? getPluralForm(numAmount, unitData) : (unitData || unitKey)}`;
+
+            if (abstractCount > 0) {
+                baseStr = `${concreteStr} + ${abstractPart}`;
+            } else {
+                baseStr = concreteStr;
+            }
+        }
+        // 3. Якщо грамів немає (це тільки за смаком або вони приховані бекендом)
+        else {
+            if (abstractCount > 0) {
+                baseStr = abstractPart;
+            } else {
+                const absTr = DICTIONARIES.units[abstractUnit] || abstractUnit;
+                baseStr = Array.isArray(absTr) ? absTr[0] : absTr;
+            }
+        }
+
+        return baseStr;
     };
 
     const capitalizeSearch = (str) => {
@@ -777,16 +815,22 @@ const Menu = () => {
                                         ) : (
                                             <ul className="space-y-3">
                                                 {shoppingList.map((item, idx) => (
-                                                    <li key={idx} className="flex justify-between items-center text-sm border-b border-gray-200 pb-2 last:border-0 last:pb-0">
-                                                        <span className="text-gray-800 font-medium">
+                                                    <li key={idx} className="flex justify-between items-start text-sm border-b border-gray-200 pb-2 last:border-0 last:pb-0 gap-3">
+                                                        <span className="text-gray-800 font-medium mt-0.5">
                                                             {capitalizeFirstLetter(item.ingredient_name)}
                                                         </span>
-                                                        <span className="text-[#B47231] font-bold whitespace-nowrap ml-3">
+                                                        <span className="text-[#B47231] font-bold text-right">
                                                             {(() => {
-                                                                let amountStr = formatIngredientAmount(item.to_buy !== undefined ? item.to_buy : item.required_amount, item.unit);
+                                                                let amountStr = formatIngredientAmount(
+                                                                    item.to_buy,
+                                                                    item.unit,
+                                                                    item.abstract_count,
+                                                                    item.abstract_unit
+                                                                );
 
-                                                                if (item.required_amount === null && item.already_have > 0) {
-                                                                    const safeHave = Math.round(item.already_have);
+                                                                // ЗАВЖДИ показуємо запаси холодильника
+                                                                if (item.already_have > 0) {
+                                                                    const safeHave = Number.isInteger(item.already_have) ? item.already_have : Number(item.already_have).toFixed(1);
                                                                     const actualUnit = item.inventory_unit || 'g';
                                                                     let unitTranslation = DICTIONARIES.units[actualUnit] || actualUnit;
                                                                     if (Array.isArray(unitTranslation)) unitTranslation = unitTranslation[0];
