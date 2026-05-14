@@ -9,8 +9,9 @@ import { pdf } from '@react-pdf/renderer';
 import ShoppingListPDF from '../components/ShoppingListPDF';
 
 import { Buffer } from 'buffer';
-if (typeof window !== 'undefined' && !window.Buffer) {
-    window.Buffer = Buffer;
+if (typeof window !== 'undefined') {
+    window.global = window.global || window;
+    window.Buffer = window.Buffer || Buffer;
 }
 
 const getPluralForm = (number, titles) => {
