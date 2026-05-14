@@ -51,7 +51,7 @@ const Recipes = () => {
 
     const isAuthenticated = !!localStorage.getItem(TOKEN_KEY) || !!sessionStorage.getItem(TOKEN_KEY);
     const location = useLocation(); // для розуміння, чи ми щойно зайшли на сторінку
-    const navigate = useNavigate(); // ДОДАНО: ініціалізація navigate для переходів
+    const navigate = useNavigate(); // ініціалізація navigate для переходів
 
     // Функція для безпечного читання з sessionStorage
     const loadStateFromStorage = (key, defaultValue) => {
@@ -98,6 +98,9 @@ const Recipes = () => {
     const [showSuggestions, setShowSuggestions] = useState(false);
     const inputRef = useRef(null);
     const suggestionsRef = useRef(null);
+
+    // Ref для скролу до результатів
+    const resultsRef = useRef(null);
 
     // === НОВІ СТАНИ ТА REFS ДЛЯ НАВІГАЦІЇ КЛАВІАТУРОЮ ===
     const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
@@ -327,7 +330,7 @@ const Recipes = () => {
                 setDuplicateError(null); // Очищаємо помилку дублікату, якщо вона є
                 return;
             } else if (activeTab !== 'ingredients' && !hasFilters) {
-                // ВИПРАВЛЕНО: Тепер ми вимагаємо наявність фільтрів незалежно від того, чи є інгредієнти
+                // вимагаємо наявність фільтрів незалежно від того, чи є інгредієнти
                 showError('emptyFilter');
                 setEmptyIngredientsError(false);
                 return;
@@ -336,6 +339,23 @@ const Recipes = () => {
             // Якщо перевірки пройдені, скидаємо помилки
             setEmptyIngredientsError(false);
             setEmptyFilterError(false);
+
+            // Скролимо до результатів при натисканні кнопки пошуку!
+            if (resultsRef.current) {
+                // Додаємо невелику затримку для кращого візуального ефекту (щоб клавіатура мобільного встигла закритись)
+                setTimeout(() => {
+                    const offset = 80; // Відступ від верхнього краю (щоб заголовок було видно під хедером)
+                    const bodyRect = document.body.getBoundingClientRect().top;
+                    const elementRect = resultsRef.current.getBoundingClientRect().top;
+                    const elementPosition = elementRect - bodyRect;
+                    const offsetPosition = elementPosition - offset;
+
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+                }, 100);
+            }
         }
 
         setLoading(true);
@@ -1285,7 +1305,7 @@ const Recipes = () => {
                 </div>
 
                 {/* ================= НИЖНІЙ БЛОК: РЕЗУЛЬТАТИ ================= */}
-                <div className="w-full">
+                <div className="w-full" ref={resultsRef}>
                     {/* Хедер результатів */}
                     <div className="flex items-center justify-between mb-8 md:mb-12 gap-2 sm:gap-4">
                         <div className="flex items-start sm:items-center gap-2 sm:gap-3 md:gap-4 shrink">
