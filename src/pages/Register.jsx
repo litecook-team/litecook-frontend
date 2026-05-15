@@ -383,27 +383,27 @@ const Register = () => {
                                     <ul className="text-[11px] text-gray-500 grid grid-cols-1 sm:grid-cols-2 gap-1.5 font-['Inter']">
                                         <li className="flex items-center gap-1.5">
                                             {formData.password1.length >= 8
-                                                ? <svg className="w-3.5 h-3.5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                ? <svg className="w-3.5 h-3.5 text-[#6A907B] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
                                                 : <span className="text-gray-300 shrink-0 text-sm leading-none">•</span>}
-                                            <span className={formData.password1.length >= 8 ? 'text-green-600 font-medium' : ''}>{t('register_page.req_length')}</span>
+                                            <span className={formData.password1.length >= 8 ? 'text-[#6A907B] font-medium' : ''}>{t('register_page.req_length')}</span>
                                         </li>
                                         <li className="flex items-center gap-1.5">
                                             {/[A-ZА-ЯІЇЄҐ]/.test(formData.password1)
-                                                ? <svg className="w-3.5 h-3.5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                ? <svg className="w-3.5 h-3.5 text-[#6A907B] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
                                                 : <span className="text-gray-300 shrink-0 text-sm leading-none">•</span>}
-                                            <span className={/[A-ZА-ЯІЇЄҐ]/.test(formData.password1) ? 'text-green-600 font-medium' : ''}>{t('register_page.req_upper')}</span>
+                                            <span className={/[A-ZА-ЯІЇЄҐ]/.test(formData.password1) ? 'text-[#6A907B] font-medium' : ''}>{t('register_page.req_upper')}</span>
                                         </li>
                                         <li className="flex items-center gap-1.5">
                                             {/[0-9]/.test(formData.password1)
-                                                ? <svg className="w-3.5 h-3.5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                ? <svg className="w-3.5 h-3.5 text-[#6A907B] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
                                                 : <span className="text-gray-300 shrink-0 text-sm leading-none">•</span>}
-                                            <span className={/[0-9]/.test(formData.password1) ? 'text-green-600 font-medium' : ''}>{t('register_page.req_number')}</span>
+                                            <span className={/[0-9]/.test(formData.password1) ? 'text-[#6A907B] font-medium' : ''}>{t('register_page.req_number')}</span>
                                         </li>
                                         <li className="flex items-center gap-1.5">
                                             {/[^A-Za-z0-9А-Яа-яІіЇїЄєҐґ]/.test(formData.password1)
-                                                ? <svg className="w-3.5 h-3.5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                ? <svg className="w-3.5 h-3.5 text-[#6A907B] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
                                                 : <span className="text-gray-300 shrink-0 text-sm leading-none">•</span>}
-                                            <span className={/[^A-Za-z0-9А-Яа-яІіЇїЄєҐґ]/.test(formData.password1) ? 'text-green-600 font-medium' : ''}>{t('register_page.req_special')}</span>
+                                            <span className={/[^A-Za-z0-9А-Яа-яІіЇїЄєҐґ]/.test(formData.password1) ? 'text-[#6A907B] font-medium' : ''}>{t('register_page.req_special')}</span>
                                         </li>
                                     </ul>
                                 </div>
