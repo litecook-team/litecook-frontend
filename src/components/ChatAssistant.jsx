@@ -17,20 +17,37 @@ const ChatAssistant = () => {
     // Стан для мікрофона (закоментовано)
     // const [isListening, setIsListening] = useState(false);
 
+    // === НОВИЙ СТАН ДЛЯ ЗВУКУ (зчитуємо з локального сховища) ===
+    const [isMuted, setIsMuted] = useState(() => {
+        const saved = localStorage.getItem('litecook_ai_muted');
+        return saved === 'true';
+    });
+
     const location = useLocation();
     const navigate = useNavigate();
     const messagesEndRef = useRef(null);
     const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
 
-    // === ПОКРАЩЕНА ФУНКЦІЯ ОЗВУЧКИ (Без символів та URL) ===
+    // === ЗБЕРЕЖЕННЯ СТАНУ ЗВУКУ ===
+    useEffect(() => {
+        localStorage.setItem('litecook_ai_muted', isMuted);
+        // Якщо ми натиснули "вимкнути звук", негайно зупиняємо поточну озвучку
+        if (isMuted && 'speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+        }
+    }, [isMuted]);
+
+    // === ПОКРАЩЕНА ФУНКЦІЯ ОЗВУЧКИ ===
     const speakText = (text) => {
-        if (!('speechSynthesis' in window)) return;
+        // ДОДАНО: Перевірка, чи не вимкнутий звук
+        if (isMuted || !('speechSynthesis' in window)) return;
+
         window.speechSynthesis.cancel();
 
-        // 1. Витягуємо текст з посилань: перетворюємо [Назва рецепту](/url) просто на "Назва рецепту"
+        // 1. Витягуємо текст з посилань
         let cleanText = text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
 
-        // 2. Видаляємо всі технічні символи Markdown (зірочки, решітки, підкреслення, дужки)
+        // 2. Видаляємо всі технічні символи Markdown
         cleanText = cleanText.replace(/[*#_`~\[\]()]/g, '').trim();
 
         if (!cleanText) return;
@@ -125,7 +142,10 @@ const ChatAssistant = () => {
 
     const sendMessage = (e) => {
         e.preventDefault();
-        if ('speechSynthesis' in window) window.speechSynthesis.speak(new SpeechSynthesisUtterance(''));
+        // Перевірка на mute перед спробою скинути синтезатор
+        if (!isMuted && 'speechSynthesis' in window) {
+            window.speechSynthesis.speak(new SpeechSynthesisUtterance(''));
+        }
         triggerMessageSend(input);
     };
 
@@ -231,6 +251,19 @@ const ChatAssistant = () => {
                         </div>
 
                         <div className="flex items-center gap-1 sm:gap-2">
+                            {/* === КНОПКА ЗВУКУ === */}
+                            <button
+                                onClick={() => setIsMuted(!isMuted)}
+                                className={`p-1.5 rounded-xl transition-all cursor-pointer ${isMuted ? 'text-white bg-white/20' : 'text-white/80 hover:text-white hover:bg-white/20'}`}
+                                title={isMuted ? "Увімкнути звук" : "Вимкнути звук"}
+                            >
+                                {isMuted ? (
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path><path strokeLinecap="round" strokeLinejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>
+                                ) : (
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+                                )}
+                            </button>
+
                             {messages.length > 0 && (
                                 <button onClick={() => setShowConfirmClear(true)} className="text-white/80 hover:text-white hover:bg-white/20 p-1.5 rounded-xl transition-all cursor-pointer" title={t('ai_chat.clear_tooltip')}>
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
