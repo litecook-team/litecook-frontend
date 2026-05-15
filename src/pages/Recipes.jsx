@@ -806,7 +806,7 @@ const Recipes = () => {
 
                             <div className="flex items-center justify-end gap-2 min-w-0 flex-1">
                                 <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 bg-[#6A907B] shrink-0"></div>
-                                <span className="font-['El_Messiri'] font-bold text-gray-800 tracking-wider pb-2 uppercase text-[15px] sm:text-xl leading-tight text-right break-words">
+                                <span className="font-['El_Messiri'] font-bold text-gray-800 tracking-wider uppercase text-[15px] sm:text-xl leading-none text-right break-words pt-1">
                                     {t('recipes_page.pick_recipe')}
                                 </span>
                             </div>
