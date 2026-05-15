@@ -23,12 +23,15 @@ const Register = () => {
     const [isMessageVisible, setIsMessageVisible] = useState(false);
     const [isPasswordErrorVisible, setIsPasswordErrorVisible] = useState(false);
 
-    // НОВИЙ СТЕЙТ: Точно визначає, яке поле має світитися червоним
+    // Точно визначає, яке поле має світитися червоним
     const [errorField, setErrorField] = useState(null);
 
     const [showTerms, setShowTerms] = useState(false);
     const [showPassword1, setShowPassword1] = useState(false);
     const [showPassword2, setShowPassword2] = useState(false);
+
+    // Стан для контролю видимості підказок пароля (фокус на полі)
+    const [isPassword1Focused, setIsPassword1Focused] = useState(false);
 
     const errorTimerRef = useRef(null);
     const pwdErrorTimerRef = useRef(null);
@@ -327,7 +330,7 @@ const Register = () => {
                         </div>
 
                         {/* Блок з паролями */}
-                        <div className="bg-gray-50/50 p-3 -mx-3 rounded-2xl border border-transparent transition-colors duration-300">
+                        <div className="bg-gray-50/50 p-3 -mx-3 rounded-2xl border border-transparent transition-colors duration-300 relative">
 
                             {/* АНІМОВАНИЙ БЛОК ПОМИЛКИ ПАРОЛЯ */}
                             <div className={`transition-all duration-500 overflow-hidden ${isPasswordErrorVisible ? 'max-h-20 opacity-100 mb-3' : 'max-h-0 opacity-0 -mb-3'}`}>
@@ -337,14 +340,16 @@ const Register = () => {
                                 </div>
                             </div>
 
-                            <div className="mb-3">
+                            <div className="mb-3 relative">
                                 <label className="inline-block text-sm md:text-base font-semibold font-['El_Messiri'] text-gray-800 mb-1 ml-4">{t('register_page.password_label')}</label>
-                                <div className="relative">
+                                <div className="relative z-20">
                                     <input
                                         type={showPassword1 ? "text" : "password"}
                                         name="password1"
                                         value={formData.password1}
                                         onChange={handleChange}
+                                        onFocus={() => setIsPassword1Focused(true)}
+                                        onBlur={() => setIsPassword1Focused(false)}
                                         required
                                         placeholder={t('register_page.password_placeholder')}
                                         className={`w-full px-5 py-3 md:py-2.5 font-['El_Messiri'] rounded-full border focus:outline-none transition-colors duration-300 text-base md:text-lg text-gray-700 bg-white pr-12 ${
@@ -354,33 +359,58 @@ const Register = () => {
                                         }`}
                                     />
                                     {formData.password1.length > 0 && (
-                                        <button type="button" onClick={() => setShowPassword1(!showPassword1)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#42705D] transition-colors focus:outline-none">
+                                        <button type="button" onClick={() => setShowPassword1(!showPassword1)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#42705D] transition-colors focus:outline-none z-30">
                                             {showPassword1 ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>}
                                         </button>
                                     )}
                                 </div>
 
-                                {formData.password1 && (
-                                    <div className="mt-2 px-2">
-                                        <div className="flex gap-1 h-1.5">
-                                            {[1, 2, 3, 4, 5].map(level => (
-                                                <div key={level} className={`w-full rounded-full transition-colors duration-300 ${pwdStrength >= level ? strengthColors[pwdStrength] : 'bg-gray-200'}`} />
-                                            ))}
-                                        </div>
-                                        <div className="flex justify-between items-center mt-1">
-                                            <span className={`text-[11px] font-bold ${strengthColors[pwdStrength].replace('bg-', 'text-')}`}>{strengthLabels[pwdStrength]}</span>
-                                        </div>
-                                        <ul className="text-[11px] text-gray-500 mt-1 grid grid-cols-2 gap-1 font-['Inter']">
-                                            {formData.password1.length < 8 && (<li><span className="text-gray-400 mr-1">○</span>{t('register_page.req_length')}</li>)}
-                                            {!/[A-ZА-ЯІЇЄҐ]/.test(formData.password1) && (<li><span className="text-gray-400 mr-1">○</span>{t('register_page.req_upper')}</li>)}
-                                            {!/[0-9]/.test(formData.password1) && (<li><span className="text-gray-400 mr-1">○</span>{t('register_page.req_number')}</li>)}
-                                            {!/[^A-Za-z0-9А-Яа-яІіЇїЄєҐґ]/.test(formData.password1) && (<li><span className="text-gray-400 mr-1">○</span>{t('register_page.req_special')}</li>)}
-                                        </ul>
+                                {/* === АБСОЛЮТНИЙ БЛОК ПІДКАЗОК === */}
+                                <div className={`absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-gray-100 p-4 z-40 transition-all duration-300 origin-top pointer-events-none ${
+                                    // Тільки якщо є фокус І пароль ще слабкий
+                                    (isPassword1Focused && pwdStrength < 5)
+                                    ? 'opacity-100 scale-y-100 translate-y-0'
+                                    : 'opacity-0 scale-y-95 -translate-y-2'
+                                }`}>
+                                    <div className="flex gap-1 h-1.5 mb-2">
+                                        {[1, 2, 3, 4, 5].map(level => (
+                                            <div key={level} className={`w-full rounded-full transition-colors duration-300 ${pwdStrength >= level ? strengthColors[pwdStrength] : 'bg-gray-200'}`} />
+                                        ))}
                                     </div>
-                                )}
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className={`text-[11px] font-bold ${strengthColors[pwdStrength].replace('bg-', 'text-')}`}>{strengthLabels[pwdStrength]}</span>
+                                    </div>
+                                    <ul className="text-[11px] text-gray-500 grid grid-cols-1 sm:grid-cols-2 gap-1.5 font-['Inter']">
+                                        <li className="flex items-center gap-1.5">
+                                            {formData.password1.length >= 8
+                                                ? <svg className="w-3.5 h-3.5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                : <span className="text-gray-300 shrink-0 text-sm leading-none">•</span>}
+                                            <span className={formData.password1.length >= 8 ? 'text-green-600 font-medium' : ''}>{t('register_page.req_length')}</span>
+                                        </li>
+                                        <li className="flex items-center gap-1.5">
+                                            {/[A-ZА-ЯІЇЄҐ]/.test(formData.password1)
+                                                ? <svg className="w-3.5 h-3.5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                : <span className="text-gray-300 shrink-0 text-sm leading-none">•</span>}
+                                            <span className={/[A-ZА-ЯІЇЄҐ]/.test(formData.password1) ? 'text-green-600 font-medium' : ''}>{t('register_page.req_upper')}</span>
+                                        </li>
+                                        <li className="flex items-center gap-1.5">
+                                            {/[0-9]/.test(formData.password1)
+                                                ? <svg className="w-3.5 h-3.5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                : <span className="text-gray-300 shrink-0 text-sm leading-none">•</span>}
+                                            <span className={/[0-9]/.test(formData.password1) ? 'text-green-600 font-medium' : ''}>{t('register_page.req_number')}</span>
+                                        </li>
+                                        <li className="flex items-center gap-1.5">
+                                            {/[^A-Za-z0-9А-Яа-яІіЇїЄєҐґ]/.test(formData.password1)
+                                                ? <svg className="w-3.5 h-3.5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                : <span className="text-gray-300 shrink-0 text-sm leading-none">•</span>}
+                                            <span className={/[^A-Za-z0-9А-Яа-яІіЇїЄєҐґ]/.test(formData.password1) ? 'text-green-600 font-medium' : ''}>{t('register_page.req_special')}</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                {/* ======================================== */}
                             </div>
 
-                            <div>
+                            <div className="relative z-10 mt-2">
                                 <label className="inline-block text-sm md:text-base font-semibold font-['El_Messiri'] text-gray-800 mb-1 ml-4">{t('register_page.password_confirm_label')}</label>
                                 <div className="relative">
                                     <input
